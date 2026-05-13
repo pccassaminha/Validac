@@ -1,0 +1,78 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Safety Net
+    match /{document=**} { 
+      allow read, write: if false; 
+    }
+
+    // Primitive Helpers
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    
+    function isAdmin() {
+      // Check if user is signed in and has the specific admin email.
+      // Note: email_verified is commented out here because we automatically create 
+      // the admin user on the frontend and it won't be verified by default.
+      return isSignedIn() && request.auth.token.email.lower() == "grupocassaminha@gmail.com";
+    }
+
+    // Validation Blueprint for Lead
+    function isValidLead(data) {
+      return data.keys().hasAll(['name', 'phone', 'address', 'province', 'produto', 'quantity', 'totalPrice', 'status', 'timestamp', 'createdAt'])
+        && data.keys().size() == 10
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.phone is string && data.phone.size() > 0 && data.phone.size() <= 50
+        && data.address is string && data.address.size() > 0 && data.address.size() <= 200
+        && data.province is string && data.province.size() > 0 && data.province.size() <= 100
+        && data.produto is string && data.produto.size() > 0 && data.produto.size() <= 100
+        && data.quantity is number && data.quantity > 0
+        && data.totalPrice is number && data.totalPrice > 0
+        && data.status is string && data.status in ["Pendente", "Reservado", "Rejeitado", "Entregue", "Cancelado", "Tentativa Falhada"]
+        && data.timestamp is string && data.timestamp.size() > 0 && data.timestamp.size() <= 50
+        && data.createdAt == request.time;
+    }
+
+    // Validation Blueprint for Lead Updates
+    function isValidLeadUpdate(data) {
+       return data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.phone is string && data.phone.size() > 0 && data.phone.size() <= 50
+        && data.address is string && data.address.size() > 0 && data.address.size() <= 200
+        && data.province is string && data.province.size() > 0 && data.province.size() <= 100
+        && data.produto is string && data.produto.size() > 0 && data.produto.size() <= 100
+        && data.quantity is number && data.quantity > 0
+        && data.totalPrice is number && data.totalPrice > 0
+        && data.status is string && data.status in ["Pendente", "Reservado", "Rejeitado", "Entregue", "Cancelado", "Tentativa Falhada"]
+        && data.timestamp is string && data.timestamp.size() > 0 && data.timestamp.size() <= 50
+        && data.createdAt == existing().createdAt;
+    }
+
+    // Leads Collection
+    match /leads/{leadId} {
+      // Only Admins can list and get the leads
+      allow get, list: if isAdmin();
+
+      // Anyone can submit a lead (unauthenticated creation is allowed for public forms)
+      allow create: if isValidId(leadId) && isValidLead(incoming());
+
+      // Only Admins can update their status
+      allow update: if isAdmin() 
+        && isValidLeadUpdate(incoming())
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['status']) 
+          || incoming().diff(existing()).affectedKeys().hasOnly([])
+        );
+
+      // Only Admins can delete
+      allow delete: if isAdmin() && isValidId(leadId);
+    }
+
+  }
+}

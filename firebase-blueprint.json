@@ -1,0 +1,28 @@
+{
+  "entities": {
+    "Lead": {
+      "title": "Lead",
+      "description": "A customer lead / reservation for a product",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "province": { "type": "string" },
+        "produto": { "type": "string" },
+        "quantity": { "type": "number", "description": "Quantity of the product requested" },
+        "totalPrice": { "type": "number", "description": "Total price calculated for the lead" },
+        "status": { "type": "string", "enum": ["Pendente", "Reservado", "Rejeitado", "Entregue", "Cancelado", "Tentativa Falhada"] },
+        "timestamp": { "type": "string" },
+        "createdAt": { "type": "timestamp", "description": "Server timestamp of creation" }
+      },
+      "required": ["name", "phone", "address", "province", "produto", "quantity", "totalPrice", "status", "timestamp", "createdAt"]
+    }
+  },
+  "firestore": {
+    "leads/{leadId}": {
+      "schema": { "$ref": "#/entities/Lead" },
+      "description": "Collection of all leads submitted by customers."
+    }
+  }
+}
