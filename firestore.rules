@@ -21,7 +21,7 @@ service cloud.firestore {
       // Check if user is signed in and has the specific admin email.
       // Note: email_verified is commented out here because we automatically create 
       // the admin user on the frontend and it won't be verified by default.
-      return isSignedIn() && request.auth.token.email.lower() == "grupocassaminha@gmail.com";
+      return isSignedIn() && (request.auth.token.email.lower() == "grupocassaminha@gmail.com" || request.auth.token.email.lower() == "grupocasssaminha@gmail.com" || request.auth.token.email.lower() == "exportacoes.extras@gmail.com");
     }
 
     // Validation Blueprint for Lead

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ShieldAlert, Activity, CheckCircle, PackageOpen, TriangleAlert, Crown, XCircle, ArrowLeft, Lock, Loader2, Info, Star, Eye, EyeOff, Copy, MessageCircle, Search, Filter, Download, User, LayoutDashboard, Settings, ExternalLink, LogOut, ChevronDown, Store, FileText, AlertOctagon, Trash2, Timer, Paperclip, FolderOpen, Monitor, Smartphone, Tablet, Bot, Upload, Edit } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db, auth, handleFirestoreError, OperationType } from './firebase';
-import { collection, doc, addDoc, updateDoc, getDocs, getDoc, query, orderBy, serverTimestamp, Timestamp, deleteDoc, where } from 'firebase/firestore';
+import { collection, doc, addDoc, updateDoc, getDocs, getDoc, query, orderBy, serverTimestamp, Timestamp, deleteDoc, where, setDoc } from 'firebase/firestore';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, updatePassword, updateProfile, updateEmail, onAuthStateChanged, signOut } from 'firebase/auth';
 import './home.css';
 import AuthView from './AuthView';
@@ -114,7 +114,7 @@ const IMAGES_ROUPAS = [
 type ModalState = 'none' | 'step1' | 'last-chance' | 'success' | 'rejected' | 'profile' | 'danger-zone' | 'danger-action-page-prompt' | 'danger-action-page-confirm' | 'danger-action-all-prompt' | 'danger-alert' | 'delete-lead-confirm';
 
 export default function App() {
-  const [view, setView] = useState<'home' | 'sales' | 'sales-roupas' | 'admin' | 'pages' | 'danger-zone' | 'ai-generator' | 'settings' | 'prompt-gallery'>(() => {
+  const [view, setView] = useState<'home' | 'sales' | 'sales-roupas' | 'admin' | 'pages' | 'danger-zone' | 'ai-generator' | 'settings' | 'prompt-gallery' | 'privacy' | 'terms'>(() => {
     const params = new URLSearchParams(window.location.search);
     const product = params.get('product');
     if (product === 'secador-uv') return 'sales';
@@ -165,6 +165,7 @@ export default function App() {
   
   // Admin Auth State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userName, setUserName] = useState('');
   const [userStatus, setUserStatus] = useState<'pending' | 'approved' | 'blocked' | 'expired' | null>(null);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -224,16 +225,23 @@ export default function App() {
   }, [view]);
 
   useEffect(() => {
+    let isMounted = true;
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setIsAuthenticated(true);
         // Load user DB object to check status
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (!isMounted) return;
           if (userDoc.exists()) {
             const data = userDoc.data();
             let finalStatus = data.status || 'pending';
+            setUserName(data.name || user.displayName || '');
             
+            if (user.email === 'exportacoes.extras@gmail.com' || user.email?.toLowerCase() === 'grupocassaminha@gmail.com' || user.email?.toLowerCase() === 'grupocasssaminha@gmail.com') {
+              finalStatus = 'approved';
+            }
+
             // Check expiration if pending
             if (finalStatus === 'pending' && data.trialExpiresAt) {
                const now = new Date();
@@ -244,24 +252,42 @@ export default function App() {
             setUserStatus(finalStatus as any);
           } else {
              // Admin fallback or old user
-             if (user.email === 'exportacoes.extras@gmail.com') setUserStatus('approved');
-             else setUserStatus('pending'); // assume new user without doc
+             setUserName(user.displayName || '');
+             if (user.email === 'exportacoes.extras@gmail.com' || user.email?.toLowerCase() === 'grupocassaminha@gmail.com' || user.email?.toLowerCase() === 'grupocasssaminha@gmail.com') {
+               setUserStatus('approved');
+             } else {
+               setUserStatus('pending'); // assume new user without doc
+             }
           }
-        } catch (e) {
+        } catch (e: any) {
+          if (!isMounted) return;
           console.error('Error fetching user status:', e);
+          setUserName(user.displayName || '');
+          if (user.email === 'exportacoes.extras@gmail.com' || user.email?.toLowerCase() === 'grupocassaminha@gmail.com' || user.email?.toLowerCase() === 'grupocasssaminha@gmail.com') {
+             setUserStatus('approved');
+          } else {
+             setUserStatus('pending');
+          }
         }
 
-        if (view === 'admin' || view === 'pages' || view === 'danger-zone' || view === 'ai-generator' || view === 'settings' || view === 'prompt-gallery') {
-           loadAdminData();
-        }
       } else {
         setIsAuthenticated(false);
         setUserStatus(null);
+        setUserName('');
       }
     });
 
-    return () => unsubscribe();
-  }, [view]);
+    return () => {
+       isMounted = false;
+       unsubscribe();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated && (view === 'admin' || view === 'pages' || view === 'danger-zone' || view === 'ai-generator' || view === 'settings' || view === 'prompt-gallery')) {
+       loadAdminData();
+    }
+  }, [view, isAuthenticated]);
 
   useEffect(() => {
     if (view !== 'sales' && view !== 'sales-roupas') return;
@@ -489,14 +515,26 @@ export default function App() {
     setIsAdminLoading(true);
 
     try {
-      if (loginEmail.toLowerCase() === 'grupocassaminha@gmail.com') {
+      if (loginEmail.toLowerCase() === 'grupocassaminha@gmail.com' || loginEmail.toLowerCase() === 'grupocasssaminha@gmail.com') {
         try {
           await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
         } catch (authErr: any) {
           if (authErr.code === 'auth/user-not-found' || authErr.code === 'auth/invalid-login-credentials' || authErr.code === 'auth/invalid-credential') {
              // If the user doesn't exist, we create it. Warning: Production apps should handle this differently
              try {
-                await createUserWithEmailAndPassword(auth, loginEmail, loginPassword);
+                const userCredential = await createUserWithEmailAndPassword(auth, loginEmail, loginPassword);
+                const user = userCredential.user;
+                await updateProfile(user, { displayName: 'Pedro Cassaminha' });
+                // Criar doc do utilizador admin
+                await setDoc(doc(db, 'users', user.uid), {
+                  id: user.uid,
+                  name: 'Pedro Cassaminha',
+                  email: loginEmail,
+                  phone: '',
+                  role: 'admin',
+                  status: 'approved',
+                  createdAt: serverTimestamp()
+                }).catch(err => console.error("Could not create user document", err));
              } catch (createErr: any) {
                 setLoginError('Erro ao criar conta: ' + (createErr.message || 'Erro desconhecido'));
                 setIsAdminLoading(false);
@@ -533,13 +571,15 @@ export default function App() {
       }));
       setAdminData(leads);
     } catch (err: any) {
-      if (err instanceof Error && err.message.includes('missing or insufficient permissions')) {
-        handleFirestoreError(err, OperationType.GET, 'leads');
+      console.error('Error fetching leads:', err);
+      if (err instanceof Error && err.message.includes('Index')) {
+         setAdminError('O banco de dados está a ser indexado. Por favor, tente novamente em alguns minutos.');
+      } else {
+         setAdminError('Erro na comunicação com a base de dados: ' + (err.message || ''));
       }
-      console.error(err);
-      setAdminError('Erro na comunicação com a base de dados.');
+    } finally {
+      setIsAdminLoading(false);
     }
-    setIsAdminLoading(false);
   };
 
   const formatKz = (value: number) => {
@@ -763,7 +803,7 @@ export default function App() {
                         </div>
                         <div className="p-2 border-t border-slate-700">
                           <button 
-                            onClick={async () => { await signOut(auth); setIsDropdownOpen(false); setIsAuthenticated(false); setView('sales'); }} 
+                            onClick={async () => { await signOut(auth); setIsDropdownOpen(false); setIsAuthenticated(false); setView('home'); }} 
                             className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-950/30 rounded-xl transition-colors text-left font-medium"
                           >
                             <LogOut size={16} /> Sair
@@ -790,7 +830,7 @@ export default function App() {
 
       {/* NEW HOME VIEW */}
       {view === 'home' && (
-        <HomeView setView={setView} isAuthenticated={isAuthenticated} currentUser={auth.currentUser} />
+        <HomeView setView={setView} isAuthenticated={isAuthenticated} currentUser={auth.currentUser} userName={userName} />
       )}
 
       {/* Old Home Footer removed, handled by new HomeView */}
@@ -2594,6 +2634,71 @@ O código da UI deve ser num único ficheiro App.tsx suportando React, usando \`
           </motion.div>
         )}
       </AnimatePresence>
+
+      {view === 'privacy' && (
+        <div className="max-w-4xl mx-auto px-4 py-16">
+          <button onClick={() => setView('home')} className="flex items-center gap-2 text-indigo-600 mb-8 font-medium hover:text-indigo-800 transition">
+            <ArrowLeft size={20} /> Voltar
+          </button>
+          <h1 className="text-4xl font-black mb-8 text-slate-900">Políticas de Privacidade</h1>
+          <div className="prose prose-lg text-slate-700">
+            <p>Data de entrada em vigor: 13 de Maio de 2026</p>
+            <p>Na Valida C (desenvolvido pelo Grupo Cassaminha), a sua privacidade é a nossa prioridade. Esta Política de Privacidade explica como recolhemos, usamos, divulgamos e protegemos a sua informação quando utiliza a nossa plataforma.</p>
+            
+            <h3 className="text-2xl font-bold mt-8 mb-4 text-slate-800">1. Informação que Recolhemos</h3>
+            <p>Recolhemos informação que nos fornece diretamente, tal como quando cria uma conta, contacta o nosso suporte ou utiliza os nossos serviços. Isto pode incluir o seu nome, endereço de e-mail e informação sobre o seu negócio e produtos.</p>
+            
+            <h3 className="text-2xl font-bold mt-8 mb-4 text-slate-800">2. Como Usamos a Sua Informação</h3>
+            <p>Utilizamos a informação que recolhemos para operar, manter e melhorar a plataforma Valida C, para comunicar consigo, e para personalizar e melhorar a sua experiência.</p>
+            
+            <h3 className="text-2xl font-bold mt-8 mb-4 text-slate-800">3. Partilha de Informação</h3>
+            <p>Não vendemos nem alugamos as suas informações pessoais a terceiros. Apenas partilhamos as suas informações quando necessário para fornecer os nossos serviços, cumprir com a lei, ou proteger os nossos direitos.</p>
+            
+            <h3 className="text-2xl font-bold mt-8 mb-4 text-slate-800">4. Segurança de Dados</h3>
+            <p>Implementamos medidas de segurança técnicas e organizacionais concebidas para proteger as suas informações. No entanto, nenhum sistema pode ser 100% seguro.</p>
+            
+            <h3 className="text-2xl font-bold mt-8 mb-4 text-slate-800">5. Os Seus Direitos</h3>
+            <p>Dependendo da sua localização, pode ter o direito de aceder, corrigir, eliminar ou restringir o uso das suas informações pessoais.</p>
+            
+            <h3 className="text-2xl font-bold mt-8 mb-4 text-slate-800">6. Contacte-nos</h3>
+            <p>Se tiver perguntas sobre esta Política de Privacidade, por favor contacte-nos através do Grupo Cassaminha.</p>
+          </div>
+        </div>
+      )}
+
+      {view === 'terms' && (
+        <div className="max-w-4xl mx-auto px-4 py-16">
+          <button onClick={() => setView('home')} className="flex items-center gap-2 text-indigo-600 mb-8 font-medium hover:text-indigo-800 transition">
+            <ArrowLeft size={20} /> Voltar
+          </button>
+          <h1 className="text-4xl font-black mb-8 text-slate-900">Termos de Uso</h1>
+          <div className="prose prose-lg text-slate-700">
+            <p>Última atualização: 13 de Maio de 2026</p>
+            <p>Bem-vindo à Valida C, uma plataforma desenvolvida pelo Grupo Cassaminha. Ao utilizar os nossos serviços, concorda com estes Termos de Uso.</p>
+
+            <h3 className="text-2xl font-bold mt-8 mb-4 text-slate-800">1. Aceitação dos Termos</h3>
+            <p>Ao aceder ou usar a plataforma Valida C, concorda em ficar vinculado por estes Termos e pela nossa Política de Privacidade. Se não concordar com alguma parte dos termos, não deverá aceder ou usar o serviço.</p>
+
+            <h3 className="text-2xl font-bold mt-8 mb-4 text-slate-800">2. Uso da Plataforma</h3>
+            <p>Concorda em utilizar a plataforma apenas para fins legais e de uma maneira que não infrinja os direitos de terceiros ou restrinja o uso da plataforma por outros utilizadores.</p>
+
+            <h3 className="text-2xl font-bold mt-8 mb-4 text-slate-800">3. Contas de Utilizador</h3>
+            <p>Para usar certas funcionalidades, terá de criar uma conta. É responsável por manter a confidencialidade da sua conta e senha, e por restringir o acesso ao seu computador ou dispositivo.</p>
+
+            <h3 className="text-2xl font-bold mt-8 mb-4 text-slate-800">4. Modificações do Serviço</h3>
+            <p>Reservamo-nos o direito de retirar ou alterar a plataforma, e qualquer serviço ou material que fornecemos nela, a nosso exclusivo critério e sem aviso prévio. Não seremos responsáveis se, por qualquer motivo, todo ou parte da plataforma estiver indisponível.</p>
+
+            <h3 className="text-2xl font-bold mt-8 mb-4 text-slate-800">5. Isenção de Garantias</h3>
+            <p>A plataforma é fornecida "tal como está" e "conforme disponível". Não oferecemos garantias de qualquer tipo, expressas ou implícitas, relativamente à operação da plataforma, às informações, conteúdos ou materiais nela incluídos.</p>
+
+            <h3 className="text-2xl font-bold mt-8 mb-4 text-slate-800">6. Limitação de Responsabilidade</h3>
+            <p>Em nenhum caso a Valida C, o Grupo Cassaminha, ou os seus diretores serão responsáveis por quaisquer danos decorrentes do uso da plataforma ou relacionados ao uso da plataforma.</p>
+
+            <h3 className="text-2xl font-bold mt-8 mb-4 text-slate-800">7. Alterações aos Termos</h3>
+            <p>Podemos rever estes Termos de Uso a qualquer momento. Ao continuar a usar o serviço após as alterações entrarem em vigor, você concorda estar vinculado aos termos revistos.</p>
+          </div>
+        </div>
+      )}
 
     </div>
   );

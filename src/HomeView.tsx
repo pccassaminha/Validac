@@ -4,9 +4,10 @@ interface HomeViewProps {
   setView: (view: any) => void;
   isAuthenticated: boolean;
   currentUser: any;
+  userName?: string;
 }
 
-export default function HomeView({ setView, isAuthenticated, currentUser }: HomeViewProps) {
+export default function HomeView({ setView, isAuthenticated, currentUser, userName }: HomeViewProps) {
   const cursorRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
 
@@ -114,6 +115,7 @@ export default function HomeView({ setView, isAuthenticated, currentUser }: Home
   };
 
   const getFirstName = () => {
+      if (userName) return userName.split(' ')[0];
       if (currentUser?.displayName) {
           return currentUser.displayName.split(' ')[0];
       }
@@ -150,9 +152,9 @@ export default function HomeView({ setView, isAuthenticated, currentUser }: Home
                 style={{ 
                   padding: '8px 20px', 
                   fontSize: '0.9rem', 
-                  backgroundColor: 'transparent', 
-                  color: 'var(--text-main)', 
-                  border: '1px solid rgba(0,0,0,0.1)', 
+                  backgroundColor: '#4f46e5', 
+                  color: '#fff', 
+                  border: 'none', 
                   borderRadius: '100px', 
                   fontWeight: 600, 
                   cursor: 'pointer' 
@@ -165,7 +167,7 @@ export default function HomeView({ setView, isAuthenticated, currentUser }: Home
                 style={{ 
                   padding: '8px 20px', 
                   fontSize: '0.9rem', 
-                  backgroundColor: 'var(--primary)', 
+                  backgroundColor: '#4f46e5', 
                   color: '#fff', 
                   border: 'none', 
                   borderRadius: '100px', 
@@ -195,7 +197,7 @@ export default function HomeView({ setView, isAuthenticated, currentUser }: Home
             Apresentamos a Plataforma Valida C
           </div>
 
-          <h1>O ecossistema perfeito para<br /><span className="gradient-text">acelerar as suas vendas.</span></h1>
+          <h1>O ecossistema perfeito para <span className="gradient-text">acelerar as suas vendas.</span></h1>
 
           <p className="hero-desc">A Valida C é a plataforma que valida os nossos produtos e clientes. Ela gere as suas páginas, unifica os seus leads e permite uma gestão centralizada para a conversão de oportunidades de uma forma simples e eficiente.</p>
 
@@ -552,8 +554,8 @@ export default function HomeView({ setView, isAuthenticated, currentUser }: Home
               <h4>Suporte</h4>
               <a href="#">Centro de Ajuda</a>
               <a href="https://wa.me/244921167980">WhatsApp</a>
-              <a href="#">Política de Privacidade</a>
-              <a href="#">Termos de Uso</a>
+              <button className="footer-btn" onClick={() => setView('privacy')}>Política de Privacidade</button>
+              <button className="footer-btn" onClick={() => setView('terms')}>Termos de Uso</button>
             </div>
           </div>
           <div className="footer-bottom">

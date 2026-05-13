@@ -245,7 +245,7 @@
 .auth-wrapper .check-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 18px; }
 .auth-wrapper .check-input { width: 16px; height: 16px; accent-color: var(--auth-violet); margin-top: 2px; cursor: pointer; flex-shrink: 0; }
 .auth-wrapper .check-label { font-size: .78rem; color: var(--auth-text-mid); line-height: 1.5; }
-.auth-wrapper .check-label a { color: var(--auth-violet); text-decoration: none; }
+.auth-wrapper .check-label a { color: var(--auth-violet); text-decoration: none; cursor: pointer; }
 
 /* CTA button */
 .auth-wrapper .btn-submit {
