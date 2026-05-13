@@ -3,7 +3,7 @@ import { ShieldAlert, Activity, CheckCircle, PackageOpen, TriangleAlert, Crown, 
 import { motion, AnimatePresence } from 'motion/react';
 import { db, auth, handleFirestoreError, OperationType } from './firebase';
 import { collection, doc, addDoc, updateDoc, getDocs, query, orderBy, serverTimestamp, Timestamp, deleteDoc, where } from 'firebase/firestore';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, updatePassword, updateProfile, updateEmail } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, updatePassword, updateProfile, updateEmail, onAuthStateChanged, signOut } from 'firebase/auth';
 
 // ==========================================
 // MÁQUINA DE GROWTH: Configuração de Pixels
@@ -185,13 +185,34 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     if (view === 'sales') {
       params.set('product', 'secador-uv');
+      document.title = 'Secador Inteligente UV - Reserva Premium';
     } else if (view === 'sales-roupas') {
       params.set('product', 'cabide-secador');
+      document.title = 'Secador Expresso Pro - C Store Angola';
+    } else if (view === 'admin' || view === 'pages' || view === 'danger-zone') {
+      params.delete('product');
+      document.title = 'Administração - Valida C';
     } else {
       params.delete('product');
+      document.title = 'Valida C - Plataforma de Vendas';
     }
     const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
     window.history.replaceState({}, '', newUrl);
+  }, [view]);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        if (view === 'admin' || view === 'pages' || view === 'danger-zone') {
+           loadAdminData();
+        }
+      } else {
+        setIsAuthenticated(false);
+      }
+    });
+
+    return () => unsubscribe();
   }, [view]);
 
   useEffect(() => {
@@ -663,7 +684,7 @@ export default function App() {
                         </div>
                         <div className="p-2 border-t border-slate-700">
                           <button 
-                            onClick={() => { setIsDropdownOpen(false); setIsAuthenticated(false); setView('sales'); }} 
+                            onClick={async () => { await signOut(auth); setIsDropdownOpen(false); setIsAuthenticated(false); setView('sales'); }} 
                             className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-950/30 rounded-xl transition-colors text-left font-medium"
                           >
                             <LogOut size={16} /> Sair
