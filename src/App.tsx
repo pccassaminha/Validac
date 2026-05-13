@@ -123,6 +123,7 @@ export default function App() {
   
   // Sales State
   const [modalState, setModalState] = useState<ModalState>('none');
+  const [isCheckoutVisible, setIsCheckoutVisible] = useState(false);
   const [dangerActionContext, setDangerActionContext] = useState<{
     pageName?: string;
     leadCount?: number;
@@ -170,6 +171,29 @@ export default function App() {
     }
     const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
     window.history.replaceState({}, '', newUrl);
+  }, [view]);
+
+  useEffect(() => {
+    if (view !== 'sales' && view !== 'sales-roupas') return;
+
+    const handleScroll = () => {
+      const comprarEl = document.getElementById('comprar');
+      if (comprarEl) {
+        const rect = comprarEl.getBoundingClientRect();
+        // Visible when top is less than viewport height (with a small buffer so it doesn't disappear too early)
+        // and bottom is greater than 0
+        if (rect.top < window.innerHeight - 50 && rect.bottom > 0) {
+          setIsCheckoutVisible(true);
+        } else {
+          setIsCheckoutVisible(false);
+        }
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    
+    return () => window.removeEventListener('scroll', handleScroll);
   }, [view]);
 
   useEffect(() => {
@@ -968,14 +992,22 @@ export default function App() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Quantidade</label>
-                      <div className="flex items-center bg-slate-50 rounded-xl border border-slate-200 shadow-sm overflow-hidden h-[54px] focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 transition-all">
-                        <button type="button" onClick={() => setFormData({...formData, quantity: Math.max(1, formData.quantity - 1)})} className="w-14 h-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition active:bg-slate-300">
-                          <span className="text-2xl font-bold leading-none">-</span>
-                        </button>
-                        <input type="number" readOnly value={formData.quantity} className="w-full h-full text-center font-bold text-lg text-slate-900 bg-transparent focus:outline-none" />
-                        <button type="button" onClick={() => setFormData({...formData, quantity: formData.quantity + 1})} className="w-14 h-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition active:bg-slate-300">
-                          <span className="text-2xl font-bold leading-none">+</span>
-                        </button>
+                      <div className="relative">
+                        <select 
+                          value={formData.quantity}
+                          onChange={e => setFormData({...formData, quantity: parseInt(e.target.value) || 1})}
+                          className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all appearance-none"
+                        >
+                           {Array.from({ length: 10 }).map((_, i) => {
+                             const q = i + 1;
+                             return (
+                               <option key={q} value={q}>
+                                 {q} {q === 1 ? 'unidade' : 'unidades'} - {new Intl.NumberFormat('pt-AO', { style: 'decimal', minimumFractionDigits: 2 }).format(q * 24900)} Kz
+                               </option>
+                             );
+                           })}
+                        </select>
+                        <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                       </div>
                     </div>
                     <button 
@@ -1218,9 +1250,14 @@ export default function App() {
                             onChange={e => setFormData({...formData, quantity: parseInt(e.target.value) || 1})}
                             className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all appearance-none"
                           >
-                             <option value={1}>1 unidade - 34.900 Kz</option>
-                             <option value={2}>2 unidades - 69.800 Kz</option>
-                             <option value={3}>3 unidades - 104.700 Kz</option>
+                             {Array.from({ length: 10 }).map((_, i) => {
+                               const q = i + 1;
+                               return (
+                                 <option key={q} value={q}>
+                                   {q} {q === 1 ? 'unidade' : 'unidades'} - {new Intl.NumberFormat('pt-AO', { style: 'decimal', minimumFractionDigits: 2 }).format(q * 34900)} Kz
+                                 </option>
+                               );
+                             })}
                           </select>
                           <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                         </div>
@@ -2128,7 +2165,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* Sticky Mobile CTA (Only visible on mobile when scrolling) */}
-      {(view === 'sales' || view === 'sales-roupas') && modalState === 'none' && (
+      {(view === 'sales' || view === 'sales-roupas') && modalState === 'none' && !isCheckoutVisible && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 md:hidden z-30">
           <button 
             onClick={() => {
