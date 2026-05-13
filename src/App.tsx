@@ -109,7 +109,13 @@ const IMAGES_ROUPAS = [
 type ModalState = 'none' | 'step1' | 'last-chance' | 'success' | 'rejected' | 'profile' | 'danger-zone' | 'danger-action-page-prompt' | 'danger-action-page-confirm' | 'danger-action-all-prompt' | 'danger-alert';
 
 export default function App() {
-  const [view, setView] = useState<'home' | 'sales' | 'sales-roupas' | 'admin' | 'pages' | 'danger-zone'>('home');
+  const [view, setView] = useState<'home' | 'sales' | 'sales-roupas' | 'admin' | 'pages' | 'danger-zone'>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const product = params.get('product');
+    if (product === 'secador-uv') return 'sales';
+    if (product === 'cabide-secador') return 'sales-roupas';
+    return 'home';
+  });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
   // Profile State
@@ -152,6 +158,19 @@ export default function App() {
   
   // Popup State
   const [activePopup, setActivePopup] = useState<any>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (view === 'sales') {
+      params.set('product', 'secador-uv');
+    } else if (view === 'sales-roupas') {
+      params.set('product', 'cabide-secador');
+    } else {
+      params.delete('product');
+    }
+    const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+    window.history.replaceState({}, '', newUrl);
+  }, [view]);
 
   useEffect(() => {
     if (view === 'sales' || view === 'sales-roupas') {
