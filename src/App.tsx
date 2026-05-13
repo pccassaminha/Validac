@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldAlert, Activity, CheckCircle, PackageOpen, TriangleAlert, Crown, XCircle, ArrowLeft, Lock, Loader2, Info, Star, Eye, EyeOff, Copy, MessageCircle, Search, Filter, Download, User, LayoutDashboard, Settings, ExternalLink, LogOut, ChevronDown, Store, FileText, AlertOctagon, Trash2 } from 'lucide-react';
+import { ShieldAlert, Activity, CheckCircle, PackageOpen, TriangleAlert, Crown, XCircle, ArrowLeft, Lock, Loader2, Info, Star, Eye, EyeOff, Copy, MessageCircle, Search, Filter, Download, User, LayoutDashboard, Settings, ExternalLink, LogOut, ChevronDown, Store, FileText, AlertOctagon, Trash2, Timer } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db, auth, handleFirestoreError, OperationType } from './firebase';
 import { collection, doc, addDoc, updateDoc, getDocs, query, orderBy, serverTimestamp, Timestamp, deleteDoc, where } from 'firebase/firestore';
@@ -124,6 +124,7 @@ export default function App() {
   // Sales State
   const [modalState, setModalState] = useState<ModalState>('none');
   const [isCheckoutVisible, setIsCheckoutVisible] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
   const [dangerActionContext, setDangerActionContext] = useState<{
     pageName?: string;
     leadCount?: number;
@@ -159,6 +160,26 @@ export default function App() {
   
   // Popup State
   const [activePopup, setActivePopup] = useState<any>(null);
+
+  useEffect(() => {
+    if (view !== 'sales' && view !== 'sales-roupas') return;
+    
+    setTimeLeft(600); // 10 minutes
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 0) return 0;
+        return prev - 1;
+      });
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [view]);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -580,7 +601,7 @@ export default function App() {
             ) : (
               <>
                 <img 
-                  src="https://i.postimg.cc/5NJLWTKg/c-store-c.png" 
+                  src="https://i.postimg.cc/3wsKF20v/Chat-GPT-Image-13-de-mai-de-2026-12-40-58.png"
                   alt="Logotipo C Store Angola" 
                   className="h-10 w-auto object-contain rounded"
                 />
@@ -961,7 +982,16 @@ export default function App() {
                 <div className="w-full md:w-1/2">
                   <div className="mb-6">
                     <h2 className="text-2xl font-bold text-slate-900 mb-1">Reserve sem compromisso</h2>
-                    <p className="text-slate-500 text-sm">Garantimos o seu envio prioritário.</p>
+                    <p className="text-slate-500 text-sm mb-4">Garantimos o seu envio prioritário.</p>
+                    <div className="bg-red-50 text-red-700 border border-red-200 p-3 rounded-xl flex items-center justify-between font-bold shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <Timer className="animate-pulse" size={20} />
+                        Oferta expira em:
+                      </div>
+                      <span className="text-xl font-black bg-white px-3 py-1 rounded-md shadow-sm border border-red-100 tabular-nums">
+                        {formatTime(timeLeft)}
+                      </span>
+                    </div>
                   </div>
 
                   <form onSubmit={handleFormSubmit} className="space-y-4">
@@ -1030,7 +1060,7 @@ export default function App() {
         <footer className="bg-slate-900 text-slate-400 py-12 px-4 text-center mt-auto pb-28 md:pb-12 shadow-[inset_0_10px_30px_rgba(0,0,0,0.5)]">
           <div className="max-w-4xl mx-auto flex flex-col items-center">
             <img 
-              src="https://i.postimg.cc/5NJLWTKg/c-store-c.png" 
+              src="https://i.postimg.cc/3wsKF20v/Chat-GPT-Image-13-de-mai-de-2026-12-40-58.png" 
               alt="Logotipo C Store Angola" 
               className="h-10 w-auto object-contain rounded opacity-80 hover:opacity-100 transition-opacity mb-5"
             />
@@ -1216,6 +1246,17 @@ export default function App() {
                   </div>
 
                   <div className="md:w-1/2">
+                    <div className="mb-6">
+                      <div className="bg-red-50 text-red-700 border border-red-200 p-3 rounded-xl flex items-center justify-between font-bold shadow-sm">
+                        <div className="flex items-center gap-2">
+                          <Timer className="animate-pulse" size={20} />
+                          Oferta expira em:
+                        </div>
+                        <span className="text-xl font-black bg-white px-3 py-1 rounded-md shadow-sm border border-red-100 tabular-nums">
+                          {formatTime(timeLeft)}
+                        </span>
+                      </div>
+                    </div>
                     <form onSubmit={handleFormSubmit} className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="name-input">Nome Completo</label>
@@ -1284,7 +1325,7 @@ export default function App() {
         <footer className="bg-slate-900 text-slate-400 py-12 px-4 text-center mt-auto pb-28 md:pb-12 shadow-[inset_0_10px_30px_rgba(0,0,0,0.5)]">
           <div className="max-w-4xl mx-auto flex flex-col items-center">
             <img 
-              src="https://i.postimg.cc/5NJLWTKg/c-store-c.png" 
+              src="https://i.postimg.cc/3wsKF20v/Chat-GPT-Image-13-de-mai-de-2026-12-40-58.png" 
               alt="Logotipo C Store Angola" 
               className="h-10 w-auto object-contain rounded opacity-80 hover:opacity-100 transition-opacity mb-5"
             />
