@@ -1037,8 +1037,27 @@ export default function App() {
                 O primeiro Secador Expresso Portátil (Edition Pro) disponível em Angola.
               </h1>
               <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto font-medium leading-relaxed">
-                Chega de depender do sol ou espalhar roupa pela casa. Conheça o Secador Expresso Portátil (Edition Pro) — a solução prática para secar roupas rapidamente, mesmo em apartamentos ou dias sem sol.
+                Chega de depender do sol ou espalhar roupa pela casa. A solução prática para secar as suas peças rapidamente, mesmo em apartamentos ou dias de chuva.
               </p>
+
+              {/* Gallery Wrapper */}
+              <div className="bg-white p-3 rounded-3xl shadow-sm border border-slate-200 inline-block w-full mb-12">
+                <div className="relative aspect-square md:aspect-video rounded-2xl overflow-hidden bg-slate-100 w-full mb-4 group cursor-pointer" onClick={() => window.open(IMAGES_ROUPAS[activeImage], '_blank')}>
+                  <img src={IMAGES_ROUPAS[activeImage]} alt="Secador Expresso Portátil (Edition Pro)" className="w-full h-full object-cover object-center" />
+                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
+                </div>
+                <div className="flex justify-center gap-2 md:gap-4 overflow-x-auto pb-2 px-2 snap-x">
+                  {IMAGES_ROUPAS.map((img, i) => (
+                    <button 
+                      key={i} 
+                      onClick={() => setActiveImage(i)}
+                      className={`w-16 h-16 md:w-20 md:h-20 shrink-0 snap-center rounded-xl overflow-hidden border-2 transition-all ${activeImage === i ? 'border-sky-500 shadow-md scale-105' : 'border-transparent opacity-70 hover:opacity-100'}`}
+                    >
+                      <img src={img} alt={`Thumbnail ${i}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </div>
               
               <ul className="text-left max-w-xl mx-auto space-y-3 mb-12 text-slate-700 font-medium text-lg">
                 <li className="flex items-center gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100"><CheckCircle className="text-emerald-500 shrink-0" size={24} /> Seca roupas em poucas horas</li>
@@ -1064,25 +1083,6 @@ export default function App() {
                       <h3 className="font-bold mb-2 text-slate-800">Ideal para Apartamentos</h3>
                       <p className="text-sm text-slate-500 leading-relaxed">Sem quintal? Esqueça a sala cheia de estendais gigantes. O design portátil e dobrável seca a roupa discretamente num canto do quarto.</p>
                   </div>
-              </div>
-
-              {/* Gallery Wrapper */}
-              <div className="bg-white p-3 rounded-3xl shadow-sm border border-slate-200 inline-block w-full">
-                <div className="relative aspect-square md:aspect-video rounded-2xl overflow-hidden bg-slate-100 w-full mb-4 group cursor-pointer" onClick={() => window.open(IMAGES_ROUPAS[activeImage], '_blank')}>
-                  <img src={IMAGES_ROUPAS[activeImage]} alt="Secador Expresso Portátil (Edition Pro)" className="w-full h-full object-cover object-center" />
-                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
-                </div>
-                <div className="flex justify-center gap-2 md:gap-4 overflow-x-auto pb-2 px-2 snap-x">
-                  {IMAGES_ROUPAS.map((img, i) => (
-                    <button 
-                      key={i} 
-                      onClick={() => setActiveImage(i)}
-                      className={`w-16 h-16 md:w-20 md:h-20 shrink-0 snap-center rounded-xl overflow-hidden border-2 transition-all ${activeImage === i ? 'border-sky-500 shadow-md scale-105' : 'border-transparent opacity-70 hover:opacity-100'}`}
-                    >
-                      <img src={img} alt={`Thumbnail ${i}`} className="w-full h-full object-cover" />
-                    </button>
-                  ))}
-                </div>
               </div>
               
               {/* Product Specifications */}
@@ -2128,7 +2128,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* Sticky Mobile CTA (Only visible on mobile when scrolling) */}
-      {view === 'sales' && modalState === 'none' && (
+      {(view === 'sales' || view === 'sales-roupas') && modalState === 'none' && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 md:hidden z-30">
           <button 
             onClick={() => {
