@@ -18,10 +18,13 @@ service cloud.firestore {
     function isSignedIn() { return request.auth != null; }
     
     function isAdmin() {
-      // Check if user is signed in and has the specific admin email.
-      // Note: email_verified is commented out here because we automatically create 
-      // the admin user on the frontend and it won't be verified by default.
-      return isSignedIn() && (request.auth.token.email.lower() == "grupocassaminha@gmail.com" || request.auth.token.email.lower() == "grupocasssaminha@gmail.com" || request.auth.token.email.lower() == "exportacoes.extras@gmail.com");
+      // Check if user is signed in and has the specific admin email or is an approved user in the database
+      return isSignedIn() && (
+        request.auth.token.email.lower() == "grupocassaminha@gmail.com" || 
+        request.auth.token.email.lower() == "grupocasssaminha@gmail.com" || 
+        request.auth.token.email.lower() == "exportacoes.extras@gmail.com" ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == "approved")
+      );
     }
 
     // Validation Blueprint for Lead
@@ -54,6 +57,21 @@ service cloud.firestore {
         && data.createdAt == existing().createdAt;
     }
 
+    function isValidUser(data) {
+      return data.keys().hasAll(['name', 'email', 'status', 'createdAt'])
+        && data.name is string && data.name.size() <= 100
+        && data.email is string && data.email.size() > 0 && data.email.size() <= 100
+        && data.status is string && data.status in ['pending', 'approved', 'blocked', 'expired']
+        && data.createdAt == request.time;
+    }
+
+    function isValidUserUpdate(data) {
+      return data.name is string && data.name.size() <= 100
+        && data.email is string && data.email.size() > 0 && data.email.size() <= 100
+        && data.status is string && data.status in ['pending', 'approved', 'blocked', 'expired']
+        && data.createdAt == existing().createdAt;
+    }
+
     // Leads Collection
     match /leads/{leadId} {
       // Only Admins can list and get the leads
@@ -74,5 +92,21 @@ service cloud.firestore {
       allow delete: if isAdmin() && isValidId(leadId);
     }
 
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      
+      // Users can only create their own document on registering
+      allow create: if isSignedIn() && ((request.auth.uid == userId && isValidUser(incoming())) || (isAdmin() && isValidUser(incoming())));
+
+      // Only admins can update the user details (or the user themselves)
+      allow update: if isSignedIn() && (
+        (isAdmin() && isValidUserUpdate(incoming()) && (incoming().diff(existing()).affectedKeys().hasOnly(['status']) || incoming().diff(existing()).affectedKeys().hasOnly([]))) ||
+        (request.auth.uid == userId && isValidUserUpdate(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'email']))
+      );
+
+      allow list: if isAdmin();
+      allow delete: if isAdmin();
+    }
   }
 }

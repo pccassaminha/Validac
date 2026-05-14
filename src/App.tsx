@@ -4,10 +4,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { db, auth, handleFirestoreError, OperationType } from './firebase';
 import { collection, doc, addDoc, updateDoc, getDocs, getDoc, query, orderBy, serverTimestamp, Timestamp, deleteDoc, where, setDoc } from 'firebase/firestore';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, updatePassword, updateProfile, updateEmail, onAuthStateChanged, signOut } from 'firebase/auth';
-import './home.css';
 import AuthView from './AuthView';
-import PaymentView from './PaymentView';
-import SettingsView from './SettingsView';
+import UsersView from './UsersView';
 import HomeView from './HomeView';
 
 // ==========================================
@@ -114,7 +112,7 @@ const IMAGES_ROUPAS = [
 type ModalState = 'none' | 'step1' | 'last-chance' | 'success' | 'rejected' | 'profile' | 'danger-zone' | 'danger-action-page-prompt' | 'danger-action-page-confirm' | 'danger-action-all-prompt' | 'danger-alert' | 'delete-lead-confirm';
 
 export default function App() {
-  const [view, setView] = useState<'home' | 'sales' | 'sales-roupas' | 'admin' | 'pages' | 'danger-zone' | 'ai-generator' | 'settings' | 'prompt-gallery' | 'privacy' | 'terms'>(() => {
+  const [view, setView] = useState<string>(() => {
     const params = new URLSearchParams(window.location.search);
     const product = params.get('product');
     if (product === 'secador-uv') return 'sales';
@@ -122,22 +120,6 @@ export default function App() {
     return 'home';
   });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  
-  // AI Generator State
-  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([
-    { role: 'assistant', content: 'Olá! Sou a IA da Valida C. Descreve a landing page que desejas criar hoje, ou escolhe um dos nossos prompts na Galeria de Prompts.'}
-  ]);
-  const [chatInput, setChatInput] = useState('');
-  const [attachedFiles, setAttachedFiles] = useState<{name: string, type: string}[]>([]);
-  const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
-  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-  const [projectName, setProjectName] = useState('Nova Página IA');
-  const [generatedCode, setGeneratedCode] = useState('// O código processado pela IA aparecerá aqui...\n\nexport default function GeneratedPage() {\n  return (\n    <div className="flex h-full items-center justify-center bg-slate-50 text-slate-400">\n      <p>A aguardar a geração da página...</p>\n    </div>\n  );\n}');
-  const [selectedApi, setSelectedApi] = useState('gemini_free');
-  const [aiKeys, setAiKeys] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('valida_c_ai_keys') || '{"openai": "", "gemini": "", "anthropic": ""}'); }
-    catch { return {openai: '', gemini: '', anthropic: ''}; }
-  });
   
   // Profile State
   const [profileFormData, setProfileFormData] = useState({ name: '', email: '', password: '' });
@@ -213,7 +195,7 @@ export default function App() {
     } else if (view === 'sales-roupas') {
       params.set('product', 'cabide-secador');
       document.title = 'Secador Expresso Pro - C Store Angola';
-    } else if (view === 'admin' || view === 'pages' || view === 'danger-zone' || view === 'ai-generator' || view === 'settings' || view === 'prompt-gallery') {
+    } else if (view === 'admin' || view === 'pages' || view === 'danger-zone' || view === 'users') {
       params.delete('product');
       document.title = 'Administração - Valida C';
     } else {
@@ -284,7 +266,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated && (view === 'admin' || view === 'pages' || view === 'danger-zone' || view === 'ai-generator' || view === 'settings' || view === 'prompt-gallery')) {
+    if (isAuthenticated && (view === 'admin' || view === 'pages' || view === 'danger-zone' || view === 'users')) {
        loadAdminData();
     }
   }, [view, isAuthenticated]);
@@ -695,10 +677,20 @@ export default function App() {
     ...adminData.map(l => l.produto).filter(Boolean)
   ]));
 
-  const isProtectedView = ['admin', 'pages', 'danger-zone', 'ai-generator', 'settings', 'prompt-gallery'].includes(view);
+  const isProtectedView = ['admin', 'pages', 'danger-zone', 'ai-generator', 'settings', 'prompt-gallery', 'users'].includes(view);
 
-  if (view === 'auth' || (isProtectedView && !isAuthenticated && userStatus !== undefined)) {
-    return <AuthView setView={setView} onLoginSuccess={() => setView('pages')} />;
+  if (view === 'auth' || view === 'auth-register' || (isProtectedView && !isAuthenticated && userStatus !== undefined)) {
+     if (isAuthenticated && userStatus !== undefined) {
+        setView('pages');
+        return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full"></div></div>;
+     }
+     if (!isAuthenticated) {
+        return <AuthView setView={setView} onLoginSuccess={() => setView('pages')} initialTab={view === 'auth-register' ? 'register' : 'login'} />;
+     }
+  }
+
+  if (view === 'home') {
+     return <HomeView setView={setView} isAuthenticated={isAuthenticated} currentUser={auth.currentUser} userName={userName} />;
   }
 
   if (isProtectedView && isAuthenticated && userStatus === null) {
@@ -706,18 +698,31 @@ export default function App() {
   }
 
   if (isProtectedView && isAuthenticated && (userStatus === 'blocked' || userStatus === 'expired' || userStatus === 'pending')) {
-    return <PaymentView reason={userStatus} onLogout={() => { setView('home'); auth.signOut(); }} />;
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
+         <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 max-w-md w-full">
+           <h1 className="text-2xl font-bold text-slate-800 mb-2">Acesso Restrito</h1>
+           <p className="text-slate-600 mb-6">A sua conta encontra-se atualmente inativa ou bloqueada. Por favor, contacte o administrador (Grupo Cassaminha) para libertar o seu acesso.</p>
+           <button 
+             onClick={() => { setView('auth'); auth.signOut(); }} 
+             className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 w-full"
+           >
+             Sair da conta
+           </button>
+         </div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-indigo-500 selection:text-white">
       
-      {/* Navigation handled by HomeView if view === 'home' */}
-      {view !== 'home' && (
+      {/* Navigation */}
+      {isAuthenticated && view !== 'home' && (
         <nav className="bg-slate-900 text-white sticky top-0 z-40 shadow-xl border-b border-slate-800">
           <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 h-16 flex justify-between items-center">
             <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView('home')}>
-              {view === 'admin' || view === 'pages' || view === 'danger-zone' || view === 'ai-generator' || view === 'settings' || view === 'prompt-gallery' ? (
+              {view === 'admin' || view === 'pages' || view === 'danger-zone' || view === 'users' ? (
                 <>
                   <img 
                     src="https://i.postimg.cc/qqtQqXb4/C-grupo.png" 
@@ -782,24 +787,14 @@ export default function App() {
                           >
                             <LayoutDashboard size={16} /> Gerenc. Páginas
                           </button>
-                          <button 
-                            onClick={() => { setIsDropdownOpen(false); setView('ai-generator'); }} 
-                            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-xl transition-colors text-left"
-                          >
-                            <Star size={16} /> Estúdio de IA
-                          </button>
-                          <button 
-                            onClick={() => { setIsDropdownOpen(false); setView('prompt-gallery'); }} 
-                            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-xl transition-colors text-left"
-                          >
-                            <FileText size={16} /> Galeria de Prompts
-                          </button>
-                          <button 
-                            onClick={() => { setIsDropdownOpen(false); setView('settings'); }} 
-                            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-xl transition-colors text-left"
-                          >
-                            <Settings size={16} /> Configurações Gerais
-                          </button>
+                          {(auth.currentUser?.email === 'exportacoes.extras@gmail.com' || auth.currentUser?.email?.toLowerCase() === 'grupocassaminha@gmail.com') && (
+                            <button 
+                              onClick={() => { setIsDropdownOpen(false); setView('users'); }} 
+                              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-xl transition-colors text-left"
+                            >
+                              <User size={16} /> Gestão de Utilizadores
+                            </button>
+                          )}
                         </div>
                         <div className="p-2 border-t border-slate-700">
                           <button 
@@ -827,13 +822,6 @@ export default function App() {
         </div>
       </nav>
       )}
-
-      {/* NEW HOME VIEW */}
-      {view === 'home' && (
-        <HomeView setView={setView} isAuthenticated={isAuthenticated} currentUser={auth.currentUser} userName={userName} />
-      )}
-
-      {/* Old Home Footer removed, handled by new HomeView */}
 
       {/* SALES VIEW */}
       {view === 'sales' && (
@@ -1613,14 +1601,6 @@ export default function App() {
               <h1 className="text-3xl font-bold text-slate-900">Gerência de Páginas</h1>
               <p className="text-slate-500 mt-1">Gira as suas landing pages, acesse links e veja leads rapidamente.</p>
             </div>
-            <div>
-              <button 
-                onClick={() => setView('ai-generator')} 
-                className="flex items-center gap-2 text-sm bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold py-2.5 px-5 rounded-xl shadow-md cursor-pointer transition-all hover:scale-105 active:scale-95"
-              >
-                <Star size={16} /> Configurações de IA
-              </button>
-            </div>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -1659,16 +1639,6 @@ export default function App() {
                       title="Copiar Link da Página"
                     >
                       <Copy size={16} />
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setProjectName('Secador Inteligente UV');
-                        setView('ai-generator');
-                      }}
-                      className="text-sm bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 px-3 py-2 rounded-xl font-bold transition flex items-center justify-center shrink-0 w-[42px] shadow-sm"
-                      title="Editar Projeto com IA"
-                    >
-                      <Edit size={16} />
                     </button>
                  </div>
               </div>
@@ -1710,357 +1680,16 @@ export default function App() {
                     >
                       <Copy size={16} />
                     </button>
-                    <button 
-                      onClick={() => {
-                        setProjectName('Cabide Secador Expresso');
-                        setView('ai-generator');
-                      }}
-                      className="text-sm bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 px-3 py-2 rounded-xl font-bold transition flex items-center justify-center shrink-0 w-[42px] shadow-sm"
-                      title="Editar Projeto com IA"
-                    >
-                      <Edit size={16} />
-                    </button>
                  </div>
               </div>
             </div>
-
-            {/* Adicionar Nova Página */}
-            <div 
-              onClick={() => {
-                setView('ai-generator');
-              }}
-              className="bg-slate-50 rounded-2xl border-2 border-dashed border-indigo-300 flex flex-col items-center justify-center p-8 text-center min-h-[300px] hover:bg-slate-100 hover:border-indigo-400 transition cursor-pointer group"
-            >
-               <div className="w-12 h-12 bg-indigo-100 text-indigo-500 group-hover:bg-indigo-600 group-hover:text-white transition-colors rounded-full flex items-center justify-center mb-3 shadow-sm">
-                 <span className="text-2xl leading-none -mt-1">+</span>
-               </div>
-               <h3 className="font-bold text-slate-700 mb-1 group-hover:text-indigo-700 transition">Solicitar Nova Página</h3>
-               <p className="text-sm text-slate-500 px-4">Peça ao assistente para programar novas páginas com 100% de integração e alta conversão.</p>
-            </div>
           </div>
         </main>
       )}
 
-      {/* SETTINGS VIEW */}
-      {view === 'settings' && isAuthenticated && (
-         <SettingsView onBack={() => setView('pages')} aiKeys={aiKeys} setAiKeys={setAiKeys} />
-      )}
-
-      {/* PROMPT GALLERY VIEW */}
-      {view === 'prompt-gallery' && isAuthenticated && (
-        <main className="w-full max-w-5xl mx-auto px-4 py-10 flex-grow">
-          <div className="mb-8 block">
-            <button 
-              onClick={() => setView('pages')} 
-              className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-indigo-600 font-medium mb-4 transition-colors"
-            >
-              <ArrowLeft size={16} /> Voltar
-            </button>
-            <h1 className="text-3xl font-bold text-slate-900">Galeria de Prompts</h1>
-            <p className="text-slate-500 mt-2 text-lg">Use as nossas instruções moldadas e testadas para gerar a landing page perfeita usando IA.</p>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
-            <div className="p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-              <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                <FileText size={18} className="text-purple-600" /> Prompt Especialista Alta Conversão (Template)
-              </h3>
-              <button 
-                onClick={() => {
-                  const promptText = document.getElementById('prompt-text')?.innerText || '';
-                  navigator.clipboard.writeText(promptText);
-                  alert('Prompt copiado com sucesso. Vá para o Estúdio IA e inicie uma página!');
-                  setView('ai-generator');
-                }}
-                className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
-              >
-                <Copy size={14} /> Usar Prompt
-              </button>
-            </div>
-            <div className="p-5 bg-slate-50 flex-grow relative">
-              <div className="absolute top-4 right-4 animate-pulse opacity-50 pointer-events-none">
-                <Star size={24} className="text-amber-400" />
-              </div>
-              <pre id="prompt-text" className="w-full h-[500px] bg-slate-900 border border-slate-800 text-emerald-400 font-mono text-sm leading-relaxed rounded-xl p-5 overflow-y-auto whitespace-pre-wrap selection:bg-emerald-500/30 selection:text-emerald-300">
-{`Aja como um Expert em Landing Pages e Engenheiro Frontend focado em conversão.
-
-Por favor, crie uma landing page de alta conversão usando React e Tailwind CSS. 
-O tema do produto é [INSERIR NOME DO PRODUTO AQUI - ex: Secador Inteligente].
-
-A página deve conter as seguintes secções:
-1. Header Persuasivo com escassez (ex: "Aviso: Últimas unidades em stock").
-2. Hero Section impactante:
-   - Título principal focado no benefício e na transformação.
-   - Subtítulo explicativo.
-   - Botão de Call-To-Action (CTA) com scroll suave para o formulário.
-   - Área para imagem principal do produto ou mockup.
-3. Seção de Avaliações / Prova Social:
-   - Apresente 3 a 4 depoimentos simulados de clientes angolanos (ex: "Paula, Luanda", "João, Benguela") com estrelas.
-4. Benefícios do Produto (Feature/Benefit):
-   - Apresente pelo menos 4 vantagens claras do uso do produto, usando ícones.
-5. Formulário de Captura / Pedido Integrado:
-   - Título focado em "Faça já a sua Reserva".
-   - Campos: Nome Completo, Número de Telefone/WhatsApp, Endereço de Entrega (Província/Município).
-   - Aviso de que o pagamento é feito apenas no ato de entrega (Pagamento na Entrega).
-   - Botão final de compra que engatilha envio dos dados.
-6. FAQ e Garanta:
-   - Secção de Perguntas Frequentes.
-   - Secção de Garantia de Satisfação (ex: "Garantia de 7 dias").
-
-O formulário deve salvar os dados ("leads") numa colecção Firestore chamada "leads" contendo as seguintes chaves do objecto:
-- name (string)
-- phone (string)
-- address (string)
-- product (string - nome do produto fixo)
-- status (string "Pendente")
-- createdAt (timestamp do servidor temporal)
-
-Não te esqueças de incluir pequenos gatilhos de atenção, como um temporizador (ex: "A oferta expira em 10 minutos") e pequenos pop-ups discretos do tipo "Alguém em Luanda acabou de comprar!". Toda a cópia deve estar em português de Angola.
-
-O código da UI deve ser num único ficheiro App.tsx suportando React, usando \`lucide-react\` para ícones, com uma componente funcional que tenha gestão do estado do formulário e animações suaves caso necessário.`}
-              </pre>
-              <div className="mt-4 p-4 bg-indigo-50 text-indigo-800 rounded-xl text-sm border border-indigo-100 flex gap-3">
-                <Info size={20} className="shrink-0 mt-0.5" />
-                <div>
-                  <strong>Como usar este prompt:</strong> Pode editá-lo e copiá-lo para que a IA do Estúdio de IA gere uma estrutura perfeita.
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
-      )}
-
-      {/* AI STUDIO HUB VIEW */}
-      {view === 'ai-generator' && isAuthenticated && (
-        <main className="w-full flex-grow p-4 flex gap-4 h-[calc(100vh-4rem)] max-w-[1920px] mx-auto">
-          {/* Chat Panel */}
-          <div className="w-[350px] lg:w-[400px] h-full bg-white rounded-2xl shadow-xl border border-slate-200 flex flex-col overflow-hidden shrink-0">
-            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h2 className="font-bold flex items-center gap-2 text-indigo-700">
-                <Star size={18} /> IA Builder
-              </h2>
-              <div className="relative">
-                <select 
-                  value={selectedApi}
-                  onChange={(e) => setSelectedApi(e.target.value)}
-                  className="appearance-none bg-slate-200 border-none text-xs font-semibold py-1.5 pl-3 pr-8 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                   <option value="gemini_free">Gemini (Free)</option>
-                   <option value="gemini">Gemini Pro</option>
-                   <option value="openai">GPT-4o</option>
-                   <option value="anthropic">Claude 3.5</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
-                   <ChevronDown size={12} />
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-indigo-50/50 border-b border-indigo-100 px-4 py-2 flex items-center gap-2">
-              <FolderOpen size={14} className="text-indigo-400" />
-              <div className="flex-1 flex gap-2">
-                <input 
-                  type="text"
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                  placeholder="Nome do Projeto..."
-                  className="bg-transparent border-none text-xs text-indigo-900 font-bold flex-1 min-w-0 p-0 py-1 focus:ring-0 focus:outline-none placeholder-indigo-300"
-                />
-                <div className="relative">
-                   <select 
-                     title="Carregar Projeto Salvo"
-                     className="appearance-none bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-none text-xs font-semibold py-1 pl-2 pr-6 rounded-md cursor-pointer focus:ring-0 focus:outline-none w-24"
-                     onChange={(e) => {
-                       if (e.target.value !== 'new') {
-                         setProjectName(e.target.options[e.target.selectedIndex].text);
-                         setTimeout(() => alert(`Projeto "${e.target.options[e.target.selectedIndex].text}" carregado com sucesso para edição!`), 300);
-                         setChatMessages([{role: 'assistant', content: `Baseado no projeto "${e.target.options[e.target.selectedIndex].text}", o que gostarias de alterar ou melhorar na página de vendas?`}]);
-                       }
-                       e.target.value = ''; // reset selection
-                     }}
-                     value=""
-                   >
-                     <option value="" disabled>Projetos</option>
-                     <option value="page1">Secador Inteligente UV</option>
-                     <option value="page2">Cabide Secador Expresso</option>
-                   </select>
-                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-indigo-500">
-                      <ChevronDown size={12} />
-                   </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50">
-               {chatMessages.map((msg, index) => (
-                 <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`p-3 max-w-[90%] text-sm rounded-2xl shadow-sm ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-700 rounded-bl-none'}`}>
-                       {msg.content}
-                    </div>
-                 </div>
-               ))}
-            </div>
-            
-            <div className="p-3 border-t border-slate-100 bg-white">
-              <div className="flex justify-between items-center mb-2 px-1">
-                 <span className="text-xs text-slate-400 font-medium ml-1">
-                    {selectedApi === 'gemini_free' ? 'Créditos: Ilimitado (Básico)' : 
-                     (!aiKeys[selectedApi.replace('_pro', '') as keyof typeof aiKeys] ? <span className="text-red-400">Chave API em falta</span> : <span className="text-emerald-500">API Key Conectada</span>)}
-                 </span>
-                 <button onClick={() => setView('prompt-gallery')} className="text-xs flex items-center gap-1 text-indigo-500 hover:text-indigo-700 transition font-medium">
-                   <FileText size={12} /> Galeria Prompts
-                 </button>
-              </div>
-              <form 
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (!chatInput.trim()) return;
-                  const newChat = [...chatMessages, {role: 'user' as const, content: chatInput}];
-                  setChatMessages(newChat);
-                  setChatInput('');
-                  
-                  // Simulate AI thinking and generating code
-                  setTimeout(() => {
-                     setChatMessages([...newChat, {role: 'assistant', content: "Estou a preparar a geração da tua nova página baseada nessa descrição. Em breve a pré-visualização e os códigos estarão disponíveis à direita!"}]);
-                     setGeneratedCode('// Nova landing page gerada!\n\nexport default function NovaPagina() {\n  return (\n    <div className="p-8 max-w-4xl mx-auto text-center font-sans">\n       <h1 className="text-4xl font-bold mb-4 text-indigo-600">Página Gerada com Sucesso</h1>\n       <p className="text-lg text-slate-600 mb-8">Esta é uma simulação da página que a IA construiria. Como estamos em modo simulação, o código de interface deve aparecer aqui após a integração com a IA em Backend.</p>\n       <button className="bg-emerald-500 text-white px-6 py-3 rounded-full font-bold shadow-lg">Faça o seu pedido</button>\n    </div>\n  );\n}');
-                  }, 1500);
-                }}
-                className="relative"
-              >
-                {attachedFiles.length > 0 && (
-                  <div className="flex gap-2 flex-wrap mb-2">
-                    {attachedFiles.map((file, idx) => (
-                      <div key={idx} className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-1 rounded-md text-xs font-medium">
-                        <FolderOpen size={12} />
-                        <span className="truncate max-w-[120px]">{file.name}</span>
-                        <button 
-                          type="button" 
-                          onClick={() => setAttachedFiles(files => files.filter((_, i) => i !== idx))}
-                          className="hover:text-red-500 ml-1"
-                        >
-                          <XCircle size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="relative flex items-end gap-2 bg-slate-100 rounded-xl border border-transparent focus-within:border-indigo-400 focus-within:ring focus-within:ring-indigo-200 focus-within:ring-opacity-50 p-1">
-                  <div className="relative">
-                    <input 
-                      type="file" 
-                      id="ai-file-upload" 
-                      className="hidden" 
-                      multiple 
-                      onChange={(e) => {
-                        if (e.target.files) {
-                          const newFiles = (Array.from(e.target.files) as File[]).map(f => ({name: f.name, type: f.type || 'unknown'}));
-                          setAttachedFiles(prev => [...prev, ...newFiles]);
-                        }
-                      }}
-                    />
-                    <label 
-                      htmlFor="ai-file-upload" 
-                      className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg cursor-pointer transition-colors block"
-                      title="Anexar arquivos (HTML, JSON, Imagens)"
-                    >
-                      <Paperclip size={18} />
-                    </label>
-                  </div>
-                  <textarea 
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    placeholder="Escreve o teu prompt aqui..."
-                    className="flex-1 text-sm resize-none bg-transparent border-none focus:ring-0 min-h-[44px] max-h-[120px] py-3 px-1"
-                    rows={1}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        document.getElementById('send-prompt-btn')?.click();
-                      }
-                    }}
-                  />
-                  <button 
-                    id="send-prompt-btn"
-                    type="submit"
-                    className="p-2.5 mb-0.5 mr-0.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-sm transition self-end shrink-0"
-                  >
-                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-          
-          {/* Workspace / Preview Panel */}
-          <div className="flex-1 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden flex flex-col">
-             <div className="border-b border-slate-200 px-4 h-[52px] flex items-center justify-between bg-slate-50 gap-4">
-                <div className="flex items-center h-full gap-4">
-                  <button 
-                    onClick={() => setActiveTab('preview')}
-                    className={`h-full px-4 text-sm font-bold border-b-2 flex items-center gap-2 transition-colors ${activeTab === 'preview' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
-                  >
-                    <Eye size={16} /> Preview (Simulado)
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('code')}
-                    className={`h-full px-4 text-sm font-bold border-b-2 flex items-center gap-2 transition-colors ${activeTab === 'code' ? 'border-pink-600 text-pink-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
-                  >
-                    <FileText size={16} /> App.tsx Code
-                  </button>
-                </div>
-                <div className="flex items-center gap-3">
-                  {activeTab === 'preview' && (
-                    <div className="flex items-center bg-slate-200 rounded-lg p-0.5 shadow-inner">
-                       <button title="Desktop" onClick={() => setPreviewDevice('desktop')} className={`p-1.5 rounded-md transition-all ${previewDevice === 'desktop' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}><Monitor size={16} /></button>
-                       <button title="Tablet" onClick={() => setPreviewDevice('tablet')} className={`p-1.5 rounded-md transition-all ${previewDevice === 'tablet' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}><Tablet size={16} /></button>
-                       <button title="Mobile" onClick={() => setPreviewDevice('mobile')} className={`p-1.5 rounded-md transition-all ${previewDevice === 'mobile' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}><Smartphone size={16} /></button>
-                    </div>
-                  )}
-                  <button 
-                    onClick={() => {
-                      alert(`Projeto "${projectName}" publicado com sucesso! Pode aceder-lhe nas Páginas Publicadas.`);
-                      setView('pages');
-                    }}
-                    className="flex items-center gap-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm transition"
-                  >
-                     <Upload size={14} /> Publicar
-                  </button>
-                </div>
-             </div>
-             
-             <div className="flex-1 relative overflow-auto bg-slate-100">
-                {activeTab === 'code' ? (
-                   <pre className="p-6 font-mono text-sm leading-relaxed text-slate-800 h-full">
-                     {generatedCode}
-                   </pre>
-                ) : (
-                   <div className="w-full h-full p-6 flex flex-col items-center">
-                      <div className={`w-full ${previewDevice === 'mobile' ? 'max-w-[400px]' : previewDevice === 'tablet' ? 'max-w-[768px]' : 'max-w-[1280px]'} transition-all duration-500 bg-white shadow-2xl border-[8px] border-slate-800 min-h-[600px] flex-shrink-0 relative \${previewDevice === 'desktop' ? 'rounded-xl mt-4' : 'rounded-[2rem] max-h-[800px]'}`}>
-                         {previewDevice !== 'desktop' && (
-                            <div className="absolute top-0 inset-x-0 h-6 bg-slate-800 rounded-b-xl max-w-[150px] mx-auto z-10"></div>
-                         )}
-                         {/* Simulacao renderizada com base no que tiver no input de texto simulado - iframe simulado */}
-                         <div className="w-full h-full overflow-y-auto">
-                            {generatedCode.includes('Nova landing page gerada') ? (
-                               <div className="p-8 text-center font-sans mt-10">
-                                   <div className="bg-indigo-100 text-indigo-700 px-3 py-1 text-xs font-bold rounded-full mb-4 inline-block">NOVIDADE</div>
-                                   <h1 className="text-2xl font-black mb-4 text-slate-800 leading-tight">Secador Inteligente UV Profissional</h1>
-                                   <img src="https://i.postimg.cc/8CB6G2qN/OIG4-8dsv20-I6k-HTy-Gj29l-K3-f-removebg.png" className="w-full h-auto object-cover rounded-xl mb-4 shadow" alt="Secador Mockup" />
-                                   <p className="text-sm text-slate-600 mb-6 font-medium">Secagem rápida e inteligente numa fracção do tempo tradicional. Garante o teu hoje mesmo com desconto especial!</p>
-                                   <button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white active:scale-95 transition px-6 py-4 rounded-2xl font-bold shadow-lg animate-pulse uppercase tracking-wide">Fazer Encomenda</button>
-                               </div>
-                            ) : (
-                               <div className="flex h-full items-center justify-center bg-slate-50 text-slate-400 text-sm">
-                                  Quando a IA gerar a página, ela aparecerá aqui.
-                               </div>
-                            )}
-                         </div>
-                      </div>
-                   </div>
-                )}
-             </div>
-          </div>
-        </main>
+      {/* USERS VIEW */}
+      {view === 'users' && isAuthenticated && (
+         <UsersView onBack={() => setView('pages')} currentUserEmail={auth.currentUser?.email || null} />
       )}
 
       {/* DANGER ZONE VIEW */}

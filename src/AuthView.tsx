@@ -8,10 +8,11 @@ import './auth.css';
 interface AuthViewProps {
   setView: (view: string) => void;
   onLoginSuccess: () => void;
+  initialTab?: 'login' | 'register';
 }
 
-export default function AuthView({ setView, onLoginSuccess }: AuthViewProps) {
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+export default function AuthView({ setView, onLoginSuccess, initialTab = 'login' }: AuthViewProps) {
+  const [activeTab, setActiveTab] = useState<'login' | 'register'>(initialTab);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ icon: string; msg: string; visible: boolean }>({ icon: '', msg: '', visible: false });
@@ -23,11 +24,8 @@ export default function AuthView({ setView, onLoginSuccess }: AuthViewProps) {
   const [loginPw, setLoginPw] = useState('');
   
   const [regNome, setRegNome] = useState('');
-  const [regApelido, setRegApelido] = useState('');
   const [regEmail, setRegEmail] = useState('');
-  const [regTel, setRegTel] = useState('');
   const [regPw, setRegPw] = useState('');
-  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const [forgotEmail, setForgotEmail] = useState('');
 
@@ -110,12 +108,8 @@ export default function AuthView({ setView, onLoginSuccess }: AuthViewProps) {
   };
 
   const handleRegister = async () => {
-    if (!regNome || !regEmail || !regTel || regPw.length < 8) {
-      showToast('⚠️', 'Preencha os campos obrigatórios e senha >= 8');
-      return;
-    }
-    if (!termsAccepted) {
-      showToast('⚠️', 'Aceite os termos para continuar.');
+    if (!regNome || !regEmail || regPw.length < 6) {
+      showToast('⚠️', 'Preencha os campos obrigatórios. Senha mínima 6 caracteres.');
       return;
     }
     setLoading(true);
@@ -123,26 +117,21 @@ export default function AuthView({ setView, onLoginSuccess }: AuthViewProps) {
       const userCredential = await createUserWithEmailAndPassword(auth, regEmail, regPw);
       const user = userCredential.user;
       
-      await updateProfile(user, { displayName: `${regNome} ${regApelido}`.trim() });
+      await updateProfile(user, { displayName: regNome.trim() });
       
-      const trialExpiresAt = new Date();
-      trialExpiresAt.setMonth(trialExpiresAt.getMonth() + 1);
-
-      // Create user doc
+      // Create user doc as pending
       await setDoc(doc(db, 'users', user.uid), {
         id: user.uid,
-        name: `${regNome} ${regApelido}`.trim(),
+        name: regNome.trim(),
         email: regEmail,
-        phone: regTel,
-        role: 'user', // Default role
         status: 'pending', // Requires approval
-        trialExpiresAt: trialExpiresAt,
         createdAt: serverTimestamp()
       }).catch(err => handleFirestoreError(err, OperationType.CREATE, 'users'));
 
       setSuccessScreenType('register');
       setTimeout(() => {
-        onLoginSuccess();
+         // Auto-login succeeds but they will just be stopped by the restriction page if pending
+         onLoginSuccess();
       }, 2000);
     } catch (error: any) {
       showToast('❌', 'Erro ao criar conta. ' + error.message);
@@ -164,15 +153,6 @@ export default function AuthView({ setView, onLoginSuccess }: AuthViewProps) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getPasswordStrength = () => {
-    let score = 0;
-    if (regPw.length >= 8) score++;
-    if (/[A-Z]/.test(regPw)) score++;
-    if (/[0-9]/.test(regPw)) score++;
-    if (/[^A-Za-z0-9]/.test(regPw)) score++;
-    return score;
   };
 
   return (
@@ -283,7 +263,7 @@ export default function AuthView({ setView, onLoginSuccess }: AuthViewProps) {
                   {activeTab === 'login' && (
                     <div className="form-panel active">
                       <div className="form-header">
-                        <div className="form-title">Bem-vindo de volta 👋</div>
+                        <div className="form-title">Gerir Plataforma 👋</div>
                         <div className="form-subtitle">Entre na sua conta para continuar</div>
                       </div>
 
@@ -309,29 +289,19 @@ export default function AuthView({ setView, onLoginSuccess }: AuthViewProps) {
                       <button className="btn-submit" onClick={handleLogin} disabled={loading}>
                         {!loading ? <span className="btn-text">Entrar na conta</span> : <div className="spinner"></div>}
                       </button>
-
-                      <div className="switch-text">
-                        Não tem conta? <a onClick={() => setActiveTab('register')}>Criar conta grátis</a>
-                      </div>
                     </div>
                   )}
 
                   {activeTab === 'register' && (
                     <div className="form-panel active">
                       <div className="form-header">
-                        <div className="form-title">Criar conta grátis ✦</div>
-                        <div className="form-subtitle">Comece a vender mais hoje mesmo</div>
+                        <div className="form-title">Solicitar Acesso ✦</div>
+                        <div className="form-subtitle">Crie conta e aguarde a aprovação</div>
                       </div>
 
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label className="form-label">Nome</label>
-                          <input type="text" className="form-input" value={regNome} onChange={e=>setRegNome(e.target.value)} placeholder="Pedro" />
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label">Apelido</label>
-                          <input type="text" className="form-input" value={regApelido} onChange={e=>setRegApelido(e.target.value)} placeholder="Silva" />
-                        </div>
+                      <div className="form-group">
+                        <label className="form-label">Nome Completo</label>
+                        <input type="text" className="form-input" value={regNome} onChange={e=>setRegNome(e.target.value)} placeholder="O seu nome" />
                       </div>
 
                       <div className="form-group">
@@ -340,52 +310,21 @@ export default function AuthView({ setView, onLoginSuccess }: AuthViewProps) {
                       </div>
 
                       <div className="form-group">
-                        <label className="form-label">Telefone / WhatsApp</label>
-                        <div className="input-wrap">
-                          <input type="tel" className="form-input has-icon" value={regTel} onChange={e=>setRegTel(e.target.value)} placeholder="9XX XXX XXX" />
-                          <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '.9rem' }}>🇦🇴</span>
-                        </div>
-                      </div>
-
-                      <div className="form-group">
                         <label className="form-label">Palavra-passe</label>
                         <div className="input-wrap">
-                          <input type={showPassword ? 'text' : 'password'} className="form-input has-icon" value={regPw} onChange={e=>setRegPw(e.target.value)} placeholder="Mínimo 8 caracteres" />
+                          <input type={showPassword ? 'text' : 'password'} className="form-input has-icon" value={regPw} onChange={e=>setRegPw(e.target.value)} placeholder="Mínimo 6 caracteres" onKeyDown={e => e.key === 'Enter' && handleRegister()}/>
                           <span className="input-icon" onClick={() => setShowPassword(!showPassword)}>
                             {showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
                           </span>
                         </div>
-                        {regPw.length > 0 && (
-                          <div className="pw-strength show">
-                            <div className="pw-bars">
-                              <div className={`pw-bar ${getPasswordStrength() >= 1 ? 'weak' : ''}`}></div>
-                              <div className={`pw-bar ${getPasswordStrength() >= 2 ? 'medium' : ''}`}></div>
-                              <div className={`pw-bar ${getPasswordStrength() >= 3 ? 'strong' : ''}`}></div>
-                              <div className={`pw-bar ${getPasswordStrength() >= 4 ? 'strong' : ''}`}></div>
-                            </div>
-                            <div className="pw-label" style={{ color: getPasswordStrength() < 2 ? 'var(--auth-red)' : getPasswordStrength() < 3 ? '#f59e0b' : 'var(--auth-green)' }}>
-                              {getPasswordStrength() < 2 ? 'Fraca' : getPasswordStrength() < 3 ? 'Razoável' : 'Forte'}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="check-row">
-                        <input type="checkbox" className="check-input" id="terms" checked={termsAccepted} onChange={e=>setTermsAccepted(e.target.checked)} />
-                        <label className="check-label" htmlFor="terms">
-                          Aceito os <a onClick={(e) => { e.preventDefault(); setView('terms'); }}>Termos de Uso</a> e a <a onClick={(e) => { e.preventDefault(); setView('privacy'); }}>Política de Privacidade</a> da Valida C.
-                        </label>
                       </div>
 
                       <button className="btn-submit" onClick={handleRegister} disabled={loading}>
-                        {!loading ? <span className="btn-text">Criar conta grátis</span> : <div className="spinner"></div>}
+                        {!loading ? <span className="btn-text">Criar conta</span> : <div className="spinner"></div>}
                       </button>
-
-                      <div className="switch-text">
-                        Já tem conta? <a onClick={() => setActiveTab('login')}>Entrar agora</a>
-                      </div>
                     </div>
                   )}
+
                 </div>
               </>
             ) : (
