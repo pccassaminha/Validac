@@ -349,7 +349,7 @@ export default function App() {
 
   useEffect(() => {
     if (view === 'sales' || view === 'sales-roupas') {
-      const produtoName = view === 'sales-roupas' ? 'Secador Expresso Pro 34 900 Kz' : 'Secador Inteligente UV';
+      const produtoName = view === 'sales-roupas' ? 'Secador Expresso Pro 35 000 Kz' : 'Secador Inteligente UV';
       initTracking(produtoName);
       
       const imagesList = view === 'sales-roupas' ? IMAGES_ROUPAS : IMAGES;
@@ -400,8 +400,8 @@ export default function App() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const produtoName = view === 'sales-roupas' ? 'Secador Expresso Pro 34 900 Kz' : 'Secador Inteligente UV';
-    const pricePerUnit = view === 'sales-roupas' ? 34900 : 24900;
+    const produtoName = view === 'sales-roupas' ? 'Secador Expresso Pro 35 000 Kz' : 'Secador Inteligente UV';
+    const pricePerUnit = view === 'sales-roupas' ? 35000 : 25000;
 
     const tempLead = {
       ...formData,
@@ -624,7 +624,7 @@ export default function App() {
   const handleCopyLead = (lead: any) => {
     const q = lead.quantity || 1;
     const product = lead.produto || 'Secador Inteligente UV';
-    const total = lead.totalPrice ? formatKz(lead.totalPrice) : formatKz(q * 24900);
+    const total = lead.totalPrice ? formatKz(lead.totalPrice) : formatKz(q * 25000);
     const text = `Cliente: ${lead.name}\ntelefone: ${lead.phone}\nProdutos: ${q} - ${product}\nLocal: ${lead.address}\nTotal: ${total}`;
     navigator.clipboard.writeText(text);
     alert('Informações copiadas!');
@@ -634,7 +634,7 @@ export default function App() {
     const cleanPhone = lead.phone.replace(/\D/g, '');
     const q = lead.quantity || 1;
     const product = lead.produto || 'Secador Inteligente UV';
-    const total = lead.totalPrice ? formatKz(lead.totalPrice) : formatKz(q * 24900);
+    const total = lead.totalPrice ? formatKz(lead.totalPrice) : formatKz(q * 25000);
     const text = `Cliente: ${lead.name}\ntelefone: ${lead.phone}\nProdutos: ${q} - ${product}\nLocal: ${lead.address}\nTotal: ${total}`;
     const encodedText = encodeURIComponent(text);
     window.open(`https://wa.me/${cleanPhone}/?text=${encodedText}`, '_blank');
@@ -726,7 +726,7 @@ export default function App() {
 
   const uniquePages = Array.from(new Set([
     'Secador Inteligente UV',
-    'Secador Expresso Pro 34 900 Kz',
+    'Secador Expresso Pro 35 000 Kz',
     ...adminData.map(l => l.produto).filter(Boolean)
   ]));
 
@@ -1161,12 +1161,15 @@ export default function App() {
                 <div className="w-full md:w-1/2 text-center md:text-left">
                   <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 mb-6 relative">
                     <div className="absolute -top-3 right-4 bg-emerald-500 text-white font-bold py-1 px-3 rounded-full text-sm shadow-md animate-pulse">
-                      Poupa 10.100 Kz
+                      Poupa 10.000 Kz
                     </div>
                     <p className="text-slate-400 line-through text-lg mb-1 font-medium">De: 35.000 Kz</p>
-                    <p className="text-5xl font-black text-slate-900 mb-4 tracking-tighter">24.900 <span className="text-2xl text-slate-500">Kz</span></p>
-                    <div className="flex items-center justify-center md:justify-start gap-2 text-emerald-600 font-bold mb-2">
-                      <PackageOpen size={20} /> Entregas para Luanda
+                    <p className="text-5xl font-black text-slate-900 mb-4 tracking-tighter">25.000 <span className="text-2xl text-slate-500">Kz</span></p>
+                    <div className="flex flex-col items-center md:items-start gap-1 mb-2">
+                      <div className="flex items-center gap-2 text-emerald-600 font-bold">
+                        <PackageOpen size={20} /> Entregas para Luanda
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider ml-7">Outras províncias sob-consulta</span>
                     </div>
                     <p className="text-sm text-slate-500">* Pague apenas quando receber o produto.</p>
                   </div>
@@ -1231,7 +1234,7 @@ export default function App() {
                              const q = i + 1;
                              return (
                                <option key={q} value={q}>
-                                 {q} {q === 1 ? 'unidade' : 'unidades'} - {new Intl.NumberFormat('pt-AO', { style: 'decimal', minimumFractionDigits: 2 }).format(q * 24900)} Kz
+                                 {q} {q === 1 ? 'unidade' : 'unidades'} - {new Intl.NumberFormat('pt-AO', { style: 'decimal', minimumFractionDigits: 2 }).format(q * 25000)} Kz
                                </option>
                              );
                            })}
@@ -1605,6 +1608,7 @@ export default function App() {
                     <div className="space-y-4 mb-10">
                       {[
                         "Entrega Grátis em Luanda",
+                        "Outras províncias sob-consulta",
                         "Pagas no Momento da Entrega",
                         "Garantia de Satisfação 7 Dias",
                         "Suporte via WhatsApp 24/7"
@@ -1632,12 +1636,12 @@ export default function App() {
               <div className="md:w-[55%] p-10">
                   <div className="text-center md:text-left relative mb-10 pb-10 border-b border-slate-100">
                       <div className="absolute top-0 right-0 bg-red-500 text-white font-black py-2 px-4 rounded-full text-xs shadow-lg animate-bounce">
-                        Poupa 15.100 Kz hoje
+                        Poupa 15.000 Kz hoje
                       </div>
                       <p className="text-slate-500 text-sm font-bold mb-4 uppercase tracking-widest">Oferta Exclusiva</p>
-                      <p className="text-slate-400 line-through text-xl font-medium mb-1">49.900 Kz</p>
+                      <p className="text-slate-400 line-through text-xl font-medium mb-1">50.000 Kz</p>
                       <div className="flex items-baseline gap-2 mb-4">
-                        <span className="text-6xl font-black text-slate-900 tracking-tight">34.900</span>
+                        <span className="text-6xl font-black text-slate-900 tracking-tight">35.000</span>
                         <span className="text-2xl font-bold text-slate-500">Kz</span>
                       </div>
                       <div className="bg-indigo-50 text-indigo-700 p-4 rounded-2xl text-sm font-bold flex items-center gap-3 text-left">
@@ -1702,7 +1706,7 @@ export default function App() {
                                const q = i + 1;
                                return (
                                  <option key={q} value={q}>
-                                   {q} {q === 1 ? 'Unidade' : 'Unidades'} - {new Intl.NumberFormat('pt-AO', { style: 'decimal' }).format(q * 34900)} Kz
+                                   {q} {q === 1 ? 'Unidade' : 'Unidades'} - {new Intl.NumberFormat('pt-AO', { style: 'decimal' }).format(q * 35000)} Kz
                                  </option>
                                );
                              })}
@@ -2078,7 +2082,7 @@ export default function App() {
                     </button>
                     <button 
                       onClick={() => {
-                        setFilterProduct('Secador Expresso Pro 34 900 Kz');
+                        setFilterProduct('Secador Expresso Pro 35 000 Kz');
                         setView('admin');
                       }} 
                       className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold transition border border-slate-200 shadow-sm"
@@ -2205,7 +2209,7 @@ export default function App() {
                     O stock do <strong>{view === 'sales-roupas' ? 'Secador Expresso Portátil' : 'Secador Inteligente UV'}</strong> para entrega imediata terminou devido à altíssima procura nas últimas horas.
                   </p>
                   <p className="text-slate-500 mb-8 max-w-sm mx-auto leading-relaxed">
-                    Mas <b>não te preocupes!</b> O novo lote chega em breve. Queres garantir a tua reserva e manter o preço promocional de <b>{view === 'sales-roupas' ? '34.900 Kz' : '24.900 Kz'}</b>? <span className="text-indigo-600 font-bold block mt-2">(Não pagas nada hoje!)</span>
+                    Mas <b>não te preocupes!</b> O novo lote chega em breve. Queres garantir a tua reserva e manter o preço promocional de <b>{view === 'sales-roupas' ? '35.000 Kz' : '25.000 Kz'}</b>? <span className="text-indigo-600 font-bold block mt-2">(Não pagas nada hoje!)</span>
                   </p>
                   <div className="space-y-3">
                     <button onClick={() => processReservation(true)} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 px-4 rounded-xl shadow-lg transition-transform active:scale-[0.98]">
@@ -2324,7 +2328,7 @@ export default function App() {
                     Parabéns, <span className="text-indigo-600">{formData.name ? formData.name.split(' ')[0] : 'Cliente'}</span>!
                   </p>
                   <p className="text-slate-600 mb-6 leading-relaxed">
-                     A tua unidade de <strong>{view === 'sales-roupas' ? 'Secador Expresso Portátil' : 'Secador UV'}</strong> está reservada ao preço de <strong>{view === 'sales-roupas' ? '34.900 Kz' : '24.900 Kz'}</strong>.
+                     A tua unidade de <strong>{view === 'sales-roupas' ? 'Secador Expresso Portátil' : 'Secador UV'}</strong> está reservada ao preço de <strong>{view === 'sales-roupas' ? '35.000 Kz' : '25.000 Kz'}</strong>.
                   </p>
                   <div className="bg-emerald-50 text-emerald-800 p-5 rounded-2xl text-sm mb-8 border border-emerald-100 font-bold leading-relaxed">
                     Receberás uma mensagem no WhatsApp quando o lote chegar — pagas só no momento da entrega.
