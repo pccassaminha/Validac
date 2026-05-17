@@ -101,7 +101,7 @@ export default function HomeView({ setView, isAuthenticated, currentUser, userNa
           </h1>
           
           <p className="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
-            Plataforma exclusiva para gestão de landing pages, consolidação de leads e coordenação de vendas do Grupo. Acesso reservado apenas para as equipas internas.
+            Plataforma exclusiva para gestão de landing pages, consolidação de leads e coordenação de vendas do Grupo Cassaminha. Acesso reservado apenas para as equipas internas.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
