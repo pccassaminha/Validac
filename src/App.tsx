@@ -69,9 +69,9 @@ const trackEvent = (produto: string, eventName: string, fbEvent: string) => {
 };
 
 const TESTIMONIALS = [
-  { name: "Pedro M., Luanda", comment: "Sempre sofri com chulé por causa do suor no ginásio. O Secador UV resolveu isso em dois dias. Incrível!", rating: 5 },
-  { name: "Sílvia C., Talatona", comment: "Vale cada kwanza. Seca os sapatos rápido sem estragar o material. Excelente para época de chuva.", rating: 5 },
-  { name: "Rui F., Benguela", comment: "Chegou super rápido e funciona perfeitamente. Pagar só na entrega deu-me muita segurança.", rating: 4 }
+  { name: "João M., Luanda", comment: "Usava spray todo dia e o chulé voltava sempre. Comprei este há 3 semanas e os meus sapatos de trabalho estão sempre secos e sem cheiro. Nunca mais precisei do spray. Entrega super rápida!", rating: 5 },
+  { name: "Sílvia C., Talatona", comment: "Vale cada kwanza. Seca os sapatos rápido sem estragar o material. Paguei na entrega com total segurança. Excelente para época de chuva.", rating: 5 },
+  { name: "Carlos R., Kilamba", comment: "Incrível como a luz UV tira mesmo o cheiro. Uso nos meus ténis de corrida que ficavam encharcados. O produto chegou no mesmo dia que encomendei.", rating: 5 }
 ];
 
 const TESTIMONIALS_ROUPAS = [
@@ -1025,6 +1025,54 @@ export default function App() {
               </div>
             </section>
 
+            {/* Como Funciona - UV */}
+            <section className="mb-24">
+              <h2 className="text-3xl font-black text-slate-900 mb-12 text-center tracking-tight">Esterilização em 3 passos</h2>
+              <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+                <div className="relative p-8 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
+                  <div className="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold absolute -top-6 shadow-lg">1</div>
+                  <div className="text-4xl mb-6 mt-2">👟</div>
+                  <p className="font-bold text-slate-800 leading-relaxed">Insira os bicos do secador dentro do calçado, seja atacadores ou sapato social</p>
+                </div>
+                <div className="relative p-8 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
+                  <div className="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold absolute -top-6 shadow-lg">2</div>
+                  <div className="text-4xl mb-6 mt-2">🕒</div>
+                  <p className="font-bold text-slate-800 leading-relaxed">Escolha o tempo necessário (30 a 120 min) e ative a luz UV para esterilizar</p>
+                </div>
+                <div className="relative p-8 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
+                  <div className="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold absolute -top-6 shadow-lg">3</div>
+                  <div className="text-4xl mb-6 mt-2">✨</div>
+                  <p className="font-bold text-slate-800 leading-relaxed">Retire o seu calçado totalmente seco, cheiroso e livre de 99.9% das bactérias</p>
+                </div>
+              </div>
+            </section>
+
+            {/* Testimonials */}
+            <section className="mb-24">
+              <div className="text-center mb-10">
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">Quem comprou, recomenda!</h2>
+                <p className="text-slate-500 max-w-lg mx-auto">Veja o que os nossos clientes dizem sobre a eficácia do Secador Inteligente UV.</p>
+              </div>
+              <div className="grid md:grid-cols-3 gap-6">
+                {TESTIMONIALS.map((t, idx) => (
+                  <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full hover:shadow-md transition-shadow">
+                    <div className="flex gap-1 mb-4">
+                       {Array.from({length: 5}).map((_, i) => (
+                         <Star key={i} size={18} className={i < t.rating ? "fill-amber-400 text-amber-400" : "fill-slate-100 text-slate-200"} />
+                       ))}
+                    </div>
+                    <p className="text-slate-700 text-sm italic mb-6 flex-grow leading-relaxed">"{t.comment}"</p>
+                    <div className="flex items-center gap-3 pt-4 border-t border-slate-50 mt-auto">
+                      <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm shrink-0">
+                         {t.name.charAt(0)}
+                      </div>
+                      <span className="text-sm font-bold text-slate-900">{t.name}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
             {/* Product Specifications */}
             <section className="mb-14 text-left max-w-3xl mx-auto">
               <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-8 text-center flex items-center justify-center gap-3">
@@ -1069,54 +1117,6 @@ export default function App() {
               </div>
             </section>
 
-            {/* Testimonials */}
-            <section className="mb-24">
-              <div className="text-center mb-10">
-                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">Quem comprou, recomenda!</h2>
-                <p className="text-slate-500 max-w-lg mx-auto">Veja o que os nossos clientes dizem sobre a eficácia do Secador Inteligente UV.</p>
-              </div>
-              <div className="grid md:grid-cols-3 gap-6">
-                {TESTIMONIALS.map((t, idx) => (
-                  <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full hover:shadow-md transition-shadow">
-                    <div className="flex gap-1 mb-4">
-                       {Array.from({length: 5}).map((_, i) => (
-                         <Star key={i} size={18} className={i < t.rating ? "fill-amber-400 text-amber-400" : "fill-slate-100 text-slate-200"} />
-                       ))}
-                    </div>
-                    <p className="text-slate-700 text-sm italic mb-6 flex-grow leading-relaxed">"{t.comment}"</p>
-                    <div className="flex items-center gap-3 pt-4 border-t border-slate-50 mt-auto">
-                      <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm shrink-0">
-                         {t.name.charAt(0)}
-                      </div>
-                      <span className="text-sm font-bold text-slate-900">{t.name}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Como Funciona - UV */}
-            <section className="mb-24">
-              <h2 className="text-3xl font-black text-slate-900 mb-12 text-center tracking-tight">Esterilização em 3 passos</h2>
-              <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                <div className="relative p-8 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
-                  <div className="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold absolute -top-6 shadow-lg">1</div>
-                  <div className="text-4xl mb-6 mt-2">👟</div>
-                  <p className="font-bold text-slate-800 leading-relaxed">Insira os bicos do secador dentro do calçado, seja atacadores ou sapato social</p>
-                </div>
-                <div className="relative p-8 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
-                  <div className="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold absolute -top-6 shadow-lg">2</div>
-                  <div className="text-4xl mb-6 mt-2">🕒</div>
-                  <p className="font-bold text-slate-800 leading-relaxed">Escolha o tempo necessário (30 a 120 min) e ative a luz UV para esterilizar</p>
-                </div>
-                <div className="relative p-8 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
-                  <div className="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold absolute -top-6 shadow-lg">3</div>
-                  <div className="text-4xl mb-6 mt-2">✨</div>
-                  <p className="font-bold text-slate-800 leading-relaxed">Retire o seu calçado totalmente seco, cheiroso e livre de 99.9% das bactérias</p>
-                </div>
-              </div>
-            </section>
-
             {/* Tabela Comparativa - UV */}
             <section className="mb-24 px-4 overflow-hidden">
               <h2 className="text-3xl font-black text-slate-900 mb-10 text-center tracking-tight">Secagem Manual VS Secador C Store UV</h2>
@@ -1132,11 +1132,11 @@ export default function App() {
                     </thead>
                     <tbody className="text-sm">
                       {[
+                        { c: "Tempo de secagem", t: "24 a 48 horas", s: "1 a 2 horas" },
                         { c: "Higiene", t: "Bactérias continuam", s: "Esterilização UV" },
                         { c: "Mau Cheiro", t: "Apenas disfarça", s: "Elimina a causa" },
                         { c: "Preservação", t: "Pode ressecar couro", s: "Temperatura controlada" },
-                        { c: "Velocidade", t: "24 a 48 horas", s: "1 a 2 horas" },
-                        { c: "Clima", t: "Depende do sol", s: "Funciona 24/7" }
+                        { c: "Funciona na chuva?", t: "Depende do sol", s: "Funciona 24/7" }
                       ].map((row, i) => (
                         <tr key={i} className="hover:bg-slate-50 transition-colors">
                           <td className="p-4 border-b border-slate-50 font-bold text-slate-800 bg-slate-50/30">{row.c}</td>
@@ -1241,9 +1241,14 @@ export default function App() {
                     </div>
                     <button 
                       type="submit" disabled={isSubmitting}
-                      className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-70 disabled:hover:bg-emerald-500 disabled:scale-100 text-white font-bold text-lg py-4 rounded-xl shadow-lg transition-all transform active:scale-[0.98] flex justify-center items-center gap-2 mt-2"
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-70 disabled:hover:bg-emerald-500 disabled:scale-100 text-white font-black text-lg py-5 rounded-2xl shadow-xl shadow-emerald-500/25 transition-all transform active:scale-[0.98] flex flex-col justify-center items-center mt-2"
                     >
-                      {isSubmitting ? <Loader2 className="animate-spin" /> : 'CONFIRMAR RESERVA VIP'}
+                      {isSubmitting ? <Loader2 className="animate-spin" size={32} /> : (
+                        <>
+                          <span>✅ Quero Garantir a Minha Reserva</span>
+                          <span className="text-xs opacity-90 font-bold uppercase tracking-widest mt-1">Pagas só no momento da entrega · Reserva Gratuita</span>
+                        </>
+                      )}
                     </button>
                   </form>
                 </div>
@@ -1404,24 +1409,24 @@ export default function App() {
               <div className="grid md:grid-cols-3 gap-6 mb-20 text-left">
                   <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:border-sky-200 hover:shadow-md transition group">
                       <div className="w-12 h-12 bg-sky-50 text-sky-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <Lock size={24} />
+                        <User size={24} />
                       </div>
-                      <h3 className="font-bold text-xl mb-3 text-slate-800">Praticidade e Descrição</h3>
-                      <p className="text-slate-500 leading-relaxed text-sm">Seca a tua roupa com total descrição e rapidez. Com o Secador Expresso, podes gerir as tuas secagens de forma tranquila e eficiente, sem ocupar espaço visível.</p>
+                      <h3 className="font-bold text-xl mb-3 text-slate-800">Mães em Luanda</h3>
+                      <p className="text-slate-500 leading-relaxed text-sm">O uniforme escolar precisa de estar seco amanhã? Lave à noite e conte com o secador. Sem stress de acordar às 5h da manhã para passar a ferro roupa húmida.</p>
                   </div>
                   <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:border-orange-200 hover:shadow-md transition group">
                       <div className="w-12 h-12 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <ShieldAlert size={24} />
+                        <FileText size={24} />
                       </div>
-                      <h3 className="font-bold text-xl mb-3 text-slate-800">Fungos e Bafio Acabaram</h3>
-                      <p className="text-slate-500 leading-relaxed text-sm">Roupa húmida por 4 ou 5 dias dentro de casa cria fungos invisíveis que causam alergias, irritação na pele e um cheiro que não sai mesmo depois de lavar. O ar quente PTC elimina a humidade em profundidade.</p>
+                      <h3 className="font-bold text-xl mb-3 text-slate-800">Profissionais Focados</h3>
+                      <p className="text-slate-500 leading-relaxed text-sm">Camisas de trabalho e fatos limpos e secos em tempo recorde. Evite o cheiro a humidade que fica impregnado nas fibras quando a secagem é lenta demais.</p>
                   </div>
                   <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:border-emerald-200 hover:shadow-md transition group">
                       <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <Timer size={24} />
+                        <LayoutDashboard size={24} />
                       </div>
-                      <h3 className="font-bold text-xl mb-3 text-slate-800">O Uniforme Está Pronto para Amanhã</h3>
-                      <p className="text-slate-500 leading-relaxed text-sm">Lavaste o uniforme escolar das crianças à noite e precisas que esteja seco de manhã? Em 1 a 2 horas está pronto. Sem stress, sem acordar cedo para resolver o problema.</p>
+                      <h3 className="font-bold text-xl mb-3 text-slate-800">Vida em Apartamento</h3>
+                      <p className="text-slate-500 leading-relaxed text-sm">Sem varanda ou sem espaço? Seque tudo discretamente dentro do quarto ou da casa de banho. Ocupa o espaço de um cabide e desaparece depois do uso.</p>
                   </div>
               </div>
 
@@ -1465,17 +1470,17 @@ export default function App() {
                       </thead>
                       <tbody className="text-sm">
                         {[
-                          { c: "Tempo de secagem", t: "3 a 5 dias", s: "1 a 2 horas" },
+                          { c: "Tempo de secagem", t: "3 a 5 dias", s: "1 a 2 horas", highlight: true },
+                          { c: "Fungos e bafio", t: "Frequente", s: "Eliminados", highlight: true },
                           { c: "Roupa íntima", t: "Exposta a todos", s: "Privacidade total" },
                           { c: "Dias de chuva", t: "Roupa não seca", s: "Funciona sempre" },
-                          { c: "Fungos e bafio", t: "Frequente", s: "Eliminados" },
                           { c: "Espaço necessário", t: "Sala, quarto, WC", s: "Cabe numa gaveta" },
                           { c: "Resultado", t: "Húmido e com cheiro", s: "Seco, limpo, sem odor" }
                         ].map((row, i) => (
-                          <tr key={i} className="hover:bg-slate-50 transition-colors">
-                            <td className="p-4 border-b border-slate-50 font-bold text-slate-800 bg-slate-50/30">{row.c}</td>
+                          <tr key={i} className={`hover:bg-slate-50 transition-colors ${row.highlight ? 'bg-sky-50 lg:scale-[1.02] shadow-sm relative z-10' : ''}`}>
+                            <td className={`p-4 border-b border-slate-50 font-bold text-slate-800 ${row.highlight ? 'bg-sky-100/50' : 'bg-slate-50/30'}`}>{row.c}</td>
                             <td className="p-4 border-b border-slate-50 text-slate-500 text-center">{row.t}</td>
-                            <td className="p-4 border-b border-slate-50 font-bold text-slate-900 bg-sky-50/40 text-center">{row.s}</td>
+                            <td className={`p-4 border-b border-slate-50 font-bold text-slate-900 text-center ${row.highlight ? 'bg-sky-100/80 text-sky-700' : 'bg-sky-50/40'}`}>{row.s}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1572,6 +1577,24 @@ export default function App() {
             </div>
           </section>
 
+          {/* BLOCO: Garantia */}
+          <div className="max-w-4xl mx-auto px-4 mb-16">
+            <div className="bg-indigo-900 text-white p-8 sm:p-10 rounded-[2.5rem] shadow-xl overflow-hidden relative border-4 border-indigo-500/30">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 rounded-full blur-3xl -mr-16 -mt-16" />
+              <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+                <div className="w-20 h-20 bg-indigo-500/30 rounded-2xl flex items-center justify-center shrink-0 border border-white/10">
+                  <ShieldCheck size={40} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold mb-3">Garantia Blindada C Store</h2>
+                  <p className="text-indigo-100 text-lg leading-relaxed">
+                    Se o produto chegar com defeito ou não funcionar como prometido, fala connosco no WhatsApp — resolvemos sem complicação. Sem stress, sem burocracia.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Checkout Section */}
           <div id="comprar" className="pt-8 scroll-mt-20 px-4 mb-10">
             <section className="bg-white rounded-[3rem] shadow-2xl border border-slate-200 overflow-hidden max-w-4xl mx-auto flex flex-col md:flex-row">
@@ -1615,14 +1638,14 @@ export default function App() {
                         Poupa 15.100 Kz hoje
                       </div>
                       <p className="text-slate-500 text-sm font-bold mb-4 uppercase tracking-widest">Oferta Exclusiva</p>
-                      <p className="text-slate-400 line-through text-xl font-medium mb-1">50.000 Kz</p>
+                      <p className="text-slate-400 line-through text-xl font-medium mb-1">49.900 Kz</p>
                       <div className="flex items-baseline gap-2 mb-4">
                         <span className="text-6xl font-black text-slate-900 tracking-tight">34.900</span>
                         <span className="text-2xl font-bold text-slate-500">Kz</span>
                       </div>
-                      <div className="bg-indigo-50 text-indigo-700 p-4 rounded-2xl text-sm font-bold flex items-center gap-3">
-                         <span className="text-indigo-500"><Info size={20} /></span>
-                         Uma lavandaria profissional cobra 3.000 Kz por sessão. Este secador paga-se sozinho no primeiro mês.
+                      <div className="bg-indigo-50 text-indigo-700 p-4 rounded-2xl text-sm font-bold flex items-center gap-3 text-left">
+                         <span className="text-indigo-500 shrink-0"><Info size={20} /></span>
+                         <span>Uma lavandaria cobra entre 500 a 1.000 Kz por peça. Este secador paga-se em menos de um mês.</span>
                       </div>
                   </div>
 
@@ -1700,8 +1723,8 @@ export default function App() {
                       >
                         {isSubmitting ? <Loader2 className="animate-spin" size={32} /> : (
                           <>
-                            <span>✅ Quero Acabar com Roupa Húmida</span>
-                            <span className="text-xs opacity-80 font-bold uppercase tracking-widest mt-0.5">Pagar só no momento da entrega</span>
+                            <span>✅ Quero Garantir a Minha Reserva</span>
+                            <span className="text-xs opacity-90 font-bold uppercase tracking-widest mt-0.5">Pagas só no momento da entrega · Reserva Gratuita</span>
                           </>
                         )}
                       </button>
