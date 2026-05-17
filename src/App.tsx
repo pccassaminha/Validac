@@ -1398,10 +1398,7 @@ export default function App() {
                       <span className="text-slate-700 font-semibold">{text}</span>
                     </div>
                   ))}
-                  <div className="flex items-center gap-3 bg-red-50 p-3.5 rounded-xl shadow-sm border border-red-100">
-                    <div className="bg-red-100 text-red-600 rounded-full p-1"><XCircle size={18} /></div>
-                    <span className="text-red-700 font-bold">Não é para quem tem quintal com sol directo e espaço para estender à vontade</span>
-                  </div>
+
                 </div>
               </div>
 
