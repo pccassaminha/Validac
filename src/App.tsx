@@ -2339,10 +2339,19 @@ export default function App() {
                       href={`https://wa.me/?text=Olha%20este%20secador%20que%20acabei%20de%20reservar!%20%0A%0A${window.location.href}`}
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="w-full flex justify-center items-center gap-3 bg-[#25D366] hover:bg-[#128C7E] text-white font-black py-4 px-4 rounded-xl transition-transform active:scale-[0.98] shadow-lg shadow-emerald-500/20"
+                      className="w-full flex justify-center items-center gap-3 bg-[#25D366] hover:bg-[#128C7E] text-white font-black py-4 px-4 rounded-xl transition-transform active:scale-[0.98] shadow-lg shadow-emerald-500/20 mb-3"
                     >
                       <MessageCircle size={22} />
                       📲 PARTILHAR NO WHATSAPP
+                    </a>
+                    <a 
+                      href="https://www.cstoreao.shop/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-full flex justify-center items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 px-4 rounded-xl transition-transform active:scale-[0.98] border border-slate-200"
+                    >
+                      <Store size={20} />
+                      Visitar Loja C Store Angola
                     </a>
                   </div>
                 </div>
