@@ -965,66 +965,34 @@ export default function App() {
           </section>
 
           {/* Dores Seccionadas */}
-          <section className="max-w-4xl mx-auto px-4 grid md:grid-cols-3 gap-6 mb-20">
-              <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:border-indigo-200 transition group">
-                  <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mb-6">
-                    <ShieldAlert size={24} />
+          <section className="max-w-4xl mx-auto px-4 mb-20">
+              <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-8 text-center tracking-tight">Benefícios Reais</h2>
+              <div className="grid md:grid-cols-3 gap-6">
+                  <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:border-indigo-200 transition group">
+                      <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mb-6">
+                        <ShieldAlert size={24} />
+                      </div>
+                      <h3 className="font-bold text-xl mb-3 text-slate-800">Higiene e Saúde</h3>
+                      <p className="text-slate-500 leading-relaxed text-sm">O calçado húmido é o local perfeito para fungos e bactérias. O Secador UV elimina a causa do mau cheiro pela raiz através da luz ultravioleta.</p>
                   </div>
-                  <h3 className="font-bold text-xl mb-3 text-slate-800">Higiene e Saúde</h3>
-                  <p className="text-slate-500 leading-relaxed text-sm">O calçado húmido é o local perfeito para fungos e bactérias. O Secador UV elimina a causa do mau cheiro pela raiz através da luz ultravioleta.</p>
-              </div>
-              <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:border-emerald-200 transition group">
-                  <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center mb-6">
-                    <Activity size={24} />
+                  <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:border-emerald-200 transition group">
+                      <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center mb-6">
+                        <Activity size={24} />
+                      </div>
+                      <h3 className="font-bold text-xl mb-3 text-slate-800">Secagem Segura</h3>
+                      <p className="text-slate-500 leading-relaxed text-sm">Ao contrário do sol ou secadores de cabelo, a temperatura constante de 48ºC seca sem deformar o couro ou descolar as solas do seu calçado.</p>
                   </div>
-                  <h3 className="font-bold text-xl mb-3 text-slate-800">Secagem Segura</h3>
-                  <p className="text-slate-500 leading-relaxed text-sm">Ao contrário do sol ou secadores de cabelo, a temperatura constante de 48ºC seca sem deformar o couro ou descolar as solas do seu calçado.</p>
-              </div>
-              <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:border-amber-200 transition group">
-                  <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-6">
-                    <Timer size={24} />
+                  <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:border-amber-200 transition group">
+                      <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-6">
+                        <Timer size={24} />
+                      </div>
+                      <h3 className="font-bold text-xl mb-3 text-slate-800">Economia de Tempo</h3>
+                      <p className="text-slate-500 leading-relaxed text-sm">Defina o temporizador e esqueça. Em pouco tempo, os seus ténis preferidos estão prontos para o próximo uso, totalmente secos e esterilizados.</p>
                   </div>
-                  <h3 className="font-bold text-xl mb-3 text-slate-800">Economia de Tempo</h3>
-                  <p className="text-slate-500 leading-relaxed text-sm">Defina o temporizador e esqueça. Em pouco tempo, os seus ténis preferidos estão prontos para o próximo uso, totalmente secos e esterilizados.</p>
               </div>
           </section>
 
           <div className="max-w-4xl mx-auto px-4">
-            {/* BLOCO: Benefícios */}
-            <section className="mb-14">
-              <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-8 text-center tracking-tight">Benefícios Reais</h2>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-start gap-4">
-                  <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center shrink-0"><CheckCircle size={20} /></div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 mb-1">Confiança Total</h3>
-                    <p className="text-sm text-slate-500 leading-relaxed">Chega de vergonha com chulé — use qualquer sapato com confiança.</p>
-                  </div>
-                </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-start gap-4">
-                  <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center shrink-0"><CheckCircle size={20} /></div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 mb-1">Durabilidade</h3>
-                    <p className="text-sm text-slate-500 leading-relaxed">Seus tênis favoritos duram muito mais, sem estragar por dentro.</p>
-                  </div>
-                </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-start gap-4">
-                  <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center shrink-0"><CheckCircle size={20} /></div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 mb-1">Praticidade Máxima</h3>
-                    <p className="text-sm text-slate-500 leading-relaxed">Dorme, o aparelho trabalha — acorda com o calçado seco e sem fungos.</p>
-                  </div>
-                </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-start gap-4">
-                  <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center shrink-0"><CheckCircle size={20} /></div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 mb-1">Versatilidade</h3>
-                    <p className="text-sm text-slate-500 leading-relaxed">Funciona em tênis, sandálias, botas e sapato social.</p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
             {/* Como Funciona - UV */}
             <section className="mb-24">
               <h2 className="text-3xl font-black text-slate-900 mb-12 text-center tracking-tight">Esterilização em 3 passos</h2>
@@ -1161,9 +1129,9 @@ export default function App() {
                 <div className="w-full md:w-1/2 text-center md:text-left">
                   <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 mb-6 relative">
                     <div className="absolute -top-3 right-4 bg-emerald-500 text-white font-bold py-1 px-3 rounded-full text-sm shadow-md animate-pulse">
-                      Poupa 10.000 Kz
+                      Poupa 20.000 Kz
                     </div>
-                    <p className="text-slate-400 line-through text-lg mb-1 font-medium">De: 35.000 Kz</p>
+                    <p className="text-slate-400 line-through text-lg mb-1 font-medium">De: 45.000 Kz</p>
                     <p className="text-5xl font-black text-slate-900 mb-4 tracking-tighter">25.000 <span className="text-2xl text-slate-500">Kz</span></p>
                     <div className="flex flex-col items-center md:items-start gap-1 mb-2">
                       <div className="flex items-center gap-2 text-emerald-600 font-bold">
@@ -2254,7 +2222,7 @@ export default function App() {
                     </ul>
                   )}
                   <p className="text-sm text-slate-900 font-bold mb-8 p-4 bg-red-50 rounded-xl border border-red-100 text-center">
-                    O próximo lote custará <b>{view === 'sales-roupas' ? '50.000 Kz' : '35.000 Kz'}</b>. Vais mesmo deixar passar?
+                    O próximo lote custará <b>{view === 'sales-roupas' ? '50.000 Kz' : '45.000 Kz'}</b>. Vais mesmo deixar passar?
                   </p>
                   <div className="space-y-3">
                     <button onClick={() => processReservation(true)} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 px-4 rounded-xl shadow-lg transition-transform active:scale-[0.98]">
