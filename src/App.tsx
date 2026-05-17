@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldAlert, Activity, CheckCircle, PackageOpen, TriangleAlert, Crown, XCircle, ArrowLeft, Lock, Loader2, Info, Star, Eye, EyeOff, Copy, MessageCircle, Search, Filter, Download, User, LayoutDashboard, Settings, ExternalLink, LogOut, ChevronDown, Store, FileText, AlertOctagon, Trash2, Timer, Paperclip, FolderOpen, Monitor, Smartphone, Tablet, Bot, Upload, Edit } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, Activity, CheckCircle, PackageOpen, TriangleAlert, Crown, XCircle, ArrowLeft, Lock, Loader2, Info, Star, Eye, EyeOff, Copy, MessageCircle, Search, Filter, Download, User, LayoutDashboard, Settings, ExternalLink, LogOut, ChevronDown, Store, FileText, AlertOctagon, Trash2, Timer, Paperclip, FolderOpen, Monitor, Smartphone, Tablet, Bot, Upload, Edit, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db, auth, handleFirestoreError, OperationType } from './firebase';
 import { collection, doc, addDoc, updateDoc, getDocs, getDoc, query, orderBy, serverTimestamp, Timestamp, deleteDoc, where, setDoc } from 'firebase/firestore';
@@ -75,9 +75,10 @@ const TESTIMONIALS = [
 ];
 
 const TESTIMONIALS_ROUPAS = [
-  { name: "Joana S., Maianga", comment: "Moro num apartamento pequeno e não tinha como secar a roupa no inverno. Este secador mudou a minha vida. Muito prático!", rating: 5 },
-  { name: "Carlos A., Kilamba", comment: "Com as fardas das crianças demorando a secar, estávamos sempre aflitos. Agora em poucas horas a roupa está pronta.", rating: 5 },
-  { name: "Marta V., Talatona", comment: "Silencioso e super rápido. Seco minhas camisas mais delicadas sem medo de estragar.", rating: 4 }
+  { name: "Joana S., Maianga", comment: "Vivo no 4º andar e sempre tive vergonha de deixar a minha roupa íntima no estendal comum. Agora seco tudo dentro do quarto em 2 horas. Comprei há 3 semanas e já não consigo imaginar sem ele.", rating: 5 },
+  { name: "Carlos A., Kilamba", comment: "As camisas de trabalho e as roupas das crianças ficavam dias a secar. Agora lavo à noite e de manhã está tudo pronto. Vale cada kwanza.", rating: 5 },
+  { name: "Marta V., Talatona", comment: "A minha roupa ficava com aquele cheiro a bafio horrível. Percebi que era fungo da humidade. Desde que comprei o secador o cheiro desapareceu completamente.", rating: 5 },
+  { name: "Nkosi B., Viana", comment: "Silencioso, rápido e discreto. Seco as minhas roupas de desporto depois do treino sem incomodar ninguém em casa. Recomendo a toda a gente que vive em apartamento.", rating: 5 }
 ];
 
 const RECENT_BUYERS = [
@@ -109,7 +110,59 @@ const IMAGES_ROUPAS = [
 ];
 
 
-type ModalState = 'none' | 'step1' | 'last-chance' | 'success' | 'rejected' | 'profile' | 'danger-zone' | 'danger-action-page-prompt' | 'danger-action-page-confirm' | 'danger-action-all-prompt' | 'danger-alert' | 'delete-lead-confirm';
+type ModalState = 'none' | 'step1' | 'last-chance' | 'testimonial-rebound' | 'success' | 'rejected' | 'profile' | 'danger-zone' | 'danger-action-page-prompt' | 'danger-action-page-confirm' | 'danger-action-all-prompt' | 'danger-alert' | 'delete-lead-confirm';
+
+const FAQ_ROUPAS = [
+  {
+    q: "Gasta muita electricidade?",
+    a: "Apenas 600W — menos do que um ferro de engomar normal. Uma sessão de 2 horas custa menos de 50 Kz em electricidade."
+  },
+  {
+    q: "É muito grande para um apartamento pequeno?",
+    a: "Tem apenas 32 x 24 x 15 cm. Cabe numa gaveta, debaixo da cama ou no topo do roupeiro. Dobra para guardar."
+  },
+  {
+    q: "Funciona mesmo ou é mais um produto que não cumpre?",
+    a: "A tecnologia PTC aquece o ar de forma uniforme e contínua. Não é um ventilador — é ar quente real que penetra no tecido e elimina a humidade de dentro para fora."
+  },
+  {
+    q: "E se eu comprar e não gostar?",
+    a: "Pagas apenas quando o produto chega à tua porta. Se não ficares satisfeito nos primeiros 7 dias, contacta-nos e resolves sem complicação."
+  },
+  {
+    q: "Estraga os tecidos delicados?",
+    a: "O ar quente é suave e controlado. Seguro para roupa íntima, tecidos finos, sintéticos e algodão. Não amarrota nem danifica."
+  }
+];
+
+function AccordionItem({ question, answer }: { question: string, answer: string, key?: any }) {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-6 py-5 text-left flex justify-between items-center hover:bg-slate-50 transition-colors"
+      >
+        <span className="font-bold text-slate-800 pr-4">{question}</span>
+        <ChevronDown size={20} className={`text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="px-6 pb-6 text-slate-600 text-sm leading-relaxed border-t border-slate-50 pt-4">
+              {answer}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function App() {
   const [view, setView] = useState<string>(() => {
@@ -833,78 +886,142 @@ export default function App() {
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               className="inline-flex items-center gap-2 bg-indigo-100 text-indigo-800 font-bold px-4 py-1.5 rounded-full text-xs sm:text-sm mb-6"
             >
-              🔥 Mais de 150 unidades reservadas esta semana
+              🔥 Edição Premium com Esterilização por UV
             </motion.div>
             
             <motion.h1 
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
               className="text-3xl sm:text-5xl md:text-6xl font-black text-slate-900 leading-[1.1] mb-6 tracking-tight"
             >
-              Pare de estragar o seu calçado e <span className="text-indigo-600 block sm:inline">elimine o mau cheiro pela raiz.</span>
+              O fim definitivo do chulé e da humidade <span className="text-indigo-600 block sm:inline">no seu calçado favorito.</span>
             </motion.h1>
+
+            {/* Product Gallery Moved Up */}
+            <motion.section 
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+              className="max-w-4xl mx-auto px-4 mb-12"
+            >
+              <div className="bg-white p-4 sm:p-6 rounded-[2rem] shadow-2xl border border-slate-200">
+                <div className="relative aspect-square sm:aspect-video rounded-2xl overflow-hidden bg-slate-100 mb-4 group shadow-inner">
+                  <AnimatePresence mode="wait">
+                    <motion.img 
+                      key={activeImage}
+                      src={IMAGES[activeImage]}
+                      initial={{ opacity: 0, x: 40 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -40 }}
+                      transition={{ duration: 0.4, ease: "easeInOut" }}
+                      className="w-full h-full object-cover absolute inset-0"
+                      alt={`Produto Imagem ${activeImage + 1}`}
+                    />
+                  </AnimatePresence>
+                </div>
+                
+                {/* Thumbnails */}
+                <div className="flex gap-3 overflow-x-auto pb-4 pt-2 px-1 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                  {IMAGES.map((src, i) => (
+                    <button 
+                      key={i} 
+                      onClick={() => setActiveImage(i)}
+                      className={`shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden snap-center transition-all ${
+                        i === activeImage 
+                          ? 'ring-4 ring-indigo-500 opacity-100 scale-105' 
+                          : 'ring-1 ring-slate-200 opacity-60 hover:opacity-100 hover:scale-105'
+                      }`}
+                    >
+                      <img src={src} alt={`Thumbnail ${i}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.section>
             
             <motion.p 
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
               className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto px-2"
             >
-              O primeiro Esterilizador Inteligente com Tecnologia UV em Angola que seca de forma segura e destrói fungos enquanto você descansa.
+              A tecnologia avançada que seca em profundidade e elimina 99.9% das bactérias e fungos enquanto você descansa.
             </motion.p>
           </section>
 
-          {/* Product Gallery */}
-          <section className="max-w-4xl mx-auto px-4 mb-12">
-            <div className="bg-white p-4 sm:p-6 rounded-[2rem] shadow-2xl border border-slate-200">
-              <div className="relative aspect-square sm:aspect-video rounded-2xl overflow-hidden bg-slate-100 mb-4 group shadow-inner">
-                <AnimatePresence mode="wait">
-                  <motion.img 
-                    key={activeImage}
-                    src={IMAGES[activeImage]}
-                    initial={{ opacity: 0, x: 40 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -40 }}
-                    transition={{ duration: 0.4, ease: "easeInOut" }}
-                    className="w-full h-full object-cover absolute inset-0"
-                    alt={`Produto Imagem ${activeImage + 1}`}
-                  />
-                </AnimatePresence>
-              </div>
-              
-              {/* Thumbnails */}
-              <div className="flex gap-3 overflow-x-auto pb-4 pt-2 px-1 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {IMAGES.map((src, i) => (
-                  <button 
-                    key={i} 
-                    onClick={() => setActiveImage(i)}
-                    className={`shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden snap-center transition-all ${
-                      i === activeImage 
-                        ? 'ring-4 ring-indigo-500 opacity-100 scale-105' 
-                        : 'ring-1 ring-slate-200 opacity-60 hover:opacity-100 hover:scale-105'
-                    }`}
-                  >
-                    <img src={src} alt={`Thumbnail ${i}`} className="w-full h-full object-cover" />
-                  </button>
+          {/* Checklist: Para quem é? */}
+          <section className="max-w-4xl mx-auto px-4 mb-20 text-center">
+            <div className="max-w-xl mx-auto text-left">
+              <div className="space-y-3">
+                {[
+                  "Praticas desporto e o teu calçado fica sempre encharcado de suor",
+                  "Tens calçado caro que queres preservar por muito mais tempo",
+                  "Sofres com o mau cheiro (chulé) persistente e nada resolve",
+                  "Queres garantir que os teus pés estão livres de fungos e micoses",
+                  "Precisas de secar sapatos de forma rápida nos dias de chuva em Luanda"
+                ].map((text, i) => (
+                  <div key={i} className="flex items-center gap-3 bg-white p-3.5 rounded-xl shadow-sm border border-slate-100">
+                    <div className="bg-emerald-100 text-emerald-600 rounded-full p-1"><CheckCircle size={18} /></div>
+                    <span className="text-slate-700 font-semibold">{text}</span>
+                  </div>
                 ))}
               </div>
             </div>
           </section>
 
+          {/* Dores Seccionadas */}
+          <section className="max-w-4xl mx-auto px-4 grid md:grid-cols-3 gap-6 mb-20">
+              <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:border-indigo-200 transition group">
+                  <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mb-6">
+                    <ShieldAlert size={24} />
+                  </div>
+                  <h3 className="font-bold text-xl mb-3 text-slate-800">Higiene e Saúde</h3>
+                  <p className="text-slate-500 leading-relaxed text-sm">O calçado húmido é o local perfeito para fungos e bactérias. O Secador UV elimina a causa do mau cheiro pela raiz através da luz ultravioleta.</p>
+              </div>
+              <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:border-emerald-200 transition group">
+                  <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center mb-6">
+                    <Activity size={24} />
+                  </div>
+                  <h3 className="font-bold text-xl mb-3 text-slate-800">Secagem Segura</h3>
+                  <p className="text-slate-500 leading-relaxed text-sm">Ao contrário do sol ou secadores de cabelo, a temperatura constante de 48ºC seca sem deformar o couro ou descolar as solas do seu calçado.</p>
+              </div>
+              <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:border-amber-200 transition group">
+                  <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-6">
+                    <Timer size={24} />
+                  </div>
+                  <h3 className="font-bold text-xl mb-3 text-slate-800">Economia de Tempo</h3>
+                  <p className="text-slate-500 leading-relaxed text-sm">Defina o temporizador e esqueça. Em pouco tempo, os seus ténis preferidos estão prontos para o próximo uso, totalmente secos e esterilizados.</p>
+              </div>
+          </section>
+
           <div className="max-w-4xl mx-auto px-4">
-            {/* Features (Mobile First stacking) */}
-            <section className="grid sm:grid-cols-3 gap-4 sm:gap-6 mb-12">
-              <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                <ShieldAlert className="w-8 h-8 text-indigo-600 mb-3" />
-                <h3 className="font-bold text-slate-900 mb-1">Elimina Fungos</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">A luz UV destrói 99,9% das bactérias causadoras do pé de atleta e chulé.</p>
-              </div>
-              <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                <Activity className="w-8 h-8 text-amber-500 mb-3" />
-                <h3 className="font-bold text-slate-900 mb-1">Secagem Segura</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">Calor 360º não deforma nem queima couro ou tecidos caros.</p>
-              </div>
-              <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                <CheckCircle className="w-8 h-8 text-emerald-500 mb-3" />
-                <h3 className="font-bold text-slate-900 mb-1">Cuidado Premium</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">Prolonga a vida útil dos seus ténis molhados pela chuva ou suor.</p>
+            {/* BLOCO: Benefícios */}
+            <section className="mb-14">
+              <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-8 text-center tracking-tight">Benefícios Reais</h2>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-start gap-4">
+                  <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center shrink-0"><CheckCircle size={20} /></div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 mb-1">Confiança Total</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed">Chega de vergonha com chulé — use qualquer sapato com confiança.</p>
+                  </div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-start gap-4">
+                  <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center shrink-0"><CheckCircle size={20} /></div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 mb-1">Durabilidade</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed">Seus tênis favoritos duram muito mais, sem estragar por dentro.</p>
+                  </div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-start gap-4">
+                  <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center shrink-0"><CheckCircle size={20} /></div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 mb-1">Praticidade Máxima</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed">Dorme, o aparelho trabalha — acorda com o calçado seco e sem fungos.</p>
+                  </div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-start gap-4">
+                  <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center shrink-0"><CheckCircle size={20} /></div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 mb-1">Versatilidade</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed">Funciona em tênis, sandálias, botas e sapato social.</p>
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -953,7 +1070,7 @@ export default function App() {
             </section>
 
             {/* Testimonials */}
-            <section className="mb-14">
+            <section className="mb-24">
               <div className="text-center mb-10">
                 <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">Quem comprou, recomenda!</h2>
                 <p className="text-slate-500 max-w-lg mx-auto">Veja o que os nossos clientes dizem sobre a eficácia do Secador Inteligente UV.</p>
@@ -975,6 +1092,61 @@ export default function App() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </section>
+
+            {/* Como Funciona - UV */}
+            <section className="mb-24">
+              <h2 className="text-3xl font-black text-slate-900 mb-12 text-center tracking-tight">Esterilização em 3 passos</h2>
+              <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+                <div className="relative p-8 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
+                  <div className="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold absolute -top-6 shadow-lg">1</div>
+                  <div className="text-4xl mb-6 mt-2">👟</div>
+                  <p className="font-bold text-slate-800 leading-relaxed">Insira os bicos do secador dentro do calçado, seja atacadores ou sapato social</p>
+                </div>
+                <div className="relative p-8 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
+                  <div className="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold absolute -top-6 shadow-lg">2</div>
+                  <div className="text-4xl mb-6 mt-2">🕒</div>
+                  <p className="font-bold text-slate-800 leading-relaxed">Escolha o tempo necessário (30 a 120 min) e ative a luz UV para esterilizar</p>
+                </div>
+                <div className="relative p-8 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
+                  <div className="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold absolute -top-6 shadow-lg">3</div>
+                  <div className="text-4xl mb-6 mt-2">✨</div>
+                  <p className="font-bold text-slate-800 leading-relaxed">Retire o seu calçado totalmente seco, cheiroso e livre de 99.9% das bactérias</p>
+                </div>
+              </div>
+            </section>
+
+            {/* Tabela Comparativa - UV */}
+            <section className="mb-24 px-4 overflow-hidden">
+              <h2 className="text-3xl font-black text-slate-900 mb-10 text-center tracking-tight">Secagem Manual VS Secador C Store UV</h2>
+              <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden max-w-2xl mx-auto">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50">
+                        <th className="p-4 border-b border-slate-100 font-bold text-slate-400 uppercase text-[10px] tracking-widest text-center">Critério</th>
+                        <th className="p-4 border-b border-slate-100 font-bold text-slate-700 bg-slate-100/50 text-center">☀️ Sol/Ar</th>
+                        <th className="p-4 border-b border-slate-100 font-bold text-indigo-600 bg-indigo-50 text-center">💜 Secador UV</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-sm">
+                      {[
+                        { c: "Higiene", t: "Bactérias continuam", s: "Esterilização UV" },
+                        { c: "Mau Cheiro", t: "Apenas disfarça", s: "Elimina a causa" },
+                        { c: "Preservação", t: "Pode ressecar couro", s: "Temperatura controlada" },
+                        { c: "Velocidade", t: "24 a 48 horas", s: "1 a 2 horas" },
+                        { c: "Clima", t: "Depende do sol", s: "Funciona 24/7" }
+                      ].map((row, i) => (
+                        <tr key={i} className="hover:bg-slate-50 transition-colors">
+                          <td className="p-4 border-b border-slate-50 font-bold text-slate-800 bg-slate-50/30">{row.c}</td>
+                          <td className="p-4 border-b border-slate-50 text-slate-500 text-center">{row.t}</td>
+                          <td className="p-4 border-b border-slate-50 font-bold text-slate-900 bg-indigo-50/40 text-center">{row.s}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </section>
 
@@ -1078,6 +1250,49 @@ export default function App() {
 
               </div>
             </section>
+
+            {/* BLOCO: Garantia */}
+            <section className="mt-14 mb-14 bg-indigo-900 text-white p-8 sm:p-10 rounded-[2rem] shadow-xl overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 rounded-full blur-3xl -mr-16 -mt-16" />
+              <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+                <div className="w-20 h-20 bg-indigo-500/30 rounded-2xl flex items-center justify-center shrink-0">
+                  <ShieldCheck size={40} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Garantia Blindada C Store</h2>
+                  <p className="text-indigo-100 text-lg">
+                    Compra sem risco. Se o produto chegar com defeito ou não funcionar como prometido, entre em contato pelo WhatsApp e resolvemos. Sem complicação.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* BLOCO: FAQ */}
+            <section className="mb-14">
+              <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-8 text-center tracking-tight">Perguntas Frequentes</h2>
+              <div className="space-y-4 max-w-3xl mx-auto">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                  <h3 className="font-bold text-slate-900 mb-2">Quanto tempo demora a entrega em Luanda?</h3>
+                  <p className="text-slate-600 text-sm">A entrega é feita em 2 a 6 horas após a confirmação do pedido. Pedidos feitos à noite são entregues no dia seguinte.</p>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                  <h3 className="font-bold text-slate-900 mb-2">Preciso pagar antes de receber?</h3>
+                  <p className="text-slate-600 text-sm">Não. O pagamento é feito na hora da entrega, só após receber o produto em mãos.</p>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                  <h3 className="font-bold text-slate-900 mb-2">Funciona para qualquer tipo de calçado?</h3>
+                  <p className="text-slate-600 text-sm">Sim — tênis, sapato social, botas, sandálias fechadas e qualquer calçado com abertura para encaixar.</p>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                  <h3 className="font-bold text-slate-900 mb-2">Posso deixar ligado a noite toda?</h3>
+                  <p className="text-slate-600 text-sm">Sim. O temporizador automático desliga sozinho em até 120 minutos. É só colocar e dormir.</p>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                  <h3 className="font-bold text-slate-900 mb-2">E se chegar com defeito?</h3>
+                  <p className="text-slate-600 text-sm">Entre em contato pelo WhatsApp imediatamente. Resolvemos com reposição ou devolução do valor.</p>
+                </div>
+              </div>
+            </section>
           </div>
         </main>
       )}
@@ -1103,6 +1318,19 @@ export default function App() {
             >
               Visitar Loja Oficial C Store Angola
             </a>
+
+            <div className="mt-10 flex justify-center">
+              <a 
+                href="https://wa.me/244921167980?text=Olá,%20tenho%20dúvidas%20sobre%20o%20Secador%20Inteligente%20UV"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-emerald-500 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 hover:bg-emerald-600 transition-all font-bold text-sm"
+              >
+                <MessageCircle size={20} />
+                Tens dúvidas? Fala connosco via WhatsApp
+              </a>
+            </div>
+
             <div className="mt-12 text-xs opacity-40">
               &copy; {new Date().getFullYear()} C Store Angola. Todos os direitos reservados.
             </div>
@@ -1114,22 +1342,20 @@ export default function App() {
       {view === 'sales-roupas' && (
         <main className="pb-24">
           
+          {/* Header/Hero */}
           <section className="pt-10 pb-6 px-4 max-w-4xl mx-auto text-center">
             <motion.div 
                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                className="mb-8"
             >
-              <div className="inline-block bg-sky-100 text-sky-800 font-bold px-3 py-1 rounded-full text-sm mb-4 border border-sky-200">
-                 A Salvação para Dias de Chuva
+              <div className="inline-block bg-sky-100 text-sky-800 font-bold px-4 py-1.5 rounded-full text-sm mb-6 border border-sky-200">
+                 ✦ A solução para quem vive em apartamento em Luanda
               </div>
-              <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight mb-6">
-                O primeiro Secador Expresso Portátil (Edition Pro) disponível em Angola.
+              <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight mb-6 px-2">
+                A solução definitiva para secar e higienizar a sua roupa de forma prática e rápida.
               </h1>
-              <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto font-medium leading-relaxed">
-                Chega de depender do sol ou espalhar roupa pela casa. A solução prática para secar as suas peças rapidamente, mesmo em apartamentos ou dias de chuva.
-              </p>
 
-              {/* Gallery Wrapper */}
+              {/* Gallery Wrapper Moved Up */}
               <div className="bg-white p-3 rounded-3xl shadow-sm border border-slate-200 inline-block w-full mb-12">
                 <div className="relative aspect-square md:aspect-video rounded-2xl overflow-hidden bg-slate-100 w-full mb-4 group cursor-pointer" onClick={() => window.open(IMAGES_ROUPAS[activeImage], '_blank')}>
                   <img src={IMAGES_ROUPAS[activeImage]} alt="Secador Expresso Portátil (Edition Pro)" className="w-full h-full object-cover object-center" />
@@ -1147,72 +1373,172 @@ export default function App() {
                   ))}
                 </div>
               </div>
-              
-              <ul className="text-left max-w-xl mx-auto space-y-3 mb-12 text-slate-700 font-medium text-lg">
-                <li className="flex items-center gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100"><CheckCircle className="text-emerald-500 shrink-0" size={24} /> Seca roupas em poucas horas</li>
-                <li className="flex items-center gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100"><CheckCircle className="text-emerald-500 shrink-0" size={24} /> Tecnologia de ar quente silencioso</li>
-                <li className="flex items-center gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100"><CheckCircle className="text-emerald-500 shrink-0" size={24} /> Compacto e fácil de transportar</li>
-                <li className="flex items-center gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100"><CheckCircle className="text-emerald-500 shrink-0" size={24} /> Ideal para apartamentos, estudantes e famílias</li>
-                <li className="flex items-center gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100"><CheckCircle className="text-emerald-500 shrink-0" size={24} /> Perfeito para fardas, camisas, roupas íntimas e peças do dia a dia</li>
-              </ul>
 
-              <div className="grid md:grid-cols-3 gap-6 mb-12 text-left">
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:border-sky-200 hover:shadow-md transition">
-                      <div className="text-3xl text-sky-500 mb-3 block">🕒</div>
-                      <h3 className="font-bold mb-2 text-slate-800">Stress Matinal Acabou</h3>
-                      <p className="text-sm text-slate-500 leading-relaxed">A farda das crianças ou a roupa de trabalho continuam húmidas? Resolva a urgência pendurando no cabide por 1 ou 2 horas.</p>
+              <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto font-medium leading-relaxed">
+                O Secador Expresso Portátil seca qualquer peça em 1 a 2 horas — roupa íntima, camisas, calças, uniformes escolares — de forma eficiente e sem complicações.
+              </p>
+              
+              <div className="max-w-xl mx-auto mb-16 text-left">
+                <div className="space-y-3">
+                  {[
+                    "Vives num apartamento sem varanda ou sem sol directo",
+                    "Tens vergonha de deixar roupa íntima no estendal comum dos vizinhos",
+                    "As tuas camisas e calças ficam dias penduradas e ainda saem húmidas",
+                    "O uniforme escolar das crianças precisa de estar seco até amanhã de manhã",
+                    "A tua roupa já ficou com cheiro a bafio ou manchas de fungo por causa da humidade",
+                    "Odeias espalhar roupa pela sala, quarto e casa de banho durante dias"
+                  ].map((text, i) => (
+                    <div key={i} className="flex items-center gap-3 bg-white p-3.5 rounded-xl shadow-sm border border-slate-100">
+                      <div className="bg-emerald-100 text-emerald-600 rounded-full p-1"><CheckCircle size={18} /></div>
+                      <span className="text-slate-700 font-semibold">{text}</span>
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-3 bg-red-50 p-3.5 rounded-xl shadow-sm border border-red-100">
+                    <div className="bg-red-100 text-red-600 rounded-full p-1"><XCircle size={18} /></div>
+                    <span className="text-red-700 font-bold">Não é para quem tem quintal com sol directo e espaço para estender à vontade</span>
                   </div>
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:border-orange-200 hover:shadow-md transition">
-                      <div className="text-3xl text-orange-500 mb-3 block">💨</div>
-                      <h3 className="font-bold mb-2 text-slate-800">Fim do Cheiro a Bafio</h3>
-                      <p className="text-sm text-slate-500 leading-relaxed">Roupas estendidas dentro de casa ganham aquele cheiro terrível a humidade. Seque rápido com ar quente e mantenha o cheiro do perfume.</p>
+                </div>
+              </div>
+
+              {/* Dores Section */}
+              <div className="grid md:grid-cols-3 gap-6 mb-20 text-left">
+                  <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:border-sky-200 hover:shadow-md transition group">
+                      <div className="w-12 h-12 bg-sky-50 text-sky-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <Lock size={24} />
+                      </div>
+                      <h3 className="font-bold text-xl mb-3 text-slate-800">Praticidade e Descrição</h3>
+                      <p className="text-slate-500 leading-relaxed text-sm">Seca a tua roupa com total descrição e rapidez. Com o Secador Expresso, podes gerir as tuas secagens de forma tranquila e eficiente, sem ocupar espaço visível.</p>
                   </div>
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:border-emerald-200 hover:shadow-md transition">
-                      <div className="text-3xl text-emerald-500 mb-3 block">🏢</div>
-                      <h3 className="font-bold mb-2 text-slate-800">Ideal para Apartamentos</h3>
-                      <p className="text-sm text-slate-500 leading-relaxed">Sem quintal? Esqueça a sala cheia de estendais gigantes. O design portátil e dobrável seca a roupa discretamente num canto do quarto.</p>
+                  <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:border-orange-200 hover:shadow-md transition group">
+                      <div className="w-12 h-12 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <ShieldAlert size={24} />
+                      </div>
+                      <h3 className="font-bold text-xl mb-3 text-slate-800">Fungos e Bafio Acabaram</h3>
+                      <p className="text-slate-500 leading-relaxed text-sm">Roupa húmida por 4 ou 5 dias dentro de casa cria fungos invisíveis que causam alergias, irritação na pele e um cheiro que não sai mesmo depois de lavar. O ar quente PTC elimina a humidade em profundidade.</p>
+                  </div>
+                  <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:border-emerald-200 hover:shadow-md transition group">
+                      <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <Timer size={24} />
+                      </div>
+                      <h3 className="font-bold text-xl mb-3 text-slate-800">O Uniforme Está Pronto para Amanhã</h3>
+                      <p className="text-slate-500 leading-relaxed text-sm">Lavaste o uniforme escolar das crianças à noite e precisas que esteja seco de manhã? Em 1 a 2 horas está pronto. Sem stress, sem acordar cedo para resolver o problema.</p>
                   </div>
               </div>
+
+              {/* Tipos de Roupa Section */}
+              <div className="mb-24 py-16 bg-slate-50 -mx-4 px-4 rounded-[3rem]">
+                <div className="max-w-4xl mx-auto">
+                  <h2 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">Seca tudo — sem excepções</h2>
+                  <p className="text-slate-500 mb-12">Do mais íntimo ao mais formal, tudo fica seco em 1 a 2 horas</p>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 text-left">
+                    {[
+                      { icon: "🩲", title: "Roupa Íntima", desc: "Cuecas, sutiãs e meias secos com privacidade total" },
+                      { icon: "👔", title: "Camisas de Trabalho", desc: "Vai para o trabalho com a camisa seca e sem amarrotar" },
+                      { icon: "👖", title: "Calças e Jeans", desc: "Jeans que demora 3 dias no estendal, seco em 2 horas" },
+                      { icon: "🎽", title: "Uniformes Escolares", desc: "Lavado à noite, pronto de manhã para os filhos" },
+                      { icon: "🩳", title: "Roupas de Desporto", desc: "Sem cheiro, sem humidade, prontas para o próximo treino" },
+                      { icon: "🧣", title: "Tecidos Delicados", desc: "Ar quente suave que não danifica os tecidos finos" }
+                    ].map((item, i) => (
+                      <div key={i} className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+                        <div className="text-3xl mb-4">{item.icon}</div>
+                        <h4 className="font-bold text-slate-900 mb-1 text-sm md:text-base">{item.title}</h4>
+                        <p className="text-[11px] md:text-xs text-slate-500 leading-relaxed">{item.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Tabela Comparativa */}
+              <div className="mb-24 px-4">
+                <h2 className="text-3xl font-black text-slate-900 mb-10 tracking-tight">Estendal tradicional VS Secador Expresso</h2>
+                <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden max-w-2xl mx-auto">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50">
+                          <th className="p-4 border-b border-slate-100 font-bold text-slate-400 uppercase text-[10px] tracking-widest text-center">Critério</th>
+                          <th className="p-4 border-b border-slate-100 font-bold text-slate-700 bg-slate-100/50 text-center">🪣 Estendal</th>
+                          <th className="p-4 border-b border-slate-100 font-bold text-sky-600 bg-sky-50 text-center">⚡ Secador</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-sm">
+                        {[
+                          { c: "Tempo de secagem", t: "3 a 5 dias", s: "1 a 2 horas" },
+                          { c: "Roupa íntima", t: "Exposta a todos", s: "Privacidade total" },
+                          { c: "Dias de chuva", t: "Roupa não seca", s: "Funciona sempre" },
+                          { c: "Fungos e bafio", t: "Frequente", s: "Eliminados" },
+                          { c: "Espaço necessário", t: "Sala, quarto, WC", s: "Cabe numa gaveta" },
+                          { c: "Resultado", t: "Húmido e com cheiro", s: "Seco, limpo, sem odor" }
+                        ].map((row, i) => (
+                          <tr key={i} className="hover:bg-slate-50 transition-colors">
+                            <td className="p-4 border-b border-slate-50 font-bold text-slate-800 bg-slate-50/30">{row.c}</td>
+                            <td className="p-4 border-b border-slate-50 text-slate-500 text-center">{row.t}</td>
+                            <td className="p-4 border-b border-slate-50 font-bold text-slate-900 bg-sky-50/40 text-center">{row.s}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* Como Funciona */}
+              <div className="mb-24">
+                <h2 className="text-3xl font-black text-slate-900 mb-12 tracking-tight">Simples assim — 3 passos e a roupa está seca</h2>
+                <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+                  <div className="relative p-8 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
+                    <div className="w-12 h-12 bg-sky-600 text-white rounded-full flex items-center justify-center font-bold absolute -top-6">1</div>
+                    <div className="text-4xl mb-6 mt-2">👕</div>
+                    <p className="font-bold text-slate-800 leading-relaxed">Pendura as peças no secador — roupa íntima, camisas, calças, o que precisares</p>
+                  </div>
+                  <div className="relative p-8 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
+                    <div className="w-12 h-12 bg-sky-600 text-white rounded-full flex items-center justify-center font-bold absolute -top-6">2</div>
+                    <div className="text-4xl mb-6 mt-2">🔌</div>
+                    <p className="font-bold text-slate-800 leading-relaxed">Liga à tomada e define o tempo com o temporizador — sem app, sem complicação</p>
+                  </div>
+                  <div className="relative p-8 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
+                    <div className="w-12 h-12 bg-sky-600 text-white rounded-full flex items-center justify-center font-bold absolute -top-6">3</div>
+                    <div className="text-4xl mb-6 mt-2">✅</div>
+                    <p className="font-bold text-slate-800 leading-relaxed">Em 1 a 2 horas a roupa está completamente seca, sem cheiro e sem fungo</p>
+                  </div>
+                </div>
+              </div>
               
+              {/* FAQ Accordion Section */}
+              <div className="mb-24 text-left max-w-3xl mx-auto px-4">
+                <h2 className="text-3xl font-black text-slate-900 mb-10 tracking-tight text-center">As tuas dúvidas respondidas de forma honesta</h2>
+                <div className="space-y-4">
+                   {FAQ_ROUPAS.map((item, i) => (
+                     <AccordionItem key={i} question={item.q} answer={item.a} />
+                   ))}
+                </div>
+              </div>
+
               {/* Product Specifications */}
               <div className="mt-20 text-left max-w-3xl mx-auto">
                 <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-8 text-center flex items-center justify-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600"><Settings size={20} /></div>
                   Especificações Técnicas
                 </h2>
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
                   <div className="divide-y divide-slate-100">
-                    <div className="p-4 md:p-5 grid grid-cols-2 gap-4 hover:bg-slate-50 md:text-base text-sm transition-colors">
-                      <span className="font-semibold text-slate-600">Tipo de Secador</span>
-                      <span className="font-medium text-slate-900 text-right">Secador de roupa elétrico</span>
-                    </div>
-                    <div className="p-4 md:p-5 grid grid-cols-2 gap-4 hover:bg-slate-50 bg-slate-50/50 md:text-base text-sm transition-colors">
+                    <div className="p-5 grid grid-cols-2 gap-4 hover:bg-slate-50 transition-colors">
                       <span className="font-semibold text-slate-600">Potência</span>
                       <span className="font-medium text-slate-900 text-right">600W</span>
                     </div>
-                    <div className="p-4 md:p-5 grid grid-cols-2 gap-4 hover:bg-slate-50 md:text-base text-sm transition-colors">
-                      <span className="font-semibold text-slate-600">Instalação</span>
-                      <span className="font-medium text-slate-900 text-right">Portátil / Mini Dobrável</span>
+                    <div className="p-5 grid grid-cols-2 gap-4 hover:bg-slate-50 bg-slate-50/50 transition-colors">
+                      <span className="font-semibold text-slate-600">Material</span>
+                      <span className="font-medium text-slate-900 text-right">ABS Ignífugo + Cabide Alumínio</span>
                     </div>
-                    <div className="p-4 md:p-5 grid grid-cols-2 gap-4 hover:bg-slate-50 bg-slate-50/50 md:text-base text-sm transition-colors">
-                      <span className="font-semibold text-slate-600">Modo de Aquecimento</span>
-                      <span className="font-medium text-slate-900 text-right">Circulação de Ar Quente (PTC)</span>
+                    <div className="p-5 grid grid-cols-2 gap-4 hover:bg-slate-50 transition-colors">
+                      <span className="font-semibold text-slate-600">Aquecimento</span>
+                      <span className="font-medium text-slate-900 text-right">PTC Automático</span>
                     </div>
-                    <div className="p-4 md:p-5 grid grid-cols-2 gap-4 hover:bg-slate-50 md:text-base text-sm transition-colors">
-                      <span className="font-semibold text-slate-600">Dimensões (C x L x A)</span>
+                    <div className="p-5 grid grid-cols-2 gap-4 hover:bg-slate-50 bg-slate-50/50 transition-colors">
+                      <span className="font-semibold text-slate-600">Dimensões</span>
                       <span className="font-medium text-slate-900 text-right">32 x 24 x 15 cm</span>
-                    </div>
-                    <div className="p-4 md:p-5 grid grid-cols-2 gap-4 hover:bg-slate-50 bg-slate-50/50 md:text-base text-sm transition-colors">
-                      <span className="font-semibold text-slate-600">Eficiência Energética</span>
-                      <span className="font-medium text-slate-900 text-right">Classe UM (A)</span>
-                    </div>
-                     <div className="p-4 md:p-5 grid grid-cols-2 gap-4 hover:bg-slate-50 md:text-base text-sm transition-colors">
-                      <span className="font-semibold text-slate-600">Aplicação / Uso</span>
-                      <span className="font-medium text-slate-900 text-right">Casa, Hotel, Viagem, Camping</span>
-                    </div>
-                     <div className="p-4 md:p-5 grid grid-cols-2 gap-4 hover:bg-slate-50 bg-slate-50/50 md:text-base text-sm transition-colors">
-                      <span className="font-semibold text-slate-600">Controlado por App</span>
-                      <span className="font-medium text-slate-900 text-right">Sem controle por app (Controlado por Comando de Fio/Temporizador)</span>
                     </div>
                   </div>
                 </div>
@@ -1221,22 +1547,22 @@ export default function App() {
           </section>
 
           {/* Testimonials */}
-          <section className="mb-14">
-            <div className="text-center mb-10 mt-10">
-              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">Quem comprou, recomenda!</h2>
-              <p className="text-slate-500 max-w-lg mx-auto">Veja o que os nossos clientes dizem sobre a praticidade do Secador Expresso Portátil.</p>
+          <section className="mb-24 px-4 bg-white py-20 border-y border-slate-100">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-4 tracking-tight">Quem comprou, recomenda!</h2>
+              <p className="text-slate-500 max-w-lg mx-auto">Vê o que os nossos clientes dizem sobre a praticidade do Secador Expresso Portátil.</p>
             </div>
-            <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto px-4">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
               {TESTIMONIALS_ROUPAS.map((t, idx) => (
-                <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full hover:shadow-md transition-shadow">
-                  <div className="flex gap-1 mb-4">
+                <div key={idx} className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 flex flex-col h-full group hover:shadow-xl hover:shadow-sky-500/5 transition-all">
+                  <div className="flex gap-1 mb-6">
                      {Array.from({length: 5}).map((_, i) => (
-                       <Star key={i} size={18} className={i < t.rating ? "fill-amber-400 text-amber-400" : "fill-slate-100 text-slate-200"} />
+                       <Star key={i} size={16} className="fill-amber-400 text-amber-400" />
                      ))}
                   </div>
-                  <p className="text-sm text-slate-600 mb-6 italic leading-relaxed flex-grow">"{t.comment}"</p>
-                  <div className="flex items-center gap-3 pt-4 border-t border-slate-50">
-                    <div className="w-8 h-8 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center font-bold text-xs">
+                  <p className="text-sm text-slate-600 mb-8 italic leading-relaxed flex-grow">"{t.comment}"</p>
+                  <div className="flex items-center gap-3 pt-6 border-t border-slate-200/50">
+                    <div className="w-10 h-10 bg-sky-600 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-md">
                       {t.name.charAt(0)}
                     </div>
                     <span className="text-sm font-bold text-slate-900">{t.name}</span>
@@ -1247,100 +1573,157 @@ export default function App() {
           </section>
 
           {/* Checkout Section */}
-          <div id="comprar" className="pt-8 scroll-mt-20 px-4">
-            <section className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden max-w-4xl mx-auto">
-              <div className="bg-sky-600 p-8 text-center text-white">
-                  <h2 className="text-2xl md:text-3xl font-bold mb-2 tracking-tight">A Mini-Lavandaria que cabe na Gaveta</h2>
-                  <p className="text-sky-100 font-medium text-sm md:text-base">Faça a sua Encomenda e Pague Apenas na Entrega!</p>
+          <div id="comprar" className="pt-8 scroll-mt-20 px-4 mb-10">
+            <section className="bg-white rounded-[3rem] shadow-2xl border border-slate-200 overflow-hidden max-w-4xl mx-auto flex flex-col md:flex-row">
+              <div className="md:w-[45%] bg-sky-600 p-10 text-white flex flex-col justify-between relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32" />
+                  
+                  <div className="relative z-10">
+                    <h2 className="text-3xl md:text-4xl font-black mb-6 tracking-tight leading-tight">Chega de Roupa Húmida em Casa — Encomenda Agora</h2>
+                    <p className="text-sky-100 font-medium text-lg leading-relaxed mb-8 opacity-90">Preenche os teus dados e recebe em casa. Pagas só quando chegar.</p>
+                    
+                    <div className="space-y-4 mb-10">
+                      {[
+                        "Entrega Grátis em Luanda",
+                        "Pagas no Momento da Entrega",
+                        "Garantia de Satisfação 7 Dias",
+                        "Suporte via WhatsApp 24/7"
+                      ].map((item, i) => (
+                        <div key={i} className="flex items-center gap-3 text-sm font-bold bg-white/10 p-3 rounded-xl border border-white/10 px-4">
+                          <CheckCircle size={18} className="text-emerald-300" /> {item}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="relative z-10 pt-8 border-t border-white/20">
+                    <p className="text-sky-200 text-sm mb-4">Aprovado por mais de 450 famílias em Luanda e no Kilamba.</p>
+                    <div className="flex -space-x-2">
+                       {[1,2,3,4].map(i => (
+                         <div key={i} className="w-8 h-8 rounded-full border-2 border-sky-600 bg-slate-200 overflow-hidden">
+                           <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="User" />
+                         </div>
+                       ))}
+                       <div className="w-8 h-8 rounded-full border-2 border-sky-600 bg-emerald-500 flex items-center justify-center text-[10px] font-bold">+450</div>
+                    </div>
+                  </div>
               </div>
               
-              <div className="p-8 md:flex gap-8 items-center">
-                  <div className="md:w-1/2 mb-8 md:mb-0">
-                      <div className="text-center md:text-left relative">
-                          <div className="absolute top-8 right-0 md:right-10 bg-emerald-500 text-white font-bold py-1 px-3 rounded-full text-sm shadow-md animate-pulse">
-                            Poupa 15.100 Kz
-                          </div>
-                          <p className="text-slate-500 text-sm mb-2">Uma máquina tradicional gasta energia e custa 300.000 Kz.</p>
-                          <p className="text-slate-400 line-through text-lg font-medium">De: 50.000 Kz</p>
-                          <p className="text-5xl font-black text-slate-900 mb-3 tracking-tight">34.900 <span className="text-2xl text-slate-500">Kz</span></p>
-                          <p className="text-sm text-emerald-600 font-bold mb-6 flex items-center justify-center md:justify-start gap-1.5"><PackageOpen size={16} /> Entrega Grátis em Luanda</p>
-                          
-                          <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl text-amber-800 text-sm font-medium flex items-start gap-2 text-left leading-relaxed">
-                            <span className="text-amber-500 mt-0.5"><Info size={16} /></span>
-                            Atenção: A procura dispara nos dias nublados. Restam apenas 12 unidades ao preço promocional.
-                          </div>
+              <div className="md:w-[55%] p-10">
+                  <div className="text-center md:text-left relative mb-10 pb-10 border-b border-slate-100">
+                      <div className="absolute top-0 right-0 bg-red-500 text-white font-black py-2 px-4 rounded-full text-xs shadow-lg animate-bounce">
+                        Poupa 15.100 Kz hoje
+                      </div>
+                      <p className="text-slate-500 text-sm font-bold mb-4 uppercase tracking-widest">Oferta Exclusiva</p>
+                      <p className="text-slate-400 line-through text-xl font-medium mb-1">50.000 Kz</p>
+                      <div className="flex items-baseline gap-2 mb-4">
+                        <span className="text-6xl font-black text-slate-900 tracking-tight">34.900</span>
+                        <span className="text-2xl font-bold text-slate-500">Kz</span>
+                      </div>
+                      <div className="bg-indigo-50 text-indigo-700 p-4 rounded-2xl text-sm font-bold flex items-center gap-3">
+                         <span className="text-indigo-500"><Info size={20} /></span>
+                         Uma lavandaria profissional cobra 3.000 Kz por sessão. Este secador paga-se sozinho no primeiro mês.
                       </div>
                   </div>
 
-                  <div className="md:w-1/2">
-                    <div className="mb-6">
-                      <div className="bg-red-50 text-red-700 border border-red-200 p-3 rounded-xl flex items-center justify-between font-bold shadow-sm">
-                        <div className="flex items-center gap-2">
-                          <Timer className="animate-pulse" size={20} />
-                          Oferta expira em:
+                  <div className="mb-8">
+                    <div className="bg-red-50 text-red-700 border border-red-200 p-4 rounded-2xl flex flex-col gap-3 shadow-sm">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 font-bold uppercase text-xs tracking-tighter">
+                          <Timer className="animate-pulse" size={18} />
+                          Promoção acaba em:
                         </div>
-                        <span className="text-xl font-black bg-white px-3 py-1 rounded-md shadow-sm border border-red-100 tabular-nums">
+                        <span className="text-2xl font-black tabular-nums">
                           {formatTime(timeLeft)}
                         </span>
                       </div>
+                      <div className="flex items-center gap-2 text-xs font-bold bg-white/50 p-2 rounded-lg">
+                        <TriangleAlert size={14} className="text-red-500" />
+                        ⚠️ Atenção: Este lote tem apenas 12 unidades restantes ao preço promocional.
+                      </div>
                     </div>
-                    <form onSubmit={handleFormSubmit} className="space-y-4">
+                  </div>
+
+                  <form onSubmit={handleFormSubmit} className="space-y-5">
+                    <div className="grid grid-cols-1 gap-5">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="name-input">Nome Completo</label>
+                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Nome Completo</label>
                         <input 
-                          id="name-input"
                           type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
-                          className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all placeholder:text-slate-400" 
+                          className="w-full px-5 py-4 bg-slate-50 rounded-2xl border border-slate-200 focus:bg-white focus:ring-4 focus:ring-sky-100 focus:border-sky-500 outline-none transition-all placeholder:text-slate-300 font-medium" 
                           placeholder="Ex: Marta Silva"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Número de WhatsApp</label>
+                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Número de WhatsApp</label>
                         <input 
                           type="tel" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})}
-                          className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all placeholder:text-slate-400" 
-                          placeholder="Ex: 923 000 000"
+                          className="w-full px-5 py-4 bg-slate-50 rounded-2xl border border-slate-200 focus:bg-white focus:ring-4 focus:ring-sky-100 focus:border-sky-500 outline-none transition-all placeholder:text-slate-300 font-medium" 
+                          placeholder="Ex: 921 167 980"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Endereço Completo</label>
+                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Bairro / Rua em Luanda</label>
                          <input 
                           type="text" required value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})}
-                          className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all placeholder:text-slate-400" 
+                          className="w-full px-5 py-4 bg-slate-50 rounded-2xl border border-slate-200 focus:bg-white focus:ring-4 focus:ring-sky-100 focus:border-sky-500 outline-none transition-all placeholder:text-slate-300 font-medium" 
                           placeholder="Bairro, Rua, Referência"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Quantidade</label>
+                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Quantas unidades?</label>
                         <div className="relative">
                           <select 
                             value={formData.quantity}
                             onChange={e => setFormData({...formData, quantity: parseInt(e.target.value) || 1})}
-                            className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all appearance-none"
+                            className="w-full px-5 py-4 bg-slate-50 rounded-2xl border border-slate-200 focus:bg-white focus:ring-4 focus:ring-sky-100 focus:border-sky-500 outline-none transition-all appearance-none font-bold"
                           >
                              {Array.from({ length: 10 }).map((_, i) => {
                                const q = i + 1;
                                return (
                                  <option key={q} value={q}>
-                                   {q} {q === 1 ? 'unidade' : 'unidades'} - {new Intl.NumberFormat('pt-AO', { style: 'decimal', minimumFractionDigits: 2 }).format(q * 34900)} Kz
+                                   {q} {q === 1 ? 'Unidade' : 'Unidades'} - {new Intl.NumberFormat('pt-AO', { style: 'decimal' }).format(q * 34900)} Kz
                                  </option>
                                );
                              })}
                           </select>
-                          <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                          <ChevronDown size={18} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                         </div>
                       </div>
+                    </div>
 
+                    <div className="pt-2">
                       <button 
                         type="submit" 
                         disabled={isSubmitting}
-                        className={`w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-lg py-4 rounded-xl shadow-lg shadow-emerald-500/20 transition transform active:scale-95 flex justify-center items-center gap-2 ${isSubmitting ? 'opacity-70 cursor-wait' : 'hover:-translate-y-1'}`}
+                        className={`w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black text-lg py-5 rounded-2xl shadow-xl shadow-emerald-500/25 transition-all transform active:scale-95 flex flex-col justify-center items-center ${isSubmitting ? 'opacity-70 cursor-wait' : 'hover:-translate-y-1'}`}
                       >
-                        {isSubmitting ? <Loader2 className="animate-spin" size={24} /> : "QUERO SECAR ROUPA RÁPIDO"}
+                        {isSubmitting ? <Loader2 className="animate-spin" size={32} /> : (
+                          <>
+                            <span>✅ Quero Acabar com Roupa Húmida</span>
+                            <span className="text-xs opacity-80 font-bold uppercase tracking-widest mt-0.5">Pagar só no momento da entrega</span>
+                          </>
+                        )}
                       </button>
-                    </form>
-                  </div>
+                    </div>
 
+                    <div className="flex flex-col items-center justify-center gap-3 pt-4 border-t border-slate-100">
+                      <div className="flex items-center gap-6">
+                        <ShieldCheck size={20} className="text-slate-300" />
+                        <div className="flex items-center gap-1">
+                          <Star size={12} className="fill-amber-400 text-amber-400" />
+                          <Star size={12} className="fill-amber-400 text-amber-400" />
+                          <Star size={12} className="fill-amber-400 text-amber-400" />
+                          <Star size={12} className="fill-amber-400 text-amber-400" />
+                          <Star size={12} className="fill-amber-400 text-amber-400" />
+                        </div>
+                        <img src="https://i.postimg.cc/3wsKF20v/Chat-GPT-Image-13-de-mai-de-2026-12-40-58.png" alt="C Store" className="h-4 opacity-30 grayscale" />
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed text-center">
+                        🔒 Compra 100% segura · Pagas só quando receberes · Garantia de satisfação 7 dias · Suporte via WhatsApp
+                      </p>
+                    </div>
+                  </form>
               </div>
             </section>
           </div>
@@ -1368,6 +1751,19 @@ export default function App() {
             >
               Visitar Loja Oficial C Store Angola
             </a>
+
+            <div className="mt-10 flex justify-center">
+              <a 
+                href="https://wa.me/244921167980?text=Olá,%20tenho%20dúvidas%20sobre%20o%20Secador%20Expresso%20Pro"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-emerald-500 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 hover:bg-emerald-600 transition-all font-bold text-sm"
+              >
+                <MessageCircle size={20} />
+                Tens dúvidas? Fala connosco via WhatsApp
+              </a>
+            </div>
+
             <div className="mt-12 text-xs opacity-40">
               &copy; {new Date().getFullYear()} C Store Angola. Todos os direitos reservados.
             </div>
@@ -1780,23 +2176,22 @@ export default function App() {
                 className="bg-white max-w-md w-full rounded-3xl shadow-2xl overflow-hidden my-8"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="bg-amber-500 p-8 text-center text-white relative">
-                  <div className="absolute top-0 left-0 w-full h-full bg-white opacity-[0.05]" style={{ backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
+                <div className="bg-red-600 p-8 text-center text-white relative">
                   <PackageOpen className="w-16 h-16 mx-auto mb-4" />
-                  <h3 className="text-3xl font-black tracking-tight">Lote Esgotado!</h3>
+                  <h3 className="text-3xl font-black tracking-tight">🔴 Lote Esgotado!</h3>
                 </div>
                 <div className="p-8 text-center text-slate-700">
-                  <p className="mb-6 text-lg">
-                    O stock do <strong>{view === 'sales-roupas' ? 'Secador Expresso Portátil' : 'Secador UV'}</strong> para entrega imediata terminou devido à altíssima procura nas últimas horas.
+                  <p className="mb-6 text-lg font-medium leading-relaxed">
+                    O stock do <strong>{view === 'sales-roupas' ? 'Secador Expresso Portátil' : 'Secador Inteligente UV'}</strong> para entrega imediata terminou devido à altíssima procura nas últimas horas.
                   </p>
                   <p className="text-slate-500 mb-8 max-w-sm mx-auto leading-relaxed">
-                    Mas <b>não se preocupe!</b> O nosso novo lote chega dentro de alguns dias. Deseja <b>garantir a sua reserva </b> e manter o preço promocional de <b>{view === 'sales-roupas' ? '34.900 Kz' : '24.900 Kz'}</b>? <span className="text-indigo-600 font-bold block mt-2">(Não paga nada hoje!)</span>
+                    Mas <b>não te preocupes!</b> O novo lote chega em breve. Queres garantir a tua reserva e manter o preço promocional de <b>{view === 'sales-roupas' ? '34.900 Kz' : '24.900 Kz'}</b>? <span className="text-indigo-600 font-bold block mt-2">(Não pagas nada hoje!)</span>
                   </p>
                   <div className="space-y-3">
-                    <button onClick={() => processReservation(true)} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-4 rounded-xl shadow-lg transition-transform active:scale-[0.98]">
-                      SIM, QUERO RESERVAR O MEU!
+                    <button onClick={() => processReservation(true)} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 px-4 rounded-xl shadow-lg transition-transform active:scale-[0.98]">
+                      ✅ SIM, QUERO RESERVAR O MEU!
                     </button>
-                    <button onClick={() => setModalState('last-chance')} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3.5 px-4 rounded-xl transition">
+                    <button onClick={() => setModalState('last-chance')} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-400 font-bold py-3.5 px-4 rounded-xl transition">
                       Não, prefiro perder a promoção
                     </button>
                   </div>
@@ -1813,41 +2208,87 @@ export default function App() {
               >
                 <div className="bg-red-50 text-center pt-8 pb-4">
                   <TriangleAlert className="w-16 h-16 mx-auto mb-2 text-red-500" />
-                  <h3 className="text-2xl font-black text-red-600">Tem a certeza, {formData.name ? formData.name.split(' ')[0] : 'amigo'}?</h3>
+                  <h3 className="text-2xl font-black text-slate-900">Tens a certeza, {formData.name ? formData.name.split(' ')[0] : 'amigo'}?</h3>
                 </div>
                 <div className="p-8 text-center pt-4">
-                  <p className="text-slate-700 mb-4 font-bold text-lg">
-                    Sem o {view === 'sales-roupas' ? 'Secador Expresso Portátil' : 'secador UV'}, {view === 'sales-roupas' ? 'vai' : 'os seus ténis vão'} continuar a:
+                  <p className="text-slate-700 mb-6 font-bold text-lg">
+                    Sem o {view === 'sales-roupas' ? 'Secador Expresso Portátil' : 'Secador UV'}, vais continuar a:
                   </p>
                   {view === 'sales-roupas' ? (
-                    <ul className="text-left text-slate-600 mb-8 space-y-3 bg-white p-5 rounded-xl border border-red-100 shadow-sm">
-                      <li className="flex items-start gap-2"><XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" /> <span>Sofrer com fardas molhadas de manhã.</span></li>
-                      <li className="flex items-start gap-2"><XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" /> <span>Suportar o cheiro a bafio nas roupas.</span></li>
-                      <li className="flex items-start gap-2"><XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" /> <span>Ter a casa cheia de estendais feios.</span></li>
+                    <ul className="text-left text-slate-600 mb-8 space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                      <li className="flex items-start gap-3"><span className="text-xl">🩲</span> <span className="font-medium">Ter vergonha de deixar roupa íntima no estendal comum dos vizinhos</span></li>
+                      <li className="flex items-start gap-3"><span className="text-xl">🤢</span> <span className="font-medium">Suportar o cheiro a bafio e fungos nas roupas</span></li>
+                      <li className="flex items-start gap-3"><span className="text-xl">😤</span> <span className="font-medium">Ver camisas, calças e uniformes escolares húmidos de manhã</span></li>
+                      <li className="flex items-start gap-3"><span className="text-xl">🏠</span> <span className="font-medium">Ter a casa cheia de roupa espalhada por dias</span></li>
                     </ul>
                   ) : (
-                    <ul className="text-left text-slate-600 mb-8 space-y-3 bg-white p-5 rounded-xl border border-red-100 shadow-sm">
-                      <li className="flex items-start gap-2"><XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" /> <span>Acumular bactérias e fungos perigosos.</span></li>
-                      <li className="flex items-start gap-2"><XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" /> <span>Manter o mau cheiro (chulé) impossível de tirar.</span></li>
-                      <li className="flex items-start gap-2"><XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" /> <span>Estragar e deformar o couro com a humidade.</span></li>
+                    <ul className="text-left text-slate-600 mb-8 space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                      <li className="flex items-start gap-3"><span className="text-xl">👟</span> <span className="font-medium">Ter vergonha de tirar os sapatos em público pelo mau cheiro</span></li>
+                      <li className="flex items-start gap-3"><span className="text-xl">🤢</span> <span className="font-medium">Acumular fungos e bactérias dentro do calçado favorito</span></li>
+                      <li className="flex items-start gap-3"><span className="text-xl">😤</span> <span className="font-medium">Usar ténis e sapatos húmidos que magoam os pés</span></li>
+                      <li className="flex items-start gap-3"><span className="text-xl">💸</span> <span className="font-medium">Ver o calçado estragar-se mais depressa pela humidade</span></li>
                     </ul>
                   )}
-                  <p className="text-sm text-slate-500 mb-6 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                    O próximo lote custará <b>{view === 'sales-roupas' ? '50.000 Kz' : '35.000 Kz'}</b>. Vai mesmo deixar passar?
+                  <p className="text-sm text-slate-900 font-bold mb-8 p-4 bg-red-50 rounded-xl border border-red-100 text-center">
+                    O próximo lote custará <b>{view === 'sales-roupas' ? '50.000 Kz' : '35.000 Kz'}</b>. Vais mesmo deixar passar?
                   </p>
                   <div className="space-y-3">
-                    <button onClick={() => processReservation(true)} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-4 rounded-xl shadow-lg transition-transform active:scale-[0.98]">
-                      MUDEI DE IDEIAS! QUERO RESERVAR
+                    <button onClick={() => processReservation(true)} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 px-4 rounded-xl shadow-lg transition-transform active:scale-[0.98]">
+                      ✅ MUDEI DE IDEIAS! QUERO RESERVAR
                     </button>
-                    <button onClick={() => processReservation(false)} className="w-full bg-transparent text-slate-400 hover:text-slate-600 underline font-medium py-2 transition">
-                      Sim, assumo o risco
+                    <button onClick={() => setModalState('testimonial-rebound')} className="w-full bg-transparent text-slate-400 hover:text-slate-600 underline font-medium py-2 transition">
+                      Sim, assumo o risco e perco a promoção
                     </button>
                   </div>
                 </div>
               </motion.div>
             )}
 
-            {/* Step 3: VIP Success */}
+            {/* Step 3: Testimonial Rebound */}
+            {modalState === 'testimonial-rebound' && (
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }}
+                className="bg-white max-w-md w-full rounded-3xl shadow-2xl overflow-hidden my-8"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="bg-indigo-600 p-8 text-center text-white">
+                  <Sparkles className="w-16 h-16 mx-auto mb-4 text-indigo-200" />
+                  <h3 className="text-2xl font-black tracking-tight">Última oportunidade, {formData.name ? formData.name.split(' ')[0] : 'amigo'}</h3>
+                </div>
+                <div className="p-8 text-center">
+                  <p className="text-slate-700 mb-8 font-bold leading-relaxed">
+                    Antes de saíres, só uma coisa:
+                  </p>
+                  
+                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-8 text-left relative">
+                    <div className="absolute -top-3 -left-2 bg-indigo-500 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-widest shadow-sm">Testemunho Real</div>
+                    <p className="text-slate-600 italic mb-4 leading-relaxed">
+                      "{view === 'sales-roupas' 
+                        ? 'A Maria de Talatona também hesitou. Hoje agradece todos os dias por ter reservado. Nunca pensei que ia fazer tanta diferença. A minha roupa íntima seca em 2 horas dentro do quarto. Sem vergonha, sem bafio.' 
+                        : 'O Paulo do Kilamba também hesitou. Hoje agradece todos os dias por ter reservado. O mau cheiro dos ténis de treino desapareceu completamente. Sinto os pés muito mais saudáveis e frescos.'}"
+                    </p>
+                    <div className="flex items-center gap-1 text-amber-400">
+                      <Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" />
+                    </div>
+                  </div>
+
+                  <p className="text-indigo-600 font-bold mb-8 text-base">
+                    A reserva é gratuita e sem compromisso. Pagas só quando receberes.
+                  </p>
+
+                  <div className="space-y-3">
+                    <button onClick={() => processReservation(true)} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 px-4 rounded-xl shadow-lg transition-transform active:scale-[0.98]">
+                      ✅ OK, VOU RESERVAR
+                    </button>
+                    <button onClick={() => processReservation(false)} className="w-full bg-transparent text-slate-300 hover:text-slate-500 underline font-medium py-2 transition text-sm">
+                      Não, desisto mesmo.
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 4: Success */}
             {modalState === 'success' && (
               <motion.div 
                 initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
@@ -1855,30 +2296,30 @@ export default function App() {
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="bg-emerald-500 p-8 text-center text-white">
-                  <Crown className="w-16 h-16 mx-auto mb-4 text-emerald-100" />
-                  <h3 className="text-3xl font-black tracking-tight">Reserva VIP!</h3>
+                  <CheckCircle className="w-16 h-16 mx-auto mb-4 text-emerald-100" />
+                  <h3 className="text-3xl font-black tracking-tight">🎉 Reserva Garantida!</h3>
                 </div>
                 <div className="p-8 text-center text-slate-700">
                   <p className="text-xl font-bold mb-4">
-                    Parabéns, <span className="text-indigo-600">{formData.name ? formData.name.split(' ')[0] : 'Cliente'}</span>! 🎉
+                    Parabéns, <span className="text-indigo-600">{formData.name ? formData.name.split(' ')[0] : 'Cliente'}</span>!
                   </p>
-                  <p className="text-slate-600 mb-2 leading-relaxed">
-                     Entrou para o nosso grupo exclusivo. A sua unidade está garantida no próximo lote pelo valor de <b>{view === 'sales-roupas' ? '34.900 Kz' : '24.900 Kz'}</b>.
+                  <p className="text-slate-600 mb-6 leading-relaxed">
+                     A tua unidade de <strong>{view === 'sales-roupas' ? 'Secador Expresso Portátil' : 'Secador UV'}</strong> está reservada ao preço de <strong>{view === 'sales-roupas' ? '34.900 Kz' : '24.900 Kz'}</strong>.
                   </p>
-                  <p className="text-emerald-600 font-bold mb-6 text-lg">
-                    Você garantiu um desconto de {view === 'sales-roupas' ? '15.100 Kz' : '10.100 Kz'}!
-                  </p>
-                  <div className="bg-emerald-50 text-emerald-800 p-4 rounded-xl text-sm mb-6 border border-emerald-100 font-medium">
-                    A nossa equipa enviará uma mensagem para o <b>{formData.phone}</b> assim que o avião aterrar em Luanda.
+                  <div className="bg-emerald-50 text-emerald-800 p-5 rounded-2xl text-sm mb-8 border border-emerald-100 font-bold leading-relaxed">
+                    Receberás uma mensagem no WhatsApp quando o lote chegar — pagas só no momento da entrega.
                   </div>
-                  <div className="space-y-3">
+                  
+                  <div className="pt-4 border-t border-slate-100">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Enquanto esperas, partilha com um amigo 👇</p>
                     <a 
-                      href="https://www.cstoreao.shop/" 
+                      href={`https://wa.me/?text=Olha%20este%20secador%20que%20acabei%20de%20reservar!%20%0A%0A${window.location.href}`}
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="w-full flex justify-center items-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-xl transition-transform active:scale-[0.98]"
+                      className="w-full flex justify-center items-center gap-3 bg-[#25D366] hover:bg-[#128C7E] text-white font-black py-4 px-4 rounded-xl transition-transform active:scale-[0.98] shadow-lg shadow-emerald-500/20"
                     >
-                      VISITAR LOJA OFICIAL
+                      <MessageCircle size={22} />
+                      📲 PARTILHAR NO WHATSAPP
                     </a>
                   </div>
                 </div>
@@ -2328,6 +2769,9 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* WhatsApp Fixed Button for Mobile - REMOVED PER USER REQUEST */}
+      {/* (view === 'sales' || view === 'sales-roupas') && ... */}
 
     </div>
   );

@@ -53,7 +53,7 @@ export default function HomeView({ setView, isAuthenticated, currentUser, userNa
             <img 
               src="https://i.postimg.cc/qqtQqXb4/C-grupo.png" 
               alt="Logo Grupo Cassaminha" 
-              className="h-9 object-contain drop-shadow-md"
+              className="h-9 object-contain drop-shadow-md rounded-xl"
             />
             <span className="font-bold text-xl tracking-tight hidden sm:block bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
               Valida C
@@ -181,10 +181,34 @@ export default function HomeView({ setView, isAuthenticated, currentUser, userNa
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="relative z-10 py-10 text-center border-t border-white/5 bg-black/40">
-        <p className="text-slate-500 text-sm font-medium">
-          &copy; {new Date().getFullYear()} Grupo Cassaminha. Operações Internas.
-        </p>
+      <footer className="relative z-10 py-16 border-t border-white/5 bg-black/40">
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <div className="mb-10">
+            <h4 className="text-white font-bold mb-6 tracking-tight uppercase text-xs opacity-50">Ecossistema Grupo Cassaminha</h4>
+            <div className="flex flex-wrap justify-center gap-4">
+              <a 
+                href="https://www.cstoreao.shop/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="px-6 py-2.5 rounded-full bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all text-sm font-semibold flex items-center gap-2"
+              >
+                C Store Angola
+              </a>
+              <button 
+                onClick={() => setView('home')} 
+                className="px-6 py-2.5 rounded-full bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all text-sm font-semibold flex items-center gap-2"
+              >
+                Valida C
+              </button>
+              <div className="px-6 py-2.5 rounded-full bg-white/5 border border-white/10 text-white/30 text-sm font-semibold cursor-default">
+                Em Breve
+              </div>
+            </div>
+          </div>
+          <p className="text-slate-500 text-sm font-medium pt-8 border-t border-white/5 max-w-md mx-auto">
+            &copy; {new Date().getFullYear()} Grupo Cassaminha. Todos os direitos reservados. Operações Internas e Seguras.
+          </p>
+        </div>
       </footer>
     </div>
   );
