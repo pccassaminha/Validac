@@ -998,20 +998,13 @@ export default function App() {
               </div>
 
               {/* BLOCO 3: CARDS DE AVATARES */}
-              <div className="grid md:grid-cols-3 gap-6 mb-20 text-left">
+              <div className="grid md:grid-cols-2 gap-6 mb-20 text-left">
                   <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 hover:border-indigo-200 transition group">
                       <div className="w-14 h-14 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mb-6">
                         <Dumbbell size={28} />
                       </div>
                       <h3 className="font-bold text-lg mb-3 text-slate-900 leading-tight">Mães em Luanda</h3>
                       <p className="text-slate-500 leading-relaxed text-sm">O calçado escolar ou os ténis de desporto dos seus filhos estão sempre húmidos? Seque-os em minutos e livre-os de fungos e bactérias e do chulé indesejado.</p>
-                  </div>
-                  <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 hover:border-indigo-200 transition group">
-                      <div className="w-14 h-14 bg-slate-50 text-slate-700 rounded-2xl flex items-center justify-center mb-6">
-                        <Activity size={28} />
-                      </div>
-                      <h3 className="font-bold text-lg mb-3 text-slate-900 leading-tight">Profissionais Focados</h3>
-                      <p className="text-slate-500 leading-relaxed text-sm">O seu sapato clássico ou bota de trabalho precisa de cuidado. O Secador UV seca suavemente, sem deformar o couro e eliminando o odor do suor diário.</p>
                   </div>
                   <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 hover:border-indigo-200 transition group">
                       <div className="w-14 h-14 bg-indigo-100/50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6">
@@ -1402,20 +1395,13 @@ export default function App() {
               </div>
 
               {/* BLOCO 3: CARDS DE AVATARES */}
-              <div className="grid md:grid-cols-3 gap-6 mb-20 text-left">
+              <div className="grid md:grid-cols-2 gap-6 mb-20 text-left">
                   <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 hover:border-sky-200 transition">
                       <div className="w-14 h-14 bg-sky-50 text-sky-500 rounded-2xl flex items-center justify-center mb-6">
                         <User size={28} />
                       </div>
                       <h3 className="font-bold text-lg mb-3 text-slate-900 leading-tight">Mães em Luanda</h3>
                       <p className="text-slate-500 leading-relaxed text-sm">O uniforme escolar do teu filho precisa estar pronto a tempo e a horas — sem depender do sol ou de varandas partilhadas. O Secador Expresso faz isso por ti, em qualquer dia, mesmo nos dias de chuva.</p>
-                  </div>
-                  <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 hover:border-sky-200 transition">
-                      <div className="w-14 h-14 bg-slate-50 text-slate-700 rounded-2xl flex items-center justify-center mb-6">
-                        <Activity size={28} />
-                      </div>
-                      <h3 className="font-bold text-lg mb-3 text-slate-900 leading-tight">Profissionais Focados</h3>
-                      <p className="text-slate-500 leading-relaxed text-sm">Camisas de trabalho, fatos e blusas — tudo pronto em 1 a 2 horas sem complicação. Chega ao trabalho sempre apresentável, mesmo que tenhas lavado a roupa à noite anterior.</p>
                   </div>
                   <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 hover:border-sky-200 transition">
                       <div className="w-14 h-14 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center mb-6">
