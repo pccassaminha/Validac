@@ -987,7 +987,7 @@ export default function App() {
                     "Tens calçado caro que queres preservar por muito mais tempo",
                     "Sofres com o mau cheiro (chulé) persistente e nada resolve",
                     "Queres garantir que os teus pés estão livres de fungos e micoses",
-                    "Precisas de secar sapatos de forma rápida nos dias de chuva em Luanda"
+                    "Precisas de secar sapatos de forma rápida nos dias de chuva ?"
                   ].map((text, i) => (
                     <div key={i} className="flex items-center gap-3 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
                       <div className="bg-indigo-50 text-indigo-500 rounded-full p-1"><CheckCircle size={18} /></div>
