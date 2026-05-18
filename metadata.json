@@ -1,6 +1,8 @@
 {
-  "name": "",
-  "description": "",
+  "name": "C Store Angola - Secador Inteligente",
+  "description": "Sistema de gestão de reservas e vendas para secadores de calçado UV e secadores expresso pro em Angola.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

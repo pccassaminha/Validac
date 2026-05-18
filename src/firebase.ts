@@ -1,11 +1,27 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, serverTimestamp, getDocs, updateDoc, doc, Timestamp, orderBy, query } from "firebase/firestore";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { 
+  initializeFirestore, 
+  collection, 
+  addDoc, 
+  serverTimestamp, 
+  getDocs, 
+  updateDoc, 
+  doc, 
+  Timestamp, 
+  orderBy, 
+  query 
+} from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 import firebaseConfig from "../firebase-applet-config.json";
 
 export { firebaseConfig };
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+// Using initializeFirestore instead of getFirestore to set experimentalForceLongPolling
+export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+}, firebaseConfig.firestoreDatabaseId);
+
 export const auth = getAuth(app);
 
 export enum OperationType {

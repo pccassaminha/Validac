@@ -108,5 +108,14 @@ service cloud.firestore {
       allow list: if isAdmin();
       allow delete: if isAdmin();
     }
+
+    // Settings Collection
+    match /settings/{settingId} {
+      // Readable by anyone (to load tracking config)
+      allow read: if true;
+      
+      // Only Admins can modify settings
+      allow write: if isAdmin();
+    }
   }
 }

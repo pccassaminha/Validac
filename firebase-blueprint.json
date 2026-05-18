@@ -17,12 +17,25 @@
         "createdAt": { "type": "timestamp", "description": "Server timestamp of creation" }
       },
       "required": ["name", "phone", "address", "province", "produto", "quantity", "totalPrice", "status", "timestamp", "createdAt"]
+    },
+    "Setting": {
+      "title": "Global Setting",
+      "description": "Global application configuration like pixel IDs",
+      "type": "object",
+      "properties": {
+        "fbPixel": { "type": "string" },
+        "googleTag": { "type": "string" }
+      }
     }
   },
   "firestore": {
     "leads/{leadId}": {
       "schema": { "$ref": "#/entities/Lead" },
       "description": "Collection of all leads submitted by customers."
+    },
+    "settings/{settingId}": {
+      "schema": { "$ref": "#/entities/Setting" },
+      "description": "Global configuration settings."
     }
   }
 }
