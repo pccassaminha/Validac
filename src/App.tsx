@@ -997,24 +997,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* BLOCO 3: CARDS DE AVATARES */}
-              <div className="grid md:grid-cols-2 gap-6 mb-20 text-left">
-                  <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 hover:border-indigo-200 transition group">
-                      <div className="w-14 h-14 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mb-6">
-                        <Dumbbell size={28} />
-                      </div>
-                      <h3 className="font-bold text-lg mb-3 text-slate-900 leading-tight">Mães em Luanda</h3>
-                      <p className="text-slate-500 leading-relaxed text-sm">O calçado escolar ou os ténis de desporto dos seus filhos estão sempre húmidos? Seque-os em minutos e livre-os de fungos e bactérias e do chulé indesejado.</p>
-                  </div>
-                  <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 hover:border-indigo-200 transition group">
-                      <div className="w-14 h-14 bg-indigo-100/50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6">
-                        <Zap size={28} />
-                      </div>
-                      <h3 className="font-bold text-lg mb-3 text-slate-900 leading-tight">Saúde dos Pés</h3>
-                      <p className="text-slate-500 leading-relaxed text-sm">Sofre de micoses ou pé de atleta? Manter o calçado seco e esterilizado com luz UV é o passo principal para evitar reinfecções e manter os pés saudáveis.</p>
-                  </div>
-              </div>
-
               {/* BLOCO 4: BENEFÍCIOS REAIS */}
               <div className="mb-24 py-12 bg-slate-50 -mx-4 px-6 rounded-[3rem] border border-slate-200">
                 <div className="max-w-4xl mx-auto">
@@ -1389,27 +1371,6 @@ export default function App() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-6 bg-red-600 text-white p-5 rounded-2xl shadow-lg border border-red-500 text-center font-bold animate-pulse text-sm">
-                  Não é mais quem vai molhar com ar directo a roupa para calçar à entrada.
-                </div>
-              </div>
-
-              {/* BLOCO 3: CARDS DE AVATARES */}
-              <div className="grid md:grid-cols-2 gap-6 mb-20 text-left">
-                  <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 hover:border-sky-200 transition">
-                      <div className="w-14 h-14 bg-sky-50 text-sky-500 rounded-2xl flex items-center justify-center mb-6">
-                        <User size={28} />
-                      </div>
-                      <h3 className="font-bold text-lg mb-3 text-slate-900 leading-tight">Mães em Luanda</h3>
-                      <p className="text-slate-500 leading-relaxed text-sm">O uniforme escolar do teu filho precisa estar pronto a tempo e a horas — sem depender do sol ou de varandas partilhadas. O Secador Expresso faz isso por ti, em qualquer dia, mesmo nos dias de chuva.</p>
-                  </div>
-                  <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 hover:border-sky-200 transition">
-                      <div className="w-14 h-14 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center mb-6">
-                        <LayoutDashboard size={28} />
-                      </div>
-                      <h3 className="font-bold text-lg mb-3 text-slate-900 leading-tight">Vida em Apartamento</h3>
-                      <p className="text-slate-500 leading-relaxed text-sm">Moras num T2, T3 ou quarto sem varanda? O Secador Expresso é compacto, silencioso e seca a roupa dentro de casa — sem ocupar espaço nem criar humidade.</p>
-                  </div>
               </div>
 
               {/* BLOCO 4: SECA TUDO */}
