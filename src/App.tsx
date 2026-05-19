@@ -463,8 +463,9 @@ export default function App() {
       const docRef = await addDoc(collection(db, 'leads'), tempLead);
       setCurrentLeadId(docRef.id);
       
-      // Disparar Evento Lead (Pendente)
+      // Disparar Evento Lead (Pendente) e Subscrição (Subscribe)
       trackEvent(produtoName, 'generate_lead', 'Lead', appSettings);
+      trackEvent(produtoName, 'subscribe', 'Subscribe', appSettings);
     } catch (err: any) {
       if (err instanceof Error && err.message.includes('missing or insufficient permissions')) {
          handleFirestoreError(err, OperationType.CREATE, 'leads');
@@ -484,8 +485,9 @@ export default function App() {
     if (isAccepted) {
       setTimeout(() => setModalState('success'), 300);
       
-      // Disparar Evento Custom/AddToCart (Reservado)
+      // Disparar Evento Custom/AddToCart (Reservado) e CompleteRegistration (Sucesso)
       trackEvent(produtoName, 'add_to_cart', 'AddToCart', appSettings);
+      trackEvent(produtoName, 'complete_registration', 'CompleteRegistration', appSettings);
     } else {
       setTimeout(() => setModalState('rejected'), 300);
     }
