@@ -51,6 +51,7 @@ const initTracking = (produto: string, dynamicSettings?: { fbPixel?: string; goo
     'https://connect.facebook.net/en_US/fbevents.js');
     (window as any).fbq('init', fbId);
     (window as any).fbq('track', 'PageView');
+    (window as any).fbq('track', 'ViewContent');
 
     // Add noscript fallback
     const noscript = document.createElement('noscript');
@@ -75,15 +76,16 @@ const initTracking = (produto: string, dynamicSettings?: { fbPixel?: string; goo
 };
 
 const trackEvent = (produto: string, eventName: string, fbEvent: string, dynamicSettings?: { fbPixel?: string; googleTag?: string }) => {
+  // Dispara sempre o evento do Facebook se a tag existir (via index.html ou dinâmica)
+  if (typeof window !== 'undefined' && (window as any).fbq) {
+    (window as any).fbq('track', fbEvent);
+  }
+
   const config = dynamicSettings?.fbPixel || dynamicSettings?.googleTag 
     ? { fbPixel: dynamicSettings.fbPixel || '', googleTag: dynamicSettings.googleTag || '' }
     : campaignConfigs[produto];
     
-  if (!config) return;
-  if (config.fbPixel && (window as any).fbq) {
-    (window as any).fbq('track', fbEvent);
-  }
-  if (config.googleTag && (window as any).gtag) {
+  if (config?.googleTag && (window as any).gtag) {
     (window as any).gtag('event', eventName, { 'send_to': config.googleTag });
   }
 };
@@ -463,9 +465,8 @@ export default function App() {
       const docRef = await addDoc(collection(db, 'leads'), tempLead);
       setCurrentLeadId(docRef.id);
       
-      // Disparar Evento Lead (Pendente) e Subscrição (Subscribe)
+      // Disparar Evento Lead (Pendente)
       trackEvent(produtoName, 'generate_lead', 'Lead', appSettings);
-      trackEvent(produtoName, 'subscribe', 'Subscribe', appSettings);
     } catch (err: any) {
       if (err instanceof Error && err.message.includes('missing or insufficient permissions')) {
          handleFirestoreError(err, OperationType.CREATE, 'leads');
@@ -485,9 +486,10 @@ export default function App() {
     if (isAccepted) {
       setTimeout(() => setModalState('success'), 300);
       
-      // Disparar Evento Custom/AddToCart (Reservado) e CompleteRegistration (Sucesso)
+      // Disparar Eventos Customizados (Reservado com sucesso)
       trackEvent(produtoName, 'add_to_cart', 'AddToCart', appSettings);
       trackEvent(produtoName, 'complete_registration', 'CompleteRegistration', appSettings);
+      trackEvent(produtoName, 'subscribe', 'Subscribe', appSettings);
     } else {
       setTimeout(() => setModalState('rejected'), 300);
     }
