@@ -211,7 +211,7 @@ export default function App() {
     alertMessage?: string;
   }>({});
   const [dangerInputValue, setDangerInputValue] = useState('');
-  const [formData, setFormData] = useState({ name: '', phone: '', address: '', area: '', province: 'Luanda', quantity: 1 });
+  const [formData, setFormData] = useState({ name: '', phone: '', address: '', area: '', province: 'Luanda', customProvince: '', quantity: 1 });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentLeadId, setCurrentLeadId] = useState<string | null>(null);
   
@@ -451,7 +451,7 @@ export default function App() {
       name: formData.name,
       phone: formData.phone,
       address: formData.address,
-      province: formData.province,
+      province: formData.province === 'Outra' ? formData.customProvince : formData.province,
       area: formData.area || '', // Bairro/Zona
       produto: produtoName,
       totalPrice: formData.quantity * pricePerUnit,
@@ -510,7 +510,7 @@ export default function App() {
 
   const closeModal = () => {
     setModalState('none');
-    setFormData({ name: '', phone: '', address: '', area: '', province: 'Luanda', quantity: 1 });
+    setFormData({ name: '', phone: '', address: '', area: '', province: 'Luanda', customProvince: '', quantity: 1 });
   };
 
   // ----------------------------------------------------
@@ -1172,26 +1172,21 @@ export default function App() {
                                   className="w-full px-6 py-4 bg-slate-50 rounded-2xl border border-slate-200 focus:bg-white focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all appearance-none font-bold text-slate-700"
                                 >
                                   <option value="Luanda">Luanda</option>
-                                  <option value="Bengo">Bengo</option>
-                                  <option value="Benguela">Benguela</option>
-                                  <option value="Bié">Bié</option>
-                                  <option value="Cabinda">Cabinda</option>
-                                  <option value="Cuando Cubango">Cuando Cubango</option>
-                                  <option value="Cuanza Norte">Cuanza Norte</option>
-                                  <option value="Cuanza Sul">Cuanza Sul</option>
-                                  <option value="Cunene">Cunene</option>
                                   <option value="Huambo">Huambo</option>
-                                  <option value="Huíla">Huíla</option>
-                                  <option value="Lunda Norte">Lunda Norte</option>
-                                  <option value="Lunda Sul">Lunda Sul</option>
-                                  <option value="Malanje">Malanje</option>
-                                  <option value="Moxico">Moxico</option>
-                                  <option value="Namibe">Namibe</option>
-                                  <option value="Uíge">Uíge</option>
-                                  <option value="Zaire">Zaire</option>
+                                  <option value="Benguela">Benguela</option>
+                                  <option value="Outra">Outra</option>
                                 </select>
                                 <ChevronDown size={18} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                               </div>
+                              {formData.province === 'Outra' && (
+                                <div className="mt-4">
+                                  <input
+                                    type="text" required value={formData.customProvince} onChange={e => setFormData({...formData, customProvince: e.target.value})}
+                                    className="w-full px-6 py-4 bg-slate-50 rounded-2xl border border-slate-200 focus:bg-white focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-300 font-bold"
+                                    placeholder="Escreva a sua província..."
+                                  />
+                                </div>
+                              )}
                             </div>
                             <div className="sm:col-span-2">
                               <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Bairro, Zona, Município</label>
@@ -1204,7 +1199,7 @@ export default function App() {
                             <div className="sm:col-span-2 flex flex-col gap-4">
                               <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">Quantas unidades?</label>
                               <div className="flex gap-3">
-                                 {[1, 2, 3].map(q => (
+                                 {[1, 2, 3, 4].map(q => (
                                    <button 
                                      key={q}
                                      type="button"
@@ -1625,26 +1620,21 @@ export default function App() {
                             className="w-full px-6 py-4 bg-slate-50 rounded-2xl border border-slate-200 focus:bg-white focus:ring-4 focus:ring-sky-100 focus:border-sky-500 outline-none transition-all appearance-none font-bold text-slate-700"
                           >
                             <option value="Luanda">Luanda</option>
-                            <option value="Bengo">Bengo</option>
-                            <option value="Benguela">Benguela</option>
-                            <option value="Bié">Bié</option>
-                            <option value="Cabinda">Cabinda</option>
-                            <option value="Cuando Cubango">Cuando Cubango</option>
-                            <option value="Cuanza Norte">Cuanza Norte</option>
-                            <option value="Cuanza Sul">Cuanza Sul</option>
-                            <option value="Cunene">Cunene</option>
                             <option value="Huambo">Huambo</option>
-                            <option value="Huíla">Huíla</option>
-                            <option value="Lunda Norte">Lunda Norte</option>
-                            <option value="Lunda Sul">Lunda Sul</option>
-                            <option value="Malanje">Malanje</option>
-                            <option value="Moxico">Moxico</option>
-                            <option value="Namibe">Namibe</option>
-                            <option value="Uíge">Uíge</option>
-                            <option value="Zaire">Zaire</option>
+                            <option value="Benguela">Benguela</option>
+                            <option value="Outra">Outra</option>
                           </select>
                           <ChevronDown size={18} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                         </div>
+                        {formData.province === 'Outra' && (
+                          <div className="mt-4">
+                            <input
+                              type="text" required value={formData.customProvince} onChange={e => setFormData({...formData, customProvince: e.target.value})}
+                              className="w-full px-6 py-4 bg-slate-50 rounded-2xl border border-slate-200 focus:bg-white focus:ring-4 focus:ring-sky-100 focus:border-sky-500 outline-none transition-all placeholder:text-slate-300 font-bold"
+                              placeholder="Escreva a sua província..."
+                            />
+                          </div>
+                        )}
                       </div>
                       <div className="sm:col-span-2">
                         <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Bairro, Zona, Município</label>
@@ -1657,7 +1647,7 @@ export default function App() {
                       <div className="sm:col-span-2 flex flex-col gap-4">
                         <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">Quantas unidades?</label>
                         <div className="flex gap-3">
-                           {[1, 2, 3].map(q => (
+                           {[1, 2, 3, 4].map(q => (
                              <button 
                                key={q}
                                type="button"
