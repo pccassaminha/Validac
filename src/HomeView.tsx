@@ -196,10 +196,18 @@ export default function HomeView({ setView, isAuthenticated, currentUser, userNa
               </a>
               <button 
                 onClick={() => setView('home')} 
-                className="px-6 py-2.5 rounded-full bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all text-sm font-semibold flex items-center gap-2"
+                className="px-6 py-2.5 rounded-full bg-blue-600/25 hover:bg-blue-600/45 border border-blue-500/30 text-blue-200 hover:text-white transition-all text-sm font-semibold flex items-center gap-2"
               >
                 Valida C
               </button>
+              <a 
+                href="https://www.cstoreao.shop/page" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="px-6 py-2.5 rounded-full bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all text-sm font-semibold flex items-center gap-2"
+              >
+                C Gestão Empresarial
+              </a>
               <div className="px-6 py-2.5 rounded-full bg-white/5 border border-white/10 text-white/30 text-sm font-semibold cursor-default">
                 Em Breve
               </div>

@@ -1696,8 +1696,8 @@ export default function App() {
         </main>
       )}
 
-      {/* FOOTER - Roupas */}
-      {view === 'sales-roupas' && (
+      {/* FOOTER */}
+      {(view === 'sales' || view === 'sales-roupas') && (
         <footer className="bg-slate-900 text-slate-400 py-12 px-4 text-center mt-auto pb-28 md:pb-12 shadow-[inset_0_10px_30px_rgba(0,0,0,0.5)]">
           <div className="max-w-4xl mx-auto flex flex-col items-center">
             <img 
@@ -1713,7 +1713,7 @@ export default function App() {
               href="https://www.cstoreao.shop/" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white font-medium py-3 px-8 rounded-full border border-slate-700 transition hover:border-slate-500"
+              className="inline-flex justify-center items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white font-medium py-3 px-8 rounded-full border border-slate-700 transition hover:border-slate-500"
             >
               Visitar Loja Oficial C Store Angola
             </a>
