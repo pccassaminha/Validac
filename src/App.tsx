@@ -234,11 +234,19 @@ export default function App() {
   const [showPassword, setShowPassword] = useState(false);
   
   // Admin Filter State
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('Todos');
-  const [filterDate, setFilterDate] = useState('');
-  const [filterProduct, setFilterProduct] = useState('');
-  const [timeRangeFilter, setTimeRangeFilter] = useState('Tudo');
+  const [searchTerm, setSearchTerm] = useState(() => localStorage.getItem('validaC_searchTerm') || '');
+  const [filterStatus, setFilterStatus] = useState(() => localStorage.getItem('validaC_filterStatus') || 'Todos');
+  const [filterDate, setFilterDate] = useState(() => localStorage.getItem('validaC_filterDate') || '');
+  const [filterProduct, setFilterProduct] = useState(() => localStorage.getItem('validaC_filterProduct') || '');
+  const [timeRangeFilter, setTimeRangeFilter] = useState(() => localStorage.getItem('validaC_timeRangeFilter') || 'Tudo');
+
+  useEffect(() => {
+    localStorage.setItem('validaC_searchTerm', searchTerm);
+    localStorage.setItem('validaC_filterStatus', filterStatus);
+    localStorage.setItem('validaC_filterDate', filterDate);
+    localStorage.setItem('validaC_filterProduct', filterProduct);
+    localStorage.setItem('validaC_timeRangeFilter', timeRangeFilter);
+  }, [searchTerm, filterStatus, filterDate, filterProduct, timeRangeFilter]);
   
   // Gallery State
   const [activeImage, setActiveImage] = useState(0);
