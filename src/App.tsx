@@ -467,15 +467,17 @@ export default function App() {
       
       // Disparar Evento Lead (Pendente)
       trackEvent(produtoName, 'generate_lead', 'Lead', appSettings);
+
+      setIsSubmitting(false);
+      setModalState('step1');
     } catch (err: any) {
       if (err instanceof Error && err.message.includes('missing or insufficient permissions')) {
          handleFirestoreError(err, OperationType.CREATE, 'leads');
       }
       console.error("Erro ao criar lead:", err);
+      alert('Ocorreu um erro ao salvar o seu pedido. Por favor, tente novamente.');
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
-    setModalState('step1');
   };
 
   const processReservation = async (isAccepted: boolean) => {
@@ -647,13 +649,31 @@ export default function App() {
     setAdminError('');
     
     try {
-      const q = query(collection(db, 'leads'), orderBy('createdAt', 'desc'));
+      const q = query(collection(db, 'leads'));
       const snapshot = await getDocs(q);
-      const leads = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        timestamp: doc.data().createdAt ? doc.data().createdAt.toDate().toISOString() : doc.data().timestamp
-      }));
+      const leads = snapshot.docs.map(doc => {
+        let ts = doc.data().timestamp || null;
+        try {
+          if (doc.data().createdAt?.toDate && typeof doc.data().createdAt.toDate === 'function') {
+             ts = doc.data().createdAt.toDate().toISOString();
+          } else if (typeof doc.data().createdAt === 'string') {
+             ts = doc.data().createdAt;
+          }
+        } catch (e) {
+          console.error("Erro na data", e);
+        }
+        return {
+          id: doc.id,
+          ...doc.data(),
+          timestamp: ts
+        };
+      });
+      // Sort locally by timestamp descending
+      leads.sort((a, b) => {
+        if (!a.timestamp) return 1;
+        if (!b.timestamp) return -1;
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      });
       setAdminData(leads);
     } catch (err: any) {
       console.error('Error fetching leads:', err);
@@ -748,12 +768,24 @@ export default function App() {
       lead.phone.includes(searchTerm) ||
       lead.address.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'Todos' || lead.status === filterStatus || (lead.status && lead.status.includes('Reservado') && filterStatus === 'Reservado');
-    const matchesDate = filterDate === '' || (lead.timestamp && new Date(lead.timestamp).toISOString().split('T')[0] === filterDate);
+    let matchesDate = filterDate === '';
+    if (filterDate !== '' && lead.timestamp) {
+      try {
+        matchesDate = new Date(lead.timestamp).toISOString().split('T')[0] === filterDate;
+      } catch(e) {
+        matchesDate = false;
+      }
+    }
     const matchesProduct = filterProduct === '' || (lead.produto || 'Secador Inteligente UV').toLowerCase().includes(filterProduct.toLowerCase());
     
     // Filtro CRM por período (Hoje, Últimos 7 dias, etc.)
     let passesTimeRange = true;
-    const leadDateStr = lead.timestamp || (lead.createdAt && lead.createdAt.toDate ? lead.createdAt.toDate().toISOString() : null);
+    let leadDateStr = lead.timestamp;
+    try {
+       if (!leadDateStr && lead.createdAt?.toDate) {
+          leadDateStr = lead.createdAt.toDate().toISOString();
+       }
+    } catch(e) {}
     if (leadDateStr && timeRangeFilter !== 'Tudo') {
         const leadDate = new Date(leadDateStr);
         const today = new Date();
