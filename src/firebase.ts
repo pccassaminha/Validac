@@ -9,7 +9,8 @@ import {
   doc, 
   Timestamp, 
   orderBy, 
-  query 
+  query,
+  enableIndexedDbPersistence
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import firebaseConfig from "../firebase-applet-config.json";
@@ -21,6 +22,11 @@ const app = initializeApp(firebaseConfig);
 export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true,
 }, firebaseConfig.firestoreDatabaseId);
+
+// Enable local offline persistence
+enableIndexedDbPersistence(db).catch((err) => {
+  console.warn("Could not enable Firestore local persistence:", err.code);
+});
 
 export const auth = getAuth(app);
 

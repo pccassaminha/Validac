@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldCheck, ShieldAlert, Activity, CheckCircle, PackageOpen, TriangleAlert, Crown, XCircle, ArrowLeft, Lock, Loader2, Info, Star, Eye, EyeOff, Copy, MessageCircle, Search, Filter, Download, User, LayoutDashboard, Settings, ExternalLink, LogOut, ChevronDown, Store, FileText, AlertOctagon, Trash2, Timer, Paperclip, FolderOpen, Monitor, Smartphone, Tablet, Bot, Upload, Edit, Sparkles, Dumbbell, Zap } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, Activity, CheckCircle, PackageOpen, TriangleAlert, Crown, XCircle, ArrowLeft, Lock, Loader2, Info, Star, Eye, EyeOff, Copy, MessageCircle, Search, Filter, Download, User, LayoutDashboard, Settings, ExternalLink, LogOut, ChevronDown, Store, FileText, AlertOctagon, Trash2, Timer, Paperclip, FolderOpen, Monitor, Smartphone, Tablet, Bot, Upload, Edit, Sparkles, Dumbbell, Zap, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db, auth, handleFirestoreError, OperationType } from './firebase';
 import { collection, doc, addDoc, updateDoc, getDocs, getDoc, query, orderBy, serverTimestamp, Timestamp, deleteDoc, where, setDoc } from 'firebase/firestore';
@@ -132,7 +132,7 @@ const IMAGES_ROUPAS = [
 ];
 
 
-type ModalState = 'none' | 'step1' | 'last-chance' | 'testimonial-rebound' | 'success' | 'rejected' | 'profile' | 'danger-zone' | 'danger-action-page-prompt' | 'danger-action-page-confirm' | 'danger-action-all-prompt' | 'danger-alert' | 'delete-lead-confirm';
+type ModalState = 'none' | 'step1' | 'last-chance' | 'testimonial-rebound' | 'success' | 'rejected' | 'profile' | 'danger-zone' | 'danger-action-page-prompt' | 'danger-action-page-confirm' | 'danger-action-all-prompt' | 'danger-alert' | 'delete-lead-confirm' | 'lead-preview' | 'admin-financial-panel';
 
 const FAQ_ROUPAS = [
   {
@@ -192,6 +192,8 @@ export default function App() {
     const product = params.get('product');
     if (product === 'secador-uv') return 'sales';
     if (product === 'cabide-secador') return 'sales-roupas';
+    const storedView = localStorage.getItem('validaC_current_view');
+    if (storedView) return storedView;
     return 'home';
   });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -202,6 +204,7 @@ export default function App() {
   // Sales State
   const [modalState, setModalState] = useState<ModalState>('none');
   const [leadToDelete, setLeadToDelete] = useState<any>(null);
+  const [selectedLeadForPreview, setSelectedLeadForPreview] = useState<any>(null);
   const [isCheckoutVisible, setIsCheckoutVisible] = useState(false);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
   const [dangerActionContext, setDangerActionContext] = useState<{
@@ -226,6 +229,7 @@ export default function App() {
   
   // Admin Auth State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [userName, setUserName] = useState('');
   const [userStatus, setUserStatus] = useState<'pending' | 'approved' | 'blocked' | 'expired' | null>(null);
   const [loginEmail, setLoginEmail] = useState('');
@@ -239,6 +243,8 @@ export default function App() {
   const [filterDate, setFilterDate] = useState(() => localStorage.getItem('validaC_filterDate') || '');
   const [filterProduct, setFilterProduct] = useState(() => localStorage.getItem('validaC_filterProduct') || '');
   const [timeRangeFilter, setTimeRangeFilter] = useState(() => localStorage.getItem('validaC_timeRangeFilter') || 'Tudo');
+  const [adminListTab, setAdminListTab] = useState<'geral' | 'arquivados'>(() => (localStorage.getItem('validaC_adminListTab') as 'geral' | 'arquivados') || 'geral');
+  const [adminCurrentPage, setAdminCurrentPage] = useState(1);
 
   useEffect(() => {
     localStorage.setItem('validaC_searchTerm', searchTerm);
@@ -246,7 +252,9 @@ export default function App() {
     localStorage.setItem('validaC_filterDate', filterDate);
     localStorage.setItem('validaC_filterProduct', filterProduct);
     localStorage.setItem('validaC_timeRangeFilter', timeRangeFilter);
-  }, [searchTerm, filterStatus, filterDate, filterProduct, timeRangeFilter]);
+    localStorage.setItem('validaC_adminListTab', adminListTab);
+    setAdminCurrentPage(1);
+  }, [searchTerm, filterStatus, filterDate, filterProduct, timeRangeFilter, adminListTab]);
   
   // Gallery State
   const [activeImage, setActiveImage] = useState(0);
@@ -293,6 +301,8 @@ export default function App() {
   };
 
   useEffect(() => {
+    localStorage.setItem('validaC_current_view', view);
+    
     const params = new URLSearchParams(window.location.search);
     if (view === 'sales') {
       params.set('product', 'secador-uv');
@@ -362,6 +372,7 @@ export default function App() {
         setUserStatus(null);
         setUserName('');
       }
+      setIsAuthLoading(false);
     });
 
     return () => {
@@ -458,7 +469,7 @@ export default function App() {
     const tempLead = {
       name: formData.name,
       phone: formData.phone,
-      address: formData.address,
+      address: formData.area || '', // Bairro/Zona/Município mapping
       province: formData.province === 'Outra' ? formData.customProvince : formData.province,
       area: formData.area || '', // Bairro/Zona
       produto: produtoName,
@@ -696,26 +707,43 @@ export default function App() {
   };
 
   const formatKz = (value: number) => {
-    return new Intl.NumberFormat('pt-AO', { style: 'decimal', minimumFractionDigits: 2 }).format(value) + ' Kz';
+    return new Intl.NumberFormat('pt-AO', { style: 'decimal', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value) + ' Kz';
+  };
+
+  const getLeadPrice = (lead: any) => {
+    if (!lead) return 0;
+    const q = lead.quantity || 1;
+    const prod = (lead.produto || '').toLowerCase();
+    const unitPrice = (prod.includes('35000') || prod.includes('35 000') || prod.includes('expresso')) ? 35000 : 25000;
+    
+    if (typeof lead.totalPrice === 'number' && lead.totalPrice > 0) {
+      if (lead.totalPrice < (q * unitPrice)) {
+        return q * unitPrice;
+      }
+      return lead.totalPrice;
+    }
+    return q * unitPrice;
+  };
+
+  const getFormattedLeadText = (lead: any) => {
+    const q = lead.quantity || 1;
+    const product = lead.produto || 'Secador Inteligente UV';
+    const total = formatKz(getLeadPrice(lead));
+    const mainProvince = lead.province || 'Luanda';
+    const mainArea = lead.area || lead.address || 'N/A';
+    
+    return `Cliente: ${lead.name}\ntelefone: ${lead.phone}\nProdutos: ${q} - ${product}\nProvíncia: ${mainProvince}\nEndereço: ${mainArea}\nTotal: ${total}.`;
   };
 
   const handleCopyLead = (lead: any) => {
-    const q = lead.quantity || 1;
-    const product = lead.produto || 'Secador Inteligente UV';
-    const total = lead.totalPrice ? formatKz(lead.totalPrice) : formatKz(q * 25000);
-    const areaInfo = lead.area ? `\nZona/Bairro: ${lead.area}` : '';
-    const text = `Cliente: ${lead.name}\ntelefone: ${lead.phone}\nProdutos: ${q} - ${product}\nProvinvia: ${lead.province || 'Luanda'}${areaInfo}\nLocal: ${lead.address}\nTotal: ${total}`;
+    const text = getFormattedLeadText(lead);
     navigator.clipboard.writeText(text);
     alert('Informações copiadas!');
   };
 
   const handleWhatsApp = (lead: any) => {
     const cleanPhone = lead.phone.replace(/\D/g, '');
-    const q = lead.quantity || 1;
-    const product = lead.produto || 'Secador Inteligente UV';
-    const total = lead.totalPrice ? formatKz(lead.totalPrice) : formatKz(q * 25000);
-    const areaInfo = lead.area ? `\nZona/Bairro: ${lead.area}` : '';
-    const text = `Cliente: ${lead.name}\ntelefone: ${lead.phone}\nProdutos: ${q} - ${product}\nProvinvia: ${lead.province || 'Luanda'}${areaInfo}\nLocal: ${lead.address}\nTotal: ${total}`;
+    const text = getFormattedLeadText(lead);
     const encodedText = encodeURIComponent(text);
     window.open(`https://wa.me/${cleanPhone}/?text=${encodedText}`, '_blank');
   };
@@ -812,6 +840,19 @@ export default function App() {
     return matchesSearch && matchesStatus && matchesDate && matchesProduct && passesTimeRange;
   });
 
+  const allDisplayedLeads = filteredData.filter(lead => {
+    if (adminListTab === 'arquivados') {
+      return lead.status === 'Entregue';
+    } else {
+      return lead.status !== 'Entregue';
+    }
+  });
+
+  const itemsPerPage = 40;
+  const totalPages = Math.ceil(allDisplayedLeads.length / itemsPerPage) || 1;
+  const currentPage = Math.min(adminCurrentPage, totalPages);
+  const displayedLeads = allDisplayedLeads.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const totalSubmissions = adminData.length;
   const totalReservados = adminData.filter(d => d.status && d.status.includes('Reservado')).length;
   const conversionRate = totalSubmissions > 0 ? ((totalReservados / totalSubmissions) * 100).toFixed(1) : '0.0';
@@ -823,6 +864,17 @@ export default function App() {
   ]));
 
   const isProtectedView = ['admin', 'pages', 'danger-zone', 'ai-generator', 'settings', 'prompt-gallery', 'users'].includes(view);
+
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="animate-spin text-emerald-400 h-10 w-10" />
+          <p className="text-sm font-bold text-slate-400 font-mono">A carregar sessão...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (view === 'auth' || view === 'auth-register' || (isProtectedView && !isAuthenticated && userStatus !== undefined)) {
      if (isAuthenticated && userStatus !== undefined) {
@@ -890,17 +942,26 @@ export default function App() {
           
           <div className={`flex items-center gap-4 ${(view === 'sales' || view === 'sales-roupas') ? 'hidden md:flex' : ''}`}>
             {isAuthenticated && (
-              <div className="relative">
-                <div 
-                  className="flex items-center gap-2 border border-slate-700 bg-slate-800/80 rounded-full pl-1.5 pr-4 py-1.5 cursor-pointer hover:bg-slate-700 hover:border-slate-600 transition-all"
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              <>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white rounded-full transition-all flex items-center justify-center gap-2 cursor-pointer text-xs font-bold shadow-sm"
+                  title="Actualizar Página"
                 >
-                  <div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-sm shadow-inner">
-                     {(auth.currentUser?.displayName || 'Pedro').charAt(0).toUpperCase()}
+                  <RefreshCw size={12} className="text-emerald-400" />
+                  <span>Actualizar</span>
+                </button>
+                <div className="relative">
+                  <div 
+                    className="flex items-center gap-2 border border-slate-700 bg-slate-800/80 rounded-full pl-1.5 pr-4 py-1.5 cursor-pointer hover:bg-slate-700 hover:border-slate-600 transition-all"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  >
+                    <div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-sm shadow-inner">
+                       {(auth.currentUser?.displayName || 'Pedro').charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-sm font-medium text-emerald-400">Olá, {auth.currentUser?.displayName || 'Pedro'}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500 ml-1"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                   </div>
-                  <span className="text-sm font-medium text-emerald-400">Olá, {auth.currentUser?.displayName || 'Pedro'}</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500 ml-1"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                </div>
                 
                 <AnimatePresence>
                   {isDropdownOpen && (
@@ -954,6 +1015,7 @@ export default function App() {
                   )}
                 </AnimatePresence>
               </div>
+              </>
             )}
             {!isAuthenticated && view !== 'home' && (
               <button 
@@ -1172,12 +1234,16 @@ export default function App() {
                     <div className="lg:w-[58%] p-8 sm:p-12">
                         <div className="text-center sm:text-left mb-10 relative flex flex-col items-center sm:items-start">
                             <div className="bg-red-500 text-white font-black py-2 px-5 rounded-full text-xs shadow-xl animate-bounce mb-6">
-                               POUPA 10.000 KZ HOJE
+                               POUPA {new Intl.NumberFormat('pt-AO').format(formData.quantity * 10000)} KZ HOJE
                             </div>
                             <div className="space-y-1 text-center sm:text-left">
-                              <p className="text-slate-400 line-through text-2xl font-bold tracking-tight">35.000 Kz</p>
+                              <p className="text-slate-400 line-through text-2xl font-bold tracking-tight">
+                                {new Intl.NumberFormat('pt-AO').format(formData.quantity * 35000)} Kz
+                              </p>
                               <div className="flex items-baseline gap-2">
-                                <span className="text-7xl font-black text-slate-900 tracking-tighter">25.000</span>
+                                <span className="text-7xl font-black text-slate-900 tracking-tighter">
+                                  {new Intl.NumberFormat('pt-AO').format(formData.quantity * 25000)}
+                                </span>
                                 <span className="text-2xl font-black text-slate-400">Kz</span>
                               </div>
                             </div>
@@ -1617,12 +1683,16 @@ export default function App() {
               <div className="lg:w-[58%] p-8 sm:p-12">
                   <div className="text-center sm:text-left mb-12 relative flex flex-col items-center sm:items-start">
                       <div className="bg-red-500 text-white font-black py-2 px-5 rounded-full text-xs shadow-xl animate-bounce mb-6">
-                        POUPA 10.000 KZ HOJE
+                        POUPA {new Intl.NumberFormat('pt-AO').format(formData.quantity * 10000)} KZ HOJE
                       </div>
                       <div className="space-y-1">
-                        <p className="text-slate-400 line-through text-2xl font-bold tracking-tight">45.000 Kz</p>
+                        <p className="text-slate-400 line-through text-2xl font-bold tracking-tight">
+                          {new Intl.NumberFormat('pt-AO').format(formData.quantity * 45000)} Kz
+                        </p>
                         <div className="flex items-baseline gap-2">
-                          <span className="text-7xl font-black text-slate-900 tracking-tighter">35.000</span>
+                          <span className="text-7xl font-black text-slate-900 tracking-tighter">
+                            {new Intl.NumberFormat('pt-AO').format(formData.quantity * 35000)}
+                          </span>
                           <span className="text-2xl font-black text-slate-400">Kz</span>
                         </div>
                       </div>
@@ -1794,8 +1864,15 @@ export default function App() {
                   </div>
                   <div className="flex gap-3 mt-4 sm:mt-0">
                     <button 
+                      onClick={() => setModalState('admin-financial-panel')}
+                      className="text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 flex items-center gap-2 rounded-lg font-bold transition shadow-sm cursor-pointer"
+                      title="Abrir Painel Financeiro"
+                    >
+                      <Store size={16} /> Painel Financeiro
+                    </button>
+                    <button 
                       onClick={handleExportCSV}
-                      className="text-sm bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-2 flex items-center gap-2 rounded-lg font-bold transition border border-indigo-200"
+                      className="text-sm bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-2 flex items-center gap-2 rounded-lg font-bold transition border border-indigo-200 cursor-pointer"
                     >
                       <Download size={16} /> Exportar CSV
                     </button>
@@ -1889,6 +1966,32 @@ export default function App() {
                 </div>
               </div>
 
+              {/* SECTIONS / SESSÕES DE LEADS */}
+              <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-6 gap-1.5 w-full sm:w-max">
+                <button
+                  onClick={() => setAdminListTab('geral')}
+                  className={`px-5 py-2.5 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    adminListTab === 'geral' 
+                      ? 'bg-indigo-600 text-white shadow-sm' 
+                       : 'text-slate-600 hover:text-slate-950 hover:bg-slate-200/50'
+                  }`}
+                >
+                  <FileText size={16} />
+                  <span>📋 Painel Geral ({filteredData.filter(d => d.status !== 'Entregue').length})</span>
+                </button>
+                <button
+                  onClick={() => setAdminListTab('arquivados')}
+                  className={`px-5 py-2.5 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    adminListTab === 'arquivados' 
+                      ? 'bg-emerald-600 text-white shadow-sm' 
+                      : 'text-slate-600 hover:text-slate-950 hover:bg-slate-200/50'
+                  }`}
+                >
+                  <PackageOpen size={16} />
+                  <span>📦 Arquivo / Entregues ({filteredData.filter(d => d.status === 'Entregue').length})</span>
+                </button>
+              </div>
+
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 {isAdminLoading ? (
                   <div className="p-12 text-center text-slate-500 flex flex-col items-center">
@@ -1896,17 +1999,28 @@ export default function App() {
                     <p>A sincronizar com a base de dados...</p>
                   </div>
                 ) : adminError ? (
-                  <div className="p-8 pb-10 text-center text-red-600 bg-red-50">
-                    <TriangleAlert className="mx-auto mb-3" size={32} />
-                    <p className="font-medium">{adminError}</p>
+                  <div className="p-8 pb-10 text-center bg-slate-50 border border-slate-200 rounded-2xl m-4 flex flex-col items-center gap-3">
+                    <TriangleAlert className="text-amber-500" size={40} />
+                    <div className="max-w-md">
+                      <p className="font-bold text-slate-800 text-base">Problema de Ligação ou Sincronização</p>
+                      <p className="text-xs text-slate-400 font-mono mt-1 bg-slate-100 p-2 rounded-lg border border-slate-200 overflow-x-auto truncate max-w-lg">{adminError}</p>
+                    </div>
+                    <button
+                      onClick={() => loadAdminData()}
+                      className="mt-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl transition shadow-sm cursor-pointer flex items-center gap-2"
+                    >
+                      <RefreshCw size={14} />
+                      Tentar Novamente / Sincronizar
+                    </button>
                   </div>
-                ) : filteredData.length === 0 ? (
+                ) : displayedLeads.length === 0 ? (
                   <div className="p-12 text-center text-slate-500">
-                    Nenhum lead encontrado com os filtros actuais.
+                    Nenhum lead encontrado nesta sessão com os filtros actuais.
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-slate-100">
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-slate-100">
                       <thead className="bg-slate-50">
                         <tr>
                           <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Data</th>
@@ -1914,13 +2028,13 @@ export default function App() {
                           <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">WhatsApp</th>
                           <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Produto</th>
                           <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Qtd</th>
-                          <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Endereço</th>
+                          <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">PROVÍNCIA</th>
                           <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
                           <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Ações</th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-slate-100">
-                        {filteredData.map((lead, i) => (
+                        {displayedLeads.map((lead, i) => (
                           <tr key={i} className="hover:bg-slate-50 transition-colors">
                             <td className="px-6 py-4 whitespace-nowrap text-xs text-slate-400">
                                {lead.timestamp ? new Date(lead.timestamp).toLocaleDateString() : 'N/A'}
@@ -1929,7 +2043,7 @@ export default function App() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{lead.phone}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{lead.produto || 'Secador Inteligente UV'}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-800">{lead.quantity || 1}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 max-w-[200px] truncate">{lead.address}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 max-w-[200px] truncate">{lead.province || 'Luanda'}</td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <select 
                                 value={lead.status}
@@ -1953,6 +2067,16 @@ export default function App() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                                <div className="flex justify-end gap-2">
+                                 <button
+                                   onClick={() => {
+                                     setSelectedLeadForPreview(lead);
+                                     setModalState('lead-preview');
+                                   }}
+                                   className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                                   title="Previsualizar Lead"
+                                 >
+                                   <Eye size={16} />
+                                 </button>
                                  <button
                                    onClick={() => handleCopyLead(lead)}
                                    className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
@@ -1984,8 +2108,87 @@ export default function App() {
                       </tbody>
                     </table>
                   </div>
-                )}
-              </div>
+                  {/* PAGINAÇÃO */}
+                  {totalPages > 1 && (
+                    <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 select-none">
+                      <p className="text-xs font-medium text-slate-500 font-mono">
+                        A mostrar <span className="text-slate-800 font-bold">{(currentPage - 1) * itemsPerPage + 1}</span> a{' '}
+                        <span className="text-slate-800 font-bold">
+                          {Math.min(currentPage * itemsPerPage, allDisplayedLeads.length)}
+                        </span>{' '}
+                        de <span className="text-slate-800 font-medium">{allDisplayedLeads.length}</span> leads
+                      </p>
+                      
+                      <div className="flex items-center gap-1.5 step-pagination">
+                        <button
+                          onClick={() => setAdminCurrentPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="p-1 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-600 sm:hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white transition flex items-center gap-1 text-xs font-bold cursor-pointer"
+                          title="Página Anterior"
+                        >
+                          <ChevronLeft size={14} />
+                          <span>Anterior</span>
+                        </button>
+
+                        {/* Page numbers */}
+                        {(() => {
+                          const pages: (number | string)[] = [];
+                          const startPage = Math.max(1, currentPage - 2);
+                          const endPage = Math.min(totalPages, currentPage + 2);
+                          
+                          if (startPage > 1) {
+                            pages.push(1);
+                            if (startPage > 2) pages.push('...');
+                          }
+                          
+                          for (let i = startPage; i <= endPage; i++) {
+                            pages.push(i);
+                          }
+                          
+                          if (endPage < totalPages) {
+                            if (endPage < totalPages - 1) pages.push('...');
+                            pages.push(totalPages);
+                          }
+                          
+                          return pages.map((page, idx) => {
+                            if (typeof page === 'string') {
+                              return (
+                                <span key={`dots-${idx}`} className="px-2 text-slate-400 font-mono text-xs">
+                                  {page}
+                                </span>
+                              );
+                            }
+                            return (
+                              <button
+                                key={`page-${page}`}
+                                onClick={() => setAdminCurrentPage(page)}
+                                className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-black transition-all ${
+                                  currentPage === page
+                                    ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/10'
+                                    : 'bg-white border border-slate-200 text-slate-600 sm:hover:bg-slate-50 cursor-pointer'
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            );
+                          });
+                        })()}
+
+                        <button
+                          onClick={() => setAdminCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                          className="p-1 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-600 sm:hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white transition flex items-center gap-1 text-xs font-bold cursor-pointer"
+                          title="Próxima Página"
+                        >
+                          <span>Próxima</span>
+                          <ChevronRight size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
         </main>
       )}
 
@@ -2728,6 +2931,201 @@ export default function App() {
                   >
                     Sim, excluir
                   </button>
+                </div>
+              </motion.div>
+            )}
+
+            {modalState === 'lead-preview' && selectedLeadForPreview && (
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                className="bg-white max-w-md w-full rounded-3xl shadow-2xl overflow-hidden my-8"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="bg-indigo-600 p-6 text-white text-center relative">
+                  <button 
+                    onClick={() => {
+                      setSelectedLeadForPreview(null);
+                      setModalState('none');
+                    }} 
+                    className="absolute top-4 right-4 text-white/80 hover:text-white"
+                  >
+                    <XCircle size={24} />
+                  </button>
+                  <Eye className="w-12 h-12 mx-auto mb-3 animate-pulse" />
+                  <h3 className="text-xl font-bold">Detalhes do Lead</h3>
+                  <p className="text-indigo-200 text-xs mt-1">Previsualização Completa do Pedido</p>
+                </div>
+                
+                <div className="p-6 space-y-4">
+                  <div className="space-y-3 text-sm text-slate-700">
+                    <div>
+                      <span className="block text-xs text-slate-400 font-bold uppercase tracking-wider">Data de Reserva</span>
+                      <p className="font-semibold">{selectedLeadForPreview.timestamp ? new Date(selectedLeadForPreview.timestamp).toLocaleString() : 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="block text-xs text-slate-400 font-bold uppercase tracking-wider">Nome Completo</span>
+                      <p className="font-semibold text-slate-900">{selectedLeadForPreview.name}</p>
+                    </div>
+                    <div>
+                      <span className="block text-xs text-slate-400 font-bold uppercase tracking-wider">Segmento / Produto</span>
+                      <p className="font-semibold text-slate-900">{selectedLeadForPreview.produto || 'Secador Inteligente UV'}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="block text-xs text-slate-400 font-bold uppercase tracking-wider">WhatsApp</span>
+                        <p className="font-semibold text-slate-900">{selectedLeadForPreview.phone}</p>
+                      </div>
+                      <div>
+                        <span className="block text-xs text-slate-400 font-bold uppercase tracking-wider">Quantidade</span>
+                        <p className="font-semibold text-slate-900">{selectedLeadForPreview.quantity || 1} Unidades</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="block text-xs text-slate-400 font-bold uppercase tracking-wider">Província</span>
+                        <p className="font-semibold text-slate-900">{selectedLeadForPreview.province || 'Luanda'}</p>
+                      </div>
+                      <div>
+                        <span className="block text-xs text-slate-400 font-bold uppercase tracking-wider">Total</span>
+                        <p className="font-bold text-indigo-600 text-base">
+                          {formatKz(getLeadPrice(selectedLeadForPreview))}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <span className="block text-xs text-slate-400 font-bold uppercase tracking-wider">Bairro, Zona, Município (Endereço)</span>
+                      <p className="font-semibold text-slate-900 p-2.5 bg-slate-50 border border-slate-100 rounded-lg">
+                        {selectedLeadForPreview.area || selectedLeadForPreview.address || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => handleCopyLead(selectedLeadForPreview)}
+                        className="flex-1 flex items-center justify-center gap-2 py-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl transition"
+                      >
+                        <Copy size={16} /> Copiar Dados
+                      </button>
+                      
+                      <button 
+                        onClick={() => handleWhatsApp(selectedLeadForPreview)}
+                        className="flex-1 flex items-center justify-center gap-2 py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs rounded-xl transition"
+                      >
+                        <MessageCircle size={16} /> WhatsApp
+                      </button>
+                    </div>
+                    
+                    <button 
+                      onClick={() => {
+                        setSelectedLeadForPreview(null);
+                        setModalState('none');
+                      }} 
+                      className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl transition mt-1"
+                    >
+                      Fechar
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {modalState === 'admin-financial-panel' && (
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                className="bg-slate-900 border border-slate-800 text-white max-w-6xl w-full rounded-[2.5rem] shadow-2xl overflow-hidden my-8 relative"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Subtle design details */}
+                <div className="absolute top-0 right-0 p-12 text-emerald-500 opacity-[0.03] pointer-events-none">
+                  <Zap size={320} />
+                </div>
+
+                <div className="p-8 md:p-12 relative">
+                  <button 
+                    onClick={() => setModalState('none')} 
+                    className="absolute top-8 right-8 text-slate-400 hover:text-white transition-colors"
+                  >
+                    <XCircle size={32} />
+                  </button>
+                  
+                  <div className="flex items-center gap-4 mb-10">
+                    <div className="p-4 bg-emerald-500/10 rounded-2xl text-emerald-400">
+                      <Store size={36} />
+                    </div>
+                    <div>
+                      <h3 className="text-3xl md:text-4xl font-black tracking-tight flex items-center gap-3">
+                        <Sparkles size={24} className="text-emerald-400 animate-pulse" />
+                        Painel Financeiro Geral
+                      </h3>
+                      <p className="text-base text-slate-400 mt-1">Análise Integrada de Faturamento & Conversões Comerciais</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+                    <div className="bg-slate-850 rounded-3xl p-6 lg:p-8 border border-slate-800 flex flex-col justify-between">
+                      <div>
+                        <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest block mb-4">💸 Faturamento Bruto Efetuado</span>
+                        <span className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-black text-emerald-300 tracking-tight block leading-none whitespace-nowrap overflow-hidden text-ellipsis" title={formatKz(adminData.filter(d => d.status === 'Entregue').reduce((sum, d) => sum + getLeadPrice(d), 0))}>
+                          {formatKz(adminData.filter(d => d.status === 'Entregue').reduce((sum, d) => sum + getLeadPrice(d), 0))}
+                        </span>
+                      </div>
+                      <p className="text-slate-350 text-sm mt-6 pt-6 border-t border-slate-800">
+                        Das <span className="text-slate-100 font-bold text-base">{adminData.filter(d => d.status === 'Entregue').length}</span> encomendas devidamente entregues e concluídas
+                      </p>
+                    </div>
+                    
+                    <div className="bg-slate-850 rounded-3xl p-6 lg:p-8 border border-slate-800 flex flex-col justify-between">
+                      <div>
+                        <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest block mb-4">💎 Possível Faturamento (Reservas)</span>
+                        <span className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-black text-indigo-300 tracking-tight block leading-none whitespace-nowrap overflow-hidden text-ellipsis" title={formatKz(adminData.filter(d => d.status && d.status.includes('Reservado')).reduce((sum, d) => sum + getLeadPrice(d), 0))}>
+                          {formatKz(adminData.filter(d => d.status && d.status.includes('Reservado')).reduce((sum, d) => sum + getLeadPrice(d), 0))}
+                        </span>
+                      </div>
+                      <p className="text-slate-350 text-sm mt-6 pt-6 border-t border-slate-800">
+                        Correspondente a <span className="text-indigo-300 font-bold text-base">{adminData.filter(d => d.status && d.status.includes('Reservado')).length}</span> reservas em fase de processamento
+                      </p>
+                    </div>
+
+                    <div className="bg-slate-850 rounded-3xl p-6 lg:p-8 border border-slate-800 flex flex-col justify-between">
+                      <div>
+                        <span className="text-xs font-bold text-amber-400 uppercase tracking-widest block mb-4">⏳ Faturamento Potencial (Em Espera)</span>
+                        <span className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-black text-amber-300 tracking-tight block leading-none whitespace-nowrap overflow-hidden text-ellipsis" title={formatKz(adminData.filter(d => d.status === 'Pendente').reduce((sum, d) => sum + getLeadPrice(d), 0))}>
+                          {formatKz(adminData.filter(d => d.status === 'Pendente').reduce((sum, d) => sum + getLeadPrice(d), 0))}
+                        </span>
+                      </div>
+                      <p className="text-slate-350 text-sm mt-6 pt-6 border-t border-slate-800">
+                        Potencial estimado de <span className="text-amber-300 font-bold text-base">{adminData.filter(d => d.status === 'Pendente').length}</span> leads pendentes de validação comercial
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Summary of conversion performance */}
+                  <div className="mt-10 bg-slate-850/50 border border-slate-800 rounded-3xl p-6 md:p-8 flex flex-col sm:flex-row gap-8 items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 shrink-0">
+                        <Activity size={28} />
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold text-slate-200">Conversão de Leads em Reservas</p>
+                        <p className="text-sm text-slate-400 mt-0.5">Relação de Leads validados e agendados no sistema</p>
+                      </div>
+                    </div>
+                    <div className="text-center sm:text-right flex items-baseline gap-3">
+                      <span className="text-4xl sm:text-5xl font-black text-indigo-400">{conversionRate}%</span>
+                      <span className="text-slate-400 text-sm font-mono tracking-wider uppercase">Taxa Global</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-10 flex justify-end">
+                    <button
+                      onClick={() => setModalState('none')}
+                      className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-base font-bold rounded-2xl transition shadow-lg hover:shadow-indigo-600/15 cursor-pointer"
+                    >
+                      Fechar Painel
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             )}
