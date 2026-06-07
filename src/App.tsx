@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldCheck, ShieldAlert, Activity, CheckCircle, PackageOpen, TriangleAlert, Crown, XCircle, ArrowLeft, Lock, Loader2, Info, Star, Eye, EyeOff, Copy, MessageCircle, Search, Filter, Download, User, LayoutDashboard, Settings, ExternalLink, LogOut, ChevronDown, Store, FileText, AlertOctagon, Trash2, Timer, Paperclip, FolderOpen, Monitor, Smartphone, Tablet, Bot, Upload, Edit, Sparkles, Dumbbell, Zap, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, Activity, CheckCircle, PackageOpen, TriangleAlert, Crown, XCircle, ArrowLeft, Lock, Loader2, Info, Star, Eye, EyeOff, Copy, MessageCircle, Search, Filter, Download, User, LayoutDashboard, Settings, ExternalLink, LogOut, ChevronDown, Store, FileText, AlertOctagon, Trash2, Timer, Paperclip, FolderOpen, Monitor, Smartphone, Tablet, Bot, Upload, Edit, Sparkles, Dumbbell, Zap, RefreshCw, ChevronLeft, ChevronRight, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db, auth, handleFirestoreError, OperationType } from './firebase';
 import { collection, doc, addDoc, updateDoc, getDocs, getDoc, query, orderBy, serverTimestamp, Timestamp, deleteDoc, where, setDoc } from 'firebase/firestore';
@@ -245,6 +245,14 @@ export default function App() {
   const [timeRangeFilter, setTimeRangeFilter] = useState(() => localStorage.getItem('validaC_timeRangeFilter') || 'Tudo');
   const [adminListTab, setAdminListTab] = useState<'geral' | 'arquivados'>(() => (localStorage.getItem('validaC_adminListTab') as 'geral' | 'arquivados') || 'geral');
   const [adminCurrentPage, setAdminCurrentPage] = useState(1);
+  const [adminSubView, setAdminSubView] = useState<'leads' | 'financeiro'>('leads');
+  const [financeProductFilter, setFinanceProductFilter] = useState('Todos');
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => (localStorage.getItem('validaC_theme') as 'dark' | 'light') || 'dark');
+  const isDark = theme === 'dark';
+
+  useEffect(() => {
+    localStorage.setItem('validaC_theme', theme);
+  }, [theme]);
 
   useEffect(() => {
     localStorage.setItem('validaC_searchTerm', searchTerm);
@@ -735,6 +743,33 @@ export default function App() {
     return `Cliente: ${lead.name}\ntelefone: ${lead.phone}\nProdutos: ${q} - ${product}\nProvíncia: ${mainProvince}\nEndereço: ${mainArea}\nTotal: ${total}.`;
   };
 
+  const getWhatsAppMessageText = (lead: any) => {
+    const name = lead.name || '';
+    const date = lead.timestamp ? new Date(lead.timestamp).toLocaleDateString('pt-AO') : 'N/A';
+    const product = lead.produto || 'Secador Inteligente UV';
+    const quantity = lead.quantity || 1;
+    const totalFormatted = new Intl.NumberFormat('pt-AO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(getLeadPrice(lead));
+    const address = [lead.province || 'Luanda', lead.area || lead.address].filter(Boolean).join(', ');
+
+    return `Olá Sr/a ${name}! 
+Aqui é a C Store Angola!
+No dia ${date} manifestou interesse em adquirir ${product} (${quantity}x) no valor de ${totalFormatted} Kz.
+
+Temos uma boa notícia — o produto já chegou e estamos prontos para fazer a entrega amanhã! 
+
+Antes de confirmar, os teus dados estão corretos? 
+
+Endereço: ${address} 
+Produto: ${product} (${quantity}x)  
+Total a pagar: ${totalFormatted} Kz
+
+Se sim, qual é o melhor período para receberes a entrega amanhã? 
+
+Manhã (8h - 12h)  
+Tarde (12h - 15h)  
+Final do dia (16h - 18h)`;
+  };
+
   const handleCopyLead = (lead: any) => {
     const text = getFormattedLeadText(lead);
     navigator.clipboard.writeText(text);
@@ -743,7 +778,7 @@ export default function App() {
 
   const handleWhatsApp = (lead: any) => {
     const cleanPhone = lead.phone.replace(/\D/g, '');
-    const text = getFormattedLeadText(lead);
+    const text = getWhatsAppMessageText(lead);
     const encodedText = encodeURIComponent(text);
     window.open(`https://wa.me/${cleanPhone}/?text=${encodedText}`, '_blank');
   };
@@ -842,9 +877,9 @@ export default function App() {
 
   const allDisplayedLeads = filteredData.filter(lead => {
     if (adminListTab === 'arquivados') {
-      return lead.status === 'Entregue';
+      return lead.status === 'Entregue' || lead.status === 'Pago';
     } else {
-      return lead.status !== 'Entregue';
+      return lead.status !== 'Entregue' && lead.status !== 'Pago';
     }
   });
 
@@ -879,7 +914,7 @@ export default function App() {
   if (view === 'auth' || view === 'auth-register' || (isProtectedView && !isAuthenticated && userStatus !== undefined)) {
      if (isAuthenticated && userStatus !== undefined) {
         setView('pages');
-        return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full"></div></div>;
+        return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full"></div></div>;
      }
      if (!isAuthenticated) {
         return <AuthView setView={setView} onLoginSuccess={() => setView('pages')} initialTab={view === 'auth-register' ? 'register' : 'login'} />;
@@ -891,15 +926,15 @@ export default function App() {
   }
 
   if (isProtectedView && isAuthenticated && userStatus === null) {
-    return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full"></div></div>;
+    return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full"></div></div>;
   }
 
   if (isProtectedView && isAuthenticated && (userStatus === 'blocked' || userStatus === 'expired' || userStatus === 'pending')) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
-         <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 max-w-md w-full">
-           <h1 className="text-2xl font-bold text-slate-800 mb-2">Acesso Restrito</h1>
-           <p className="text-slate-600 mb-6">A sua conta encontra-se atualmente inativa ou bloqueada. Por favor, contacte o administrador (Grupo Cassaminha) para libertar o seu acesso.</p>
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
+         <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-2xl max-w-md w-full text-white">
+           <h1 className="text-2xl font-black text-white mb-2">Acesso Restrito</h1>
+           <p className="text-slate-400 mb-6">A sua conta encontra-se atualmente inativa ou bloqueada. Por favor, contacte o administrador (Grupo Cassaminha) para libertar o seu acesso.</p>
            <button 
              onClick={() => { setView('auth'); auth.signOut(); }} 
              className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 w-full"
@@ -912,7 +947,9 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-indigo-500 selection:text-white">
+    <div className={`min-h-screen font-sans selection:bg-indigo-500 selection:text-white transition-colors duration-300 ${
+      isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-800'
+    }`}>
       
       {/* Navigation */}
       {isAuthenticated && view !== 'home' && (
@@ -950,6 +987,23 @@ export default function App() {
                 >
                   <RefreshCw size={12} className="text-emerald-400" />
                   <span>Actualizar</span>
+                </button>
+                <button
+                  onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                  className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white rounded-full transition-all flex items-center justify-center gap-2 cursor-pointer text-xs font-bold shadow-sm"
+                  title={isDark ? "Mudar para Tema Claro" : "Mudar para Tema Escuro"}
+                >
+                  {isDark ? (
+                    <>
+                      <Sun size={12} className="text-amber-400" />
+                      <span>Claro</span>
+                    </>
+                  ) : (
+                    <>
+                      <Moon size={12} className="text-indigo-400" />
+                      <span>Escuro</span>
+                    </>
+                  )}
                 </button>
                 <div className="relative">
                   <div 
@@ -1850,21 +1904,283 @@ export default function App() {
       {/* ADMIN VIEW */}
       {view === 'admin' && (
         <main className="w-full max-w-[1600px] mx-auto px-4 py-10 flex-grow">
-            <div className="mb-8 block">
-              <button 
-                onClick={() => setView('pages')} 
-                  className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-indigo-600 font-medium mb-4 transition-colors"
+          {adminSubView === 'financeiro' ? (
+            <div className="animate-fadeIn">
+              <div className="mb-4">
+                <button 
+                  onClick={() => setAdminSubView('leads')}
+                  className={`flex items-center gap-1.5 text-sm font-bold transition-colors cursor-pointer ${
+                    isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-indigo-600'
+                  }`}
+                >
+                  <ArrowLeft size={16} /> Voltar ao Painel de Leads
+                </button>
+              </div>
+              {/* Standalone Financial Page */}
+              <div className="flex justify-between items-center flex-wrap gap-4 mb-8">
+                <div>
+                  <h1 className="text-3xl font-black text-white flex items-center gap-2 tracking-tight">
+                    <Store className="text-emerald-400" size={28} /> Painel de Análise Financeira
+                  </h1>
+                  <p className="text-slate-400 mt-1">Previsões de faturamento e detalhamento real e estimado por produto</p>
+                </div>
+                
+                {/* Product Selector specifically built for the financial page */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <button
+                    onClick={() => setAdminSubView('leads')}
+                    className={`text-sm px-4 py-2.5 flex items-center gap-2 rounded-lg font-bold transition border cursor-pointer ${
+                      isDark 
+                        ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800 shadow-2xl' 
+                        : 'bg-indigo-50 hover:bg-indigo-150 text-indigo-700 border-indigo-200 shadow-md'
+                    }`}
+                  >
+                    <ArrowLeft size={16} /> Voltar ao Painel de Leads
+                  </button>
+                  
+                  <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-xl shadow-xl">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">Visualizar Produto:</span>
+                    <select
+                      value={financeProductFilter}
+                      onChange={(e) => setFinanceProductFilter(e.target.value)}
+                      className="text-sm font-bold text-white bg-transparent focus:outline-none cursor-pointer"
+                    >
+                      <option value="Todos" className="bg-slate-900 text-white">📦 Todos os Produtos ({adminData.length})</option>
+                      {uniquePages.map((page, index) => (
+                        <option key={index} value={page} className="bg-slate-900 text-white">
+                          🏷️ {page} ({adminData.filter(d => d.produto === page).length})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {(() => {
+                const filteredDataForFinance = financeProductFilter === 'Todos'
+                  ? adminData
+                  : adminData.filter(d => d.produto === financeProductFilter);
+
+                const faturamentoEfetuado = filteredDataForFinance
+                  .filter(d => d.status === 'Entregue' || d.status === 'Pago')
+                  .reduce((sum, d) => sum + getLeadPrice(d), 0);
+
+                const countEfetuado = filteredDataForFinance.filter(d => d.status === 'Entregue' || d.status === 'Pago').length;
+
+                const faturamentoReservas = filteredDataForFinance
+                  .filter(d => d.status && d.status.includes('Reservado'))
+                  .reduce((sum, d) => sum + getLeadPrice(d), 0);
+
+                const countReservas = filteredDataForFinance.filter(d => d.status && d.status.includes('Reservado')).length;
+
+                const faturamentoEspera = filteredDataForFinance
+                  .filter(d => d.status === 'Pendente')
+                  .reduce((sum, d) => sum + getLeadPrice(d), 0);
+
+                const countEspera = filteredDataForFinance.filter(d => d.status === 'Pendente').length;
+
+                const totalFaturamentoGeral = faturamentoEfetuado + faturamentoReservas + faturamentoEspera;
+                const totalCountGeral = countEfetuado + countReservas + countEspera;
+
+                return (
+                  <>
+                    {/* Visual warning when filter is applied */}
+                    {financeProductFilter !== 'Todos' && (
+                      <div className="mb-6 p-4 bg-slate-900 border border-slate-800 text-slate-100 rounded-2xl flex items-center justify-between shadow-lg">
+                        <div className="flex items-center gap-2.5">
+                          <Sparkles size={18} className="text-indigo-400 shrink-0 animate-pulse" />
+                          <span className="text-sm font-medium text-slate-300">Filtrado por: <strong className="text-white bg-slate-950 px-2 py-1 rounded-md border border-slate-800 ml-1">{financeProductFilter}</strong></span>
+                        </div>
+                        <button
+                          onClick={() => setFinanceProductFilter('Todos')}
+                          className="text-xs bg-slate-950 hover:bg-slate-850 text-slate-300 border border-slate-800 px-3 py-1.5 font-bold rounded-lg transition-colors cursor-pointer"
+                        >
+                          Limpar Filtro
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Financial stats grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+                      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden group hover:border-slate-700 transition duration-300">
+                        <div className="absolute top-0 right-0 p-3 bg-slate-950 text-emerald-400 rounded-bl-3xl opacity-80 border-l border-b border-slate-800">
+                          <CheckCircle size={22} />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-2">💸 Bruto Concluído (Entregues + Pagos)</span>
+                          <span className="text-lg sm:text-xl xl:text-2xl font-black text-emerald-400 tracking-tighter block leading-none whitespace-nowrap overflow-hidden text-ellipsis" title={formatKz(faturamentoEfetuado)}>
+                            {formatKz(faturamentoEfetuado)}
+                          </span>
+                        </div>
+                        <p className="text-slate-400 text-xs mt-4 pt-4 border-t border-slate-800">
+                          Das <span className="text-emerald-400 font-extrabold">{countEfetuado}</span> encomendas entregues ou pagas com sucesso do produto selecionado.
+                        </p>
+                      </div>
+
+                      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden group hover:border-slate-700 transition duration-300">
+                        <div className="absolute top-0 right-0 p-3 bg-slate-950 text-indigo-400 rounded-bl-3xl opacity-80 border-l border-b border-slate-800">
+                          <Activity size={22} />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2">💎 Possível Faturamento (Reservas)</span>
+                          <span className="text-lg sm:text-xl xl:text-2xl font-black text-indigo-400 tracking-tighter block leading-none whitespace-nowrap overflow-hidden text-ellipsis" title={formatKz(faturamentoReservas)}>
+                            {formatKz(faturamentoReservas)}
+                          </span>
+                        </div>
+                        <p className="text-slate-400 text-xs mt-4 pt-4 border-t border-slate-800">
+                          Correspondente a <span className="text-indigo-400 font-extrabold">{countReservas}</span> reservas em processamento no sistema.
+                        </p>
+                      </div>
+
+                      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden group hover:border-slate-700 transition duration-300">
+                        <div className="absolute top-0 right-0 p-3 bg-slate-950 text-amber-400 rounded-bl-3xl opacity-80 border-l border-b border-slate-800">
+                          <Timer size={22} />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest block mb-2">⏳ Faturamento Potencial (Em Espera)</span>
+                          <span className="text-lg sm:text-xl xl:text-2xl font-black text-amber-400 tracking-tighter block leading-none whitespace-nowrap overflow-hidden text-ellipsis" title={formatKz(faturamentoEspera)}>
+                            {formatKz(faturamentoEspera)}
+                          </span>
+                        </div>
+                        <p className="text-slate-400 text-xs mt-4 pt-4 border-t border-slate-800">
+                          Do total de <span className="text-amber-400 font-extrabold">{countEspera}</span> leads comerciais aguardando verificação.
+                        </p>
+                      </div>
+
+                      <div className="bg-gradient-to-br from-indigo-950 to-slate-900 text-white border border-slate-800 rounded-3xl p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-3 bg-white/5 text-emerald-400 rounded-bl-3xl border-l border-b border-slate-800">
+                          <Zap size={22} className="text-emerald-400 animate-pulse" />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-1">📊 Total Estimado Potencial</span>
+                          <span className="text-lg sm:text-xl xl:text-2xl font-black tracking-tighter block leading-none text-emerald-300 whitespace-nowrap overflow-hidden text-ellipsis" title={formatKz(totalFaturamentoGeral)}>
+                            {formatKz(totalFaturamentoGeral)}
+                          </span>
+                        </div>
+                        <p className="text-indigo-350 text-xs mt-4 pt-4 border-t border-indigo-905">
+                          Acumulado total de <span className="text-white font-extrabold">{totalCountGeral}</span> leads do fluxo de faturamento.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Breakdown by Product Table */}
+                    <div className="bg-slate-900 rounded-3xl border border-slate-800 shadow-2xl overflow-hidden mb-10">
+                      <div className="p-6 border-b border-slate-800 flex items-center justify-between flex-wrap gap-2 bg-slate-950/60">
+                        <div>
+                          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                            <Sparkles className="text-indigo-400 animate-pulse" size={20} /> Comparação Analítica de Todos os Produtos
+                          </h3>
+                          <p className="text-xs text-slate-400 mt-1">Previsão e status financeiro discriminado por linha de produto</p>
+                        </div>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[900px] border-collapse text-left">
+                          <thead>
+                            <tr className="bg-slate-950 border-b border-slate-800 text-slate-400 font-mono text-[10px] font-bold uppercase tracking-wider">
+                              <th className="px-6 py-4">Produto / Landing Page</th>
+                              <th className="px-5 py-4 text-center">Quant. Leads</th>
+                              <th className="px-5 py-4 text-center">Pendentes (⏳)</th>
+                              <th className="px-5 py-4 text-center">Reservados (💎)</th>
+                              <th className="px-5 py-4 text-center">Entregues ou Pagos (💸)</th>
+                              <th className="px-6 py-4 text-right">Faturamento Concluído</th>
+                              <th className="px-6 py-4 text-right">Total Estimado</th>
+                              <th className="px-6 py-4 text-center">Ações</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800">
+                            {uniquePages.map((prod, index) => {
+                              const leadsForProd = adminData.filter(d => d.produto === prod);
+                              const pendentesForProd = leadsForProd.filter(d => d.status === 'Pendente');
+                              const reservadosForProd = leadsForProd.filter(d => d.status && d.status.includes('Reservado'));
+                              const entreguesForProd = leadsForProd.filter(d => d.status === 'Entregue' || d.status === 'Pago');
+
+                              const brutoProd = entreguesForProd.reduce((sum, d) => sum + getLeadPrice(d), 0);
+                              const previstoProd = reservadosForProd.reduce((sum, d) => sum + getLeadPrice(d), 0);
+                              const pendenteValProd = pendentesForProd.reduce((sum, d) => sum + getLeadPrice(d), 0);
+
+                              const totalProdVal = brutoProd + previstoProd + pendenteValProd;
+
+                              const isSelected = financeProductFilter === prod;
+
+                              return (
+                                <tr 
+                                  key={index} 
+                                  className={`transition-colors text-sm ${isSelected ? 'bg-indigo-950/40 hover:bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
+                                >
+                                  <td className="px-6 py-4 font-bold text-white">
+                                    <div className="flex items-center gap-2">
+                                      <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 shrink-0" />
+                                      {prod}
+                                    </div>
+                                  </td>
+                                  <td className="px-5 py-4 text-center font-bold text-slate-600">{leadsForProd.length}</td>
+                                  <td className="px-5 py-4 text-center">
+                                    <div className="inline-flex flex-col items-center">
+                                      <span className="font-bold text-amber-400">{pendentesForProd.length}</span>
+                                      <span className="text-[10px] text-slate-400 font-mono">{formatKz(pendenteValProd)}</span>
+                                    </div>
+                                  </td>
+                                  <td className="px-5 py-4 text-center">
+                                    <div className="inline-flex flex-col items-center">
+                                      <span className="font-bold text-indigo-400">{reservadosForProd.length}</span>
+                                      <span className="text-[10px] text-slate-400 font-mono">{formatKz(previstoProd)}</span>
+                                    </div>
+                                  </td>
+                                  <td className="px-5 py-4 text-center">
+                                    <div className="inline-flex flex-col items-center">
+                                      <span className="font-bold text-emerald-400">{entreguesForProd.length}</span>
+                                      <span className="text-[10px] text-slate-400 font-mono">{formatKz(brutoProd)}</span>
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 text-right font-black text-emerald-400 font-mono">
+                                    {formatKz(brutoProd)}
+                                  </td>
+                                  <td className="px-6 py-4 text-right font-black text-white font-mono bg-slate-950/40">
+                                    {formatKz(totalProdVal)}
+                                  </td>
+                                  <td className="px-6 py-4 text-center">
+                                    <button
+                                      onClick={() => setFinanceProductFilter(prod)}
+                                      className={`px-3 py-1.5 bg-slate-900 border rounded-lg text-xs font-bold transition cursor-pointer ${
+                                        isSelected 
+                                          ? 'border-indigo-500 text-indigo-400 shadow-xl bg-slate-950' 
+                                          : 'border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                                      }`}
+                                    >
+                                      {isSelected ? '✓ Selecionado' : '⚡ Isolar Produto'}
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+
+                  </>
+                );
+              })()}
+            </div>
+          ) : (
+            <>
+              <div className="mb-8 block">
+                <button 
+                  onClick={() => setView('pages')} 
+                  className={`flex items-center gap-1.5 text-sm font-medium mb-4 transition-colors ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-indigo-600'}`}
                 >
                   <ArrowLeft size={16} /> Voltar
                 </button>
                 <div className="flex justify-between items-center flex-wrap gap-4">
                   <div>
-                    <h1 className="text-3xl font-bold text-slate-900">Painel de Leads</h1>
-                    <p className="text-slate-500 mt-1">Gestão de Reservas</p>
+                    <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Painel de Leads</h1>
+                    <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Gestão de Reservas</p>
                   </div>
                   <div className="flex gap-3 mt-4 sm:mt-0">
                     <button 
-                      onClick={() => setModalState('admin-financial-panel')}
+                      onClick={() => setAdminSubView('financeiro')}
                       className="text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 flex items-center gap-2 rounded-lg font-bold transition shadow-sm cursor-pointer"
                       title="Abrir Painel Financeiro"
                     >
@@ -1872,7 +2188,7 @@ export default function App() {
                     </button>
                     <button 
                       onClick={handleExportCSV}
-                      className="text-sm bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-2 flex items-center gap-2 rounded-lg font-bold transition border border-indigo-200 cursor-pointer"
+                      className={`text-sm px-4 py-2 flex items-center gap-2 rounded-lg font-bold transition border cursor-pointer ${isDark ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-850 shadow-2xl' : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200 shadow-sm'}`}
                     >
                       <Download size={16} /> Exportar CSV
                     </button>
@@ -1881,35 +2197,35 @@ export default function App() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-amber-200 relative overflow-hidden">
+                <div className={`p-6 rounded-2xl border relative overflow-hidden transition-all duration-300 ${isDark ? 'bg-slate-900 border-slate-800 text-white shadow-2xl' : 'bg-white border-amber-200 text-slate-800 shadow-sm'}`}>
                   <div className="absolute top-0 right-0 p-4 opacity-10"><Activity size={64}/></div>
                   <p className="text-sm text-amber-600 font-bold uppercase tracking-wider">Pendentes</p>
-                  <p className="text-4xl font-black text-slate-900 mt-2">{adminData.filter(d => d.status === 'Pendente').length}</p>
+                  <p className={`text-4xl font-black mt-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>{adminData.filter(d => d.status === 'Pendente').length}</p>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-emerald-200 relative overflow-hidden">
+                <div className={`p-6 rounded-2xl border relative overflow-hidden transition-all duration-300 ${isDark ? 'bg-slate-900 border-slate-800 text-white shadow-2xl' : 'bg-white border-emerald-200 text-slate-800 shadow-sm'}`}>
                   <div className="absolute top-0 right-0 p-4 opacity-10 text-emerald-500"><CheckCircle size={64}/></div>
                   <p className="text-sm text-emerald-600 font-bold uppercase tracking-wider">Reservados</p>
-                  <p className="text-4xl font-black text-slate-900 mt-2">{adminData.filter(d => d.status && d.status.includes('Reservado')).length}</p>
+                  <p className={`text-4xl font-black mt-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>{adminData.filter(d => d.status && d.status.includes('Reservado')).length}</p>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-indigo-200 relative overflow-hidden">
+                <div className={`p-6 rounded-2xl border relative overflow-hidden transition-all duration-300 ${isDark ? 'bg-slate-900 border-slate-800 text-white shadow-2xl' : 'bg-white border-indigo-200 text-slate-800 shadow-sm'}`}>
                   <div className="absolute top-0 right-0 p-4 opacity-10 text-indigo-500"><Activity size={64}/></div>
                   <p className="text-sm text-indigo-600 font-bold uppercase tracking-wider">Taxa de Conversão</p>
-                  <p className="text-4xl font-black text-slate-900 mt-2">{conversionRate}%</p>
+                  <p className={`text-4xl font-black mt-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>{conversionRate}%</p>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-red-200 relative overflow-hidden">
+                <div className={`p-6 rounded-2xl border relative overflow-hidden transition-all duration-300 ${isDark ? 'bg-slate-900 border-slate-800 text-white shadow-2xl' : 'bg-white border-red-200 text-slate-800 shadow-sm'}`}>
                   <div className="absolute top-0 right-0 p-4 opacity-10 text-red-500"><XCircle size={64}/></div>
                   <p className="text-sm text-red-600 font-bold uppercase tracking-wider">Rejeitados</p>
-                  <p className="text-4xl font-black text-slate-900 mt-2">{adminData.filter(d => d.status === 'Rejeitado').length}</p>
+                  <p className={`text-4xl font-black mt-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>{adminData.filter(d => d.status === 'Rejeitado').length}</p>
                 </div>
               </div>
 
-              <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4 items-center">
+              <div className={`p-4 rounded-2xl border mb-6 flex flex-col md:flex-row gap-4 items-center transition-all duration-300 ${isDark ? 'bg-slate-900 border-slate-800 shadow-2xl' : 'bg-white border-slate-200 shadow-sm'}`}>
                 <div className="relative flex-grow w-full md:w-auto">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                   <input 
                     type="text" 
                     placeholder="Pesquisar por nome, telefone ou endereço..." 
-                    className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className={`w-full pl-10 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${isDark ? 'bg-slate-950 border-slate-800 text-white placeholder:text-slate-500' : 'bg-slate-50 border-slate-200 text-slate-750'}`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -1918,48 +2234,48 @@ export default function App() {
                   <div className="relative min-w-[140px] shrink-0">
                      <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                      <select 
-                       className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none text-sm cursor-pointer"
+                       className={`w-full pl-9 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none text-sm cursor-pointer transition-colors ${isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-750'}`}
                        value={timeRangeFilter}
                        onChange={(e) => setTimeRangeFilter(e.target.value)}
                      >
-                        <option value="Tudo">Qualquer Data</option>
-                        <option value="Hoje">Hoje</option>
-                        <option value="Últimos 7 Dias">Últimos 7 Dias</option>
-                        <option value="Este Mês">Este Mês</option>
+                        <option value="Tudo" className={isDark ? 'bg-slate-900 text-white' : ''}>Qualquer Data</option>
+                        <option value="Hoje" className={isDark ? 'bg-slate-900 text-white' : ''}>Hoje</option>
+                        <option value="Últimos 7 Dias" className={isDark ? 'bg-slate-900 text-white' : ''}>Últimos 7 Dias</option>
+                        <option value="Este Mês" className={isDark ? 'bg-slate-900 text-white' : ''}>Este Mês</option>
                      </select>
                   </div>
                   <div className="relative min-w-[140px] shrink-0">
                      <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                      <select 
-                       className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none text-sm cursor-pointer"
+                       className={`w-full pl-9 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none text-sm cursor-pointer transition-colors ${isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-750'}`}
                        value={filterStatus}
                        onChange={(e) => setFilterStatus(e.target.value)}
                      >
-                        <option value="Todos">Todos os Status</option>
-                        <option value="Pendente">Pendentes</option>
-                        <option value="Reservado">Reservados</option>
-                        <option value="Rejeitado">Rejeitados</option>
-                        <option value="Entregue">Entregues</option>
-                        <option value="Tentativa Falhada">Tentativas Falhadas</option>
-                        <option value="Cancelado">Cancelados</option>
+                        <option value="Todos" className={isDark ? 'bg-slate-900 text-white' : ''}>Todos os Status</option>
+                        <option value="Pendente" className={isDark ? 'bg-slate-900 text-white' : ''}>Pendentes</option>
+                        <option value="Reservado" className={isDark ? 'bg-slate-900 text-white' : ''}>Reservados</option>
+                        <option value="Rejeitado" className={isDark ? 'bg-slate-900 text-white' : ''}>Rejeitados</option>
+                        <option value="Entregue" className={isDark ? 'bg-slate-900 text-white' : ''}>Entregues</option>
+                        <option value="Tentativa Falhada" className={isDark ? 'bg-slate-900 text-white' : ''}>Tentativas Falhadas</option>
+                        <option value="Cancelado" className={isDark ? 'bg-slate-900 text-white' : ''}>Cancelados</option>
                      </select>
                   </div>
                   <input 
                     type="date"
-                    className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm shrink-0 cursor-pointer"
+                    className={`px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm shrink-0 cursor-pointer transition-colors ${isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-750'}`}
                     value={filterDate}
                     onChange={(e) => setFilterDate(e.target.value)}
                   />
                   <div className="relative min-w-[160px] shrink-0">
                      <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                      <select 
-                       className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none text-sm cursor-pointer"
+                       className={`w-full pl-9 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none text-sm cursor-pointer transition-colors ${isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-750'}`}
                        value={filterProduct}
                        onChange={(e) => setFilterProduct(e.target.value)}
                      >
-                        <option value="">Todas as Páginas</option>
+                        <option value="" className={isDark ? 'bg-slate-900 text-white' : ''}>Todas as Páginas</option>
                         {uniquePages.map((page, index) => (
-                           <option key={index} value={page}>{page}</option>
+                           <option key={index} value={page} className={isDark ? 'bg-slate-900 text-white' : ''}>{page}</option>
                         ))}
                      </select>
                   </div>
@@ -1967,43 +2283,43 @@ export default function App() {
               </div>
 
               {/* SECTIONS / SESSÕES DE LEADS */}
-              <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-6 gap-1.5 w-full sm:w-max">
+              <div className="flex bg-slate-900 border border-slate-800 p-1.5 rounded-2xl mb-6 gap-1.5 w-full sm:w-max shadow-xl">
                 <button
                   onClick={() => setAdminListTab('geral')}
                   className={`px-5 py-2.5 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
                     adminListTab === 'geral' 
-                      ? 'bg-indigo-600 text-white shadow-sm' 
-                       : 'text-slate-600 hover:text-slate-950 hover:bg-slate-200/50'
+                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/15' 
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
                   }`}
                 >
                   <FileText size={16} />
-                  <span>📋 Painel Geral ({filteredData.filter(d => d.status !== 'Entregue').length})</span>
+                  <span>📋 Painel Geral ({filteredData.filter(d => d.status !== 'Entregue' && d.status !== 'Pago').length})</span>
                 </button>
                 <button
                   onClick={() => setAdminListTab('arquivados')}
                   className={`px-5 py-2.5 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
                     adminListTab === 'arquivados' 
-                      ? 'bg-emerald-600 text-white shadow-sm' 
-                      : 'text-slate-600 hover:text-slate-950 hover:bg-slate-200/50'
+                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/15' 
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
                   }`}
                 >
                   <PackageOpen size={16} />
-                  <span>📦 Arquivo / Entregues ({filteredData.filter(d => d.status === 'Entregue').length})</span>
+                  <span>💸 Pagos ou Entregues ({filteredData.filter(d => d.status === 'Entregue' || d.status === 'Pago').length})</span>
                 </button>
               </div>
 
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className={`${isDark ? 'bg-slate-900 border-slate-800 shadow-2xl' : 'bg-white border-slate-200 shadow-sm'} rounded-2xl border overflow-hidden transition-all duration-300`}>
                 {isAdminLoading ? (
                   <div className="p-12 text-center text-slate-500 flex flex-col items-center">
                     <Loader2 className="animate-spin mb-4" size={32} />
                     <p>A sincronizar com a base de dados...</p>
                   </div>
                 ) : adminError ? (
-                  <div className="p-8 pb-10 text-center bg-slate-50 border border-slate-200 rounded-2xl m-4 flex flex-col items-center gap-3">
+                  <div className={`p-8 pb-10 text-center rounded-2xl m-4 flex flex-col items-center gap-3 border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                     <TriangleAlert className="text-amber-500" size={40} />
                     <div className="max-w-md">
-                      <p className="font-bold text-slate-800 text-base">Problema de Ligação ou Sincronização</p>
-                      <p className="text-xs text-slate-400 font-mono mt-1 bg-slate-100 p-2 rounded-lg border border-slate-200 overflow-x-auto truncate max-w-lg">{adminError}</p>
+                      <p className={`font-bold text-base ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>Problema de Ligação ou Sincronização</p>
+                      <p className={`text-xs font-mono mt-1 p-2 rounded-lg border overflow-x-auto truncate max-w-lg ${isDark ? 'bg-slate-900 border-slate-805 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-400'}`}>{adminError}</p>
                     </div>
                     <button
                       onClick={() => loadAdminData()}
@@ -2020,30 +2336,30 @@ export default function App() {
                 ) : (
                   <>
                     <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-slate-100">
-                      <thead className="bg-slate-50">
+                      <table className={`min-w-full divide-y ${isDark ? 'divide-slate-800' : 'divide-slate-100'}`}>
+                      <thead className={isDark ? 'bg-slate-950' : 'bg-slate-50'}>
                         <tr>
-                          <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Data</th>
-                          <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Nome</th>
-                          <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">WhatsApp</th>
-                          <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Produto</th>
-                          <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Qtd</th>
-                          <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">PROVÍNCIA</th>
-                          <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                          <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Ações</th>
+                          <th className={`px-6 py-4 text-left text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Data</th>
+                          <th className={`px-6 py-4 text-left text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Nome</th>
+                          <th className={`px-6 py-4 text-left text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>WhatsApp</th>
+                          <th className={`px-6 py-4 text-left text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Produto</th>
+                          <th className={`px-6 py-4 text-left text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Qtd</th>
+                          <th className={`px-6 py-4 text-left text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>PROVÍNCIA</th>
+                          <th className={`px-6 py-4 text-left text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Status</th>
+                          <th className={`px-6 py-4 text-right text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ações</th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-slate-100">
+                      <tbody className={`divide-y ${isDark ? 'bg-slate-900 divide-slate-800' : 'bg-white divide-slate-100'}`}>
                         {displayedLeads.map((lead, i) => (
-                          <tr key={i} className="hover:bg-slate-50 transition-colors">
-                            <td className="px-6 py-4 whitespace-nowrap text-xs text-slate-400">
+                          <tr key={i} className={`transition-colors border-b ${isDark ? 'hover:bg-slate-800/40 border-slate-800/40' : 'hover:bg-slate-50 border-slate-100/50'}`}>
+                            <td className="px-6 py-4 whitespace-nowrap text-xs text-slate-450">
                                {lead.timestamp ? new Date(lead.timestamp).toLocaleDateString() : 'N/A'}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{lead.name}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{lead.phone}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{lead.produto || 'Secador Inteligente UV'}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-800">{lead.quantity || 1}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 max-w-[200px] truncate">{lead.province || 'Luanda'}</td>
+                            <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{lead.name}</td>
+                            <td className={`px-6 py-4 whitespace-nowrap text-sm font-mono ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{lead.phone}</td>
+                            <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-slate-300' : 'text-slate-650'}`}>{lead.produto || 'Secador Inteligente UV'}</td>
+                            <td className={`px-6 py-4 whitespace-nowrap text-sm font-extrabold ${isDark ? 'text-emerald-400' : 'text-slate-800'}`}>{lead.quantity || 1}</td>
+                            <td className={`px-6 py-4 whitespace-nowrap text-sm max-w-[200px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lead.province || 'Luanda'}</td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <select 
                                 value={lead.status}
@@ -2108,28 +2424,27 @@ export default function App() {
                       </tbody>
                     </table>
                   </div>
-                  {/* PAGINAÇÃO */}
-                  {totalPages > 1 && (
-                    <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 select-none">
-                      <p className="text-xs font-medium text-slate-500 font-mono">
-                        A mostrar <span className="text-slate-800 font-bold">{(currentPage - 1) * itemsPerPage + 1}</span> a{' '}
-                        <span className="text-slate-800 font-bold">
+                                    {totalPages > 1 && (
+                    <div className={`px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 select-none transition-colors ${isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-100'}`}>
+                      <p className={`text-xs font-medium font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                        A mostrar <span className={`${isDark ? 'text-white' : 'text-slate-800'} font-bold`}>{(currentPage - 1) * itemsPerPage + 1}</span> a{' '}
+                        <span className={`${isDark ? 'text-white' : 'text-slate-800'} font-bold`}>
                           {Math.min(currentPage * itemsPerPage, allDisplayedLeads.length)}
                         </span>{' '}
-                        de <span className="text-slate-800 font-medium">{allDisplayedLeads.length}</span> leads
+                        de <span className={`${isDark ? 'text-white' : 'text-slate-800'} font-medium`}>{allDisplayedLeads.length}</span> leads
                       </p>
                       
                       <div className="flex items-center gap-1.5 step-pagination">
                         <button
                           onClick={() => setAdminCurrentPage(prev => Math.max(1, prev - 1))}
                           disabled={currentPage === 1}
-                          className="p-1 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-600 sm:hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white transition flex items-center gap-1 text-xs font-bold cursor-pointer"
+                          className={`p-1 px-2.5 rounded-lg border transition flex items-center gap-1 text-xs font-bold cursor-pointer ${isDark ? 'border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:bg-slate-950 disabled:opacity-40' : 'border-slate-200 bg-white text-slate-600 sm:hover:bg-slate-50 disabled:bg-white disabled:opacity-40'}`}
                           title="Página Anterior"
                         >
                           <ChevronLeft size={14} />
                           <span>Anterior</span>
                         </button>
-
+ 
                         {/* Page numbers */}
                         {(() => {
                           const pages: (number | string)[] = [];
@@ -2153,7 +2468,7 @@ export default function App() {
                           return pages.map((page, idx) => {
                             if (typeof page === 'string') {
                               return (
-                                <span key={`dots-${idx}`} className="px-2 text-slate-400 font-mono text-xs">
+                                <span key={`dots-${idx}`} className="px-2 text-slate-450 font-mono text-xs">
                                   {page}
                                 </span>
                               );
@@ -2165,7 +2480,9 @@ export default function App() {
                                 className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-black transition-all ${
                                   currentPage === page
                                     ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/10'
-                                    : 'bg-white border border-slate-200 text-slate-600 sm:hover:bg-slate-50 cursor-pointer'
+                                    : isDark 
+                                      ? 'bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 cursor-pointer' 
+                                      : 'bg-white border border-slate-200 text-slate-600 sm:hover:bg-slate-50 cursor-pointer'
                                 }`}
                               >
                                 {page}
@@ -2173,11 +2490,11 @@ export default function App() {
                             );
                           });
                         })()}
-
+ 
                         <button
                           onClick={() => setAdminCurrentPage(prev => Math.min(totalPages, prev + 1))}
                           disabled={currentPage === totalPages}
-                          className="p-1 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-600 sm:hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white transition flex items-center gap-1 text-xs font-bold cursor-pointer"
+                          className={`p-1 px-2.5 rounded-lg border transition flex items-center gap-1 text-xs font-bold cursor-pointer ${isDark ? 'border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:bg-slate-950 disabled:opacity-40' : 'border-slate-200 bg-white text-slate-600 sm:hover:bg-slate-50 disabled:bg-white disabled:opacity-40'}`}
                           title="Próxima Página"
                         >
                           <span>Próxima</span>
@@ -2189,6 +2506,8 @@ export default function App() {
                 </>
               )}
             </div>
+            </>
+          )}
         </main>
       )}
 
@@ -3031,104 +3350,7 @@ export default function App() {
               </motion.div>
             )}
 
-            {modalState === 'admin-financial-panel' && (
-              <motion.div 
-                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                className="bg-slate-900 border border-slate-800 text-white max-w-6xl w-full rounded-[2.5rem] shadow-2xl overflow-hidden my-8 relative"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Subtle design details */}
-                <div className="absolute top-0 right-0 p-12 text-emerald-500 opacity-[0.03] pointer-events-none">
-                  <Zap size={320} />
-                </div>
 
-                <div className="p-8 md:p-12 relative">
-                  <button 
-                    onClick={() => setModalState('none')} 
-                    className="absolute top-8 right-8 text-slate-400 hover:text-white transition-colors"
-                  >
-                    <XCircle size={32} />
-                  </button>
-                  
-                  <div className="flex items-center gap-4 mb-10">
-                    <div className="p-4 bg-emerald-500/10 rounded-2xl text-emerald-400">
-                      <Store size={36} />
-                    </div>
-                    <div>
-                      <h3 className="text-3xl md:text-4xl font-black tracking-tight flex items-center gap-3">
-                        <Sparkles size={24} className="text-emerald-400 animate-pulse" />
-                        Painel Financeiro Geral
-                      </h3>
-                      <p className="text-base text-slate-400 mt-1">Análise Integrada de Faturamento & Conversões Comerciais</p>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-                    <div className="bg-slate-850 rounded-3xl p-6 lg:p-8 border border-slate-800 flex flex-col justify-between">
-                      <div>
-                        <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest block mb-4">💸 Faturamento Bruto Efetuado</span>
-                        <span className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-black text-emerald-300 tracking-tight block leading-none whitespace-nowrap overflow-hidden text-ellipsis" title={formatKz(adminData.filter(d => d.status === 'Entregue').reduce((sum, d) => sum + getLeadPrice(d), 0))}>
-                          {formatKz(adminData.filter(d => d.status === 'Entregue').reduce((sum, d) => sum + getLeadPrice(d), 0))}
-                        </span>
-                      </div>
-                      <p className="text-slate-350 text-sm mt-6 pt-6 border-t border-slate-800">
-                        Das <span className="text-slate-100 font-bold text-base">{adminData.filter(d => d.status === 'Entregue').length}</span> encomendas devidamente entregues e concluídas
-                      </p>
-                    </div>
-                    
-                    <div className="bg-slate-850 rounded-3xl p-6 lg:p-8 border border-slate-800 flex flex-col justify-between">
-                      <div>
-                        <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest block mb-4">💎 Possível Faturamento (Reservas)</span>
-                        <span className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-black text-indigo-300 tracking-tight block leading-none whitespace-nowrap overflow-hidden text-ellipsis" title={formatKz(adminData.filter(d => d.status && d.status.includes('Reservado')).reduce((sum, d) => sum + getLeadPrice(d), 0))}>
-                          {formatKz(adminData.filter(d => d.status && d.status.includes('Reservado')).reduce((sum, d) => sum + getLeadPrice(d), 0))}
-                        </span>
-                      </div>
-                      <p className="text-slate-350 text-sm mt-6 pt-6 border-t border-slate-800">
-                        Correspondente a <span className="text-indigo-300 font-bold text-base">{adminData.filter(d => d.status && d.status.includes('Reservado')).length}</span> reservas em fase de processamento
-                      </p>
-                    </div>
-
-                    <div className="bg-slate-850 rounded-3xl p-6 lg:p-8 border border-slate-800 flex flex-col justify-between">
-                      <div>
-                        <span className="text-xs font-bold text-amber-400 uppercase tracking-widest block mb-4">⏳ Faturamento Potencial (Em Espera)</span>
-                        <span className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-black text-amber-300 tracking-tight block leading-none whitespace-nowrap overflow-hidden text-ellipsis" title={formatKz(adminData.filter(d => d.status === 'Pendente').reduce((sum, d) => sum + getLeadPrice(d), 0))}>
-                          {formatKz(adminData.filter(d => d.status === 'Pendente').reduce((sum, d) => sum + getLeadPrice(d), 0))}
-                        </span>
-                      </div>
-                      <p className="text-slate-350 text-sm mt-6 pt-6 border-t border-slate-800">
-                        Potencial estimado de <span className="text-amber-300 font-bold text-base">{adminData.filter(d => d.status === 'Pendente').length}</span> leads pendentes de validação comercial
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Summary of conversion performance */}
-                  <div className="mt-10 bg-slate-850/50 border border-slate-800 rounded-3xl p-6 md:p-8 flex flex-col sm:flex-row gap-8 items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 shrink-0">
-                        <Activity size={28} />
-                      </div>
-                      <div>
-                        <p className="text-lg font-bold text-slate-200">Conversão de Leads em Reservas</p>
-                        <p className="text-sm text-slate-400 mt-0.5">Relação de Leads validados e agendados no sistema</p>
-                      </div>
-                    </div>
-                    <div className="text-center sm:text-right flex items-baseline gap-3">
-                      <span className="text-4xl sm:text-5xl font-black text-indigo-400">{conversionRate}%</span>
-                      <span className="text-slate-400 text-sm font-mono tracking-wider uppercase">Taxa Global</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-10 flex justify-end">
-                    <button
-                      onClick={() => setModalState('none')}
-                      className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-base font-bold rounded-2xl transition shadow-lg hover:shadow-indigo-600/15 cursor-pointer"
-                    >
-                      Fechar Painel
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
 
           </motion.div>
         )}
