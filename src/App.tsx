@@ -248,7 +248,7 @@ export default function App() {
   const [adminSubView, setAdminSubView] = useState<'leads' | 'financeiro'>('leads');
   const [financeProductFilter, setFinanceProductFilter] = useState('Todos');
   const [theme, setTheme] = useState<'dark' | 'light'>(() => (localStorage.getItem('validaC_theme') as 'dark' | 'light') || 'dark');
-  const isDark = theme === 'dark';
+  const isDark = theme === 'dark' && ['admin', 'pages', 'danger-zone', 'ai-generator', 'settings', 'prompt-gallery', 'users'].includes(view);
 
   useEffect(() => {
     localStorage.setItem('validaC_theme', theme);
