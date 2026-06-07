@@ -1926,17 +1926,6 @@ Final do dia (16h - 18h)`;
                 
                 {/* Product Selector specifically built for the financial page */}
                 <div className="flex items-center gap-3 flex-wrap">
-                  <button
-                    onClick={() => setAdminSubView('leads')}
-                    className={`text-sm px-4 py-2.5 flex items-center gap-2 rounded-lg font-bold transition border cursor-pointer ${
-                      isDark 
-                        ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800 shadow-2xl' 
-                        : 'bg-indigo-50 hover:bg-indigo-150 text-indigo-700 border-indigo-200 shadow-md'
-                    }`}
-                  >
-                    <ArrowLeft size={16} /> Voltar ao Painel de Leads
-                  </button>
-                  
                   <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-xl shadow-xl">
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">Visualizar Produto:</span>
                     <select
