@@ -988,23 +988,6 @@ Final do dia (16h - 18h)`;
                   <RefreshCw size={12} className="text-emerald-400" />
                   <span>Actualizar</span>
                 </button>
-                <button
-                  onClick={() => setTheme(isDark ? 'light' : 'dark')}
-                  className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white rounded-full transition-all flex items-center justify-center gap-2 cursor-pointer text-xs font-bold shadow-sm"
-                  title={isDark ? "Mudar para Tema Claro" : "Mudar para Tema Escuro"}
-                >
-                  {isDark ? (
-                    <>
-                      <Sun size={12} className="text-amber-400" />
-                      <span>Claro</span>
-                    </>
-                  ) : (
-                    <>
-                      <Moon size={12} className="text-indigo-400" />
-                      <span>Escuro</span>
-                    </>
-                  )}
-                </button>
                 <div className="relative">
                   <div 
                     className="flex items-center gap-2 border border-slate-700 bg-slate-800/80 rounded-full pl-1.5 pr-4 py-1.5 cursor-pointer hover:bg-slate-700 hover:border-slate-600 transition-all"
@@ -1034,6 +1017,22 @@ Final do dia (16h - 18h)`;
                             className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-xl transition-colors text-left"
                           >
                             <User size={16} /> Meu Perfil
+                          </button>
+                          <button 
+                            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-xl transition-colors text-left"
+                          >
+                            {isDark ? (
+                              <>
+                                <Sun size={16} className="text-amber-400" />
+                                <span>Tema Claro</span>
+                              </>
+                            ) : (
+                              <>
+                                <Moon size={16} className="text-indigo-400" />
+                                <span>Tema Escuro</span>
+                              </>
+                            )}
                           </button>
                           <button 
                             onClick={() => { setIsDropdownOpen(false); setView('admin'); }} 
