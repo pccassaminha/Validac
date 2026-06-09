@@ -208,9 +208,14 @@ export default function HomeView({ setView, isAuthenticated, currentUser, userNa
               >
                 C Gestão Empresarial
               </a>
-              <div className="px-6 py-2.5 rounded-full bg-white/5 border border-white/10 text-white/30 text-sm font-semibold cursor-default">
-                Em Breve
-              </div>
+              <a 
+                href="https://cprofit.app/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="px-6 py-2.5 rounded-full bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all text-sm font-semibold flex items-center gap-2"
+              >
+                C Profit
+              </a>
             </div>
           </div>
           <p className="text-slate-500 text-sm font-medium pt-8 border-t border-white/5 max-w-md mx-auto">
