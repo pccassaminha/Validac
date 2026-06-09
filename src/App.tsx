@@ -3847,10 +3847,14 @@ Final do dia (16h - 18h)`;
                                       />
                                       <div
                                         onClick={(e) => e.stopPropagation()}
-                                        className={`absolute right-0 z-50 mt-8 w-44 rounded-xl border py-1 shadow-2xl ${
+                                        className={`absolute right-0 z-50 w-44 rounded-xl border py-1 shadow-2xl ${
+                                          i >= displayedLeads.length - 3 && displayedLeads.length > 2
+                                            ? "bottom-full mb-2"
+                                            : "top-full mt-2"
+                                        } ${
                                           isDark
                                             ? "border-slate-800 bg-slate-950 text-slate-200"
-                                            : "border-slate-200 bg-white text-slate-800"
+                                            : "border-slate-200 bg-white text-slate-805"
                                         }`}
                                       >
                                         <button
