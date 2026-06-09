@@ -1032,9 +1032,31 @@ export default function App() {
         } catch (e) {
           console.error("Erro na data", e);
         }
+
+        const rawProduto = doc.data().produto || "";
+        let normalizedProduto = "Secador Inteligente UV";
+        if (rawProduto) {
+          const lowerProd = rawProduto.toLowerCase();
+          if (
+            lowerProd.includes("roupa") ||
+            lowerProd.includes("expresso") ||
+            lowerProd.includes("cabide") ||
+            lowerProd.includes("secador_roupa") ||
+            lowerProd.includes("35000") ||
+            lowerProd.includes("35 000") ||
+            lowerProd.includes("34900") ||
+            lowerProd.includes("34 900")
+          ) {
+            normalizedProduto = "Secador Expresso Pro 35 000 Kz";
+          } else {
+            normalizedProduto = "Secador Inteligente UV";
+          }
+        }
+
         return {
           id: doc.id,
           ...doc.data(),
+          produto: normalizedProduto,
           timestamp: ts,
         };
       });
