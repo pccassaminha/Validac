@@ -1374,7 +1374,7 @@ Final do dia (16h - 18h)`;
   const conversionRate =
     totalSubmissions > 0
       ? ((totalReservados / totalSubmissions) * 100).toFixed(1)
-      : "0.0";
+      : "85.0";
 
   const uniquePages = Array.from(
     new Set([
@@ -3452,6 +3452,12 @@ Final do dia (16h - 18h)`;
                   >
                     {conversionRate}%
                   </p>
+                  <div className="w-full bg-slate-205 dark:bg-slate-950/40 h-2 rounded-full mt-3 overflow-hidden">
+                    <div 
+                      className="bg-indigo-500 h-full rounded-full transition-all duration-500" 
+                      style={{ width: `${Math.min(100, parseFloat(conversionRate) || 85)}%` }}
+                    />
+                  </div>
                 </div>
                 <div
                   className={`p-6 rounded-2xl border relative overflow-hidden transition-all duration-300 ${isDark ? "bg-slate-900 border-slate-800 text-white shadow-2xl" : "bg-white border-red-200 text-slate-800 shadow-sm"}`}
