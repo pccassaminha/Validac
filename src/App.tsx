@@ -1384,6 +1384,16 @@ Final do dia (16h - 18h)`;
     ]),
   );
 
+  const formatPageNameWithCensorship = (pageName: string | undefined | null) => {
+    if (!pageName) return "";
+    if (!hidePhones) return pageName;
+    const index = uniquePages.indexOf(pageName);
+    if (index !== -1) {
+      return `Página #${index + 1}`;
+    }
+    return "Página Ocultada";
+  };
+
   const isProtectedView = [
     "admin",
     "pages",
@@ -3000,7 +3010,7 @@ Final do dia (16h - 18h)`;
                           value={page}
                           className="bg-slate-900 text-white"
                         >
-                          🏷️ {page} (
+                          🏷️ {formatPageNameWithCensorship(page)} (
                           {adminData.filter((d) => d.produto === page).length})
                         </option>
                       ))}
@@ -3265,7 +3275,7 @@ Final do dia (16h - 18h)`;
                                   <td className="px-6 py-4 font-bold text-white">
                                     <div className="flex items-center gap-2">
                                       <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 shrink-0" />
-                                      {prod}
+                                      {formatPageNameWithCensorship(prod)}
                                     </div>
                                   </td>
                                   <td className="px-5 py-4 text-center font-bold text-slate-600">
@@ -3368,15 +3378,15 @@ Final do dia (16h - 18h)`;
                             ? "bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-850 shadow-2xl"
                             : "bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200 shadow-sm"
                       }`}
-                      title={hidePhones ? "Mostrar Números de WhatsApp" : "Censurar Números de WhatsApp"}
+                      title={hidePhones ? "Mostrar Números de WhatsApp e Páginas" : "Censurar Números de WhatsApp e Páginas"}
                     >
                       {hidePhones ? (
                         <>
-                          <Eye size={16} /> Mostrar Números
+                          <Eye size={16} /> Mostrar Dados
                         </>
                       ) : (
                         <>
-                          <EyeOff size={16} /> Censurar Números
+                          <EyeOff size={16} /> Censurar Dados
                         </>
                       )}
                     </button>
@@ -3598,7 +3608,7 @@ Final do dia (16h - 18h)`;
                           value={page}
                           className={isDark ? "bg-slate-900 text-white" : ""}
                         >
-                          {page}
+                          {formatPageNameWithCensorship(page)}
                         </option>
                       ))}
                     </select>
@@ -3763,9 +3773,9 @@ Final do dia (16h - 18h)`;
                                 {formatPhoneWithCensorship(lead.phone)}
                               </td>
                               <td
-                                className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? "text-slate-300" : "text-slate-650"}`}
+                                className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? "text-slate-300" : "text-slate-655"}`}
                               >
-                                {lead.produto || "Secador Inteligente UV"}
+                                {formatPageNameWithCensorship(lead.produto || "Secador Inteligente UV")}
                               </td>
                               <td
                                 className={`px-6 py-4 whitespace-nowrap text-sm font-extrabold ${isDark ? "text-emerald-400" : "text-slate-800"}`}
@@ -5213,8 +5223,7 @@ Final do dia (16h - 18h)`;
                         Segmento / Produto
                       </span>
                       <p className="font-semibold text-slate-900">
-                        {selectedLeadForPreview.produto ||
-                          "Secador Inteligente UV"}
+                        {formatPageNameWithCensorship(selectedLeadForPreview.produto || "Secador Inteligente UV")}
                       </p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
