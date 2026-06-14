@@ -349,7 +349,7 @@ const FAQ_ROTEADOR = [
   },
   {
     q: "Qual a diferença entre um router normal e este Ultra 5G WiFi 6?",
-    a: "Um router normal 4G atinge velocidades baixas de até 100-300 Mbps e suporta poucos aparelhos. Este router Ultra Capta rede 5G verdadeira e alcança até 3600 Mbps (WiFi 6). Suporta até 256 dispositivos sem travar, garantindo velocidade para toda casa ou empresa.",
+    a: "Um router normal 4G atinge velocidades baixas de até 100-300 Mbps e suporta poucos aparelhos. Este router Ultra Capta rede 5G verdadeira e alcança até 3600 Mbps (WiFi 6). Suporta até 32 dispositivos sem travar, garantindo velocidade para toda casa ou empresa.",
   },
   {
     q: "Preciso de instalação técnica?",
@@ -3168,10 +3168,10 @@ Final do dia (16h - 18h)`;
 
                 <div className="md:col-span-2 bg-gradient-to-tr from-slate-900/60 to-slate-800/60 border border-white/10 p-8 sm:p-10 rounded-[2.5rem] flex items-center overflow-hidden relative">
                    <div className="absolute right-0 bottom-0 text-[10rem] font-black leading-none text-white/5 -mb-10 mr-10 select-none">
-                     256
+                     32
                    </div>
                    <div className="relative z-10">
-                     <h3 className="text-2xl sm:text-4xl font-black text-white mb-3">Conecte até 256 Utilizadores</h3>
+                     <h3 className="text-2xl sm:text-4xl font-black text-white mb-3">Conecte até 32 Utilizadores</h3>
                      <p className="text-slate-400 lg:max-w-xl text-lg">Ideal para casas grandes, condomínios ou escritórios empresariais onde ninguém pode ficar parado.</p>
                    </div>
                 </div>
@@ -3202,7 +3202,7 @@ Final do dia (16h - 18h)`;
                       {[
                         { label: "Velocidade Média", old: "10-20 Mbps", new: "Aceleração 5G Giga", hl: true },
                         { label: "Rede / SIM", old: "Bloqueado à origem", new: "Totalmente Livre" },
-                        { label: "Dispositivos Sup.", old: "Até 10 simultâneos", new: "Até 256 simultâneos", hl: true },
+                        { label: "Dispositivos Sup.", old: "Até 10 simultâneos", new: "Até 32 simultâneos", hl: true },
                         { label: "Wi-Fi", old: "Wi-Fi 4 / 5 Antigo", new: "Wi-Fi 6 c/ NFC" },
                         { label: "Antenas", old: "Internas Fracas", new: "Super Direcional 360°" },
                       ].map((row, i) => (
