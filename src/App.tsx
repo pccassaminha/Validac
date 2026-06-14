@@ -312,6 +312,54 @@ const FAQ_ROUPAS = [
   },
 ];
 
+const IMAGES_ROTEADOR = [
+  "https://i.postimg.cc/jjvBx9jT/main-image-1.webp",
+  "https://i.postimg.cc/tgD8qfg9/main-image-2.webp",
+  "https://i.postimg.cc/mDDJtwcT/main-image-3.webp",
+  "https://i.postimg.cc/bJJWsTGp/main-image-4.webp",
+  "https://i.postimg.cc/JnnvGqyc/main-image-5.webp",
+];
+
+const TESTIMONIALS_ROTEADOR = [
+  {
+    name: "Hélder M., Talatona",
+    comment:
+      "Eu trabalho em TI e precisava de net rápida. Já tentei fibra, mas o serviço caía sempre. Comprei o ZTE MC888 Ultra, pus um chip da Africel e estou a tirar estabilidade que nunca tive. 5G real dentro de casa, os 3600 Mbps de WiFi 6 fazem muita diferença.",
+    rating: 5,
+  },
+  {
+    name: "Ana P., Luanda",
+    comment:
+      "Vale cada Kwanza! Estava cansada de ficar refém de planos caros de operadoras que falhavam. Agora eu decido qual chip usar (Unitel ou Africel dependendo do mês) e a velocidade de internet é sempre top. Design lindo e não ocupa espaço.",
+    rating: 5,
+  },
+  {
+    name: "Rui C., Benfica",
+    comment:
+      "Chega de router bloqueado que só serve pra uma operadora. O 5G aqui bate nos 2Gbps. Instalação em 2 minutos. Foi só espetar o chip e meter na tomada e já tava a voar no WiFi6. Entrega excelente no mesmo dia.",
+    rating: 5,
+  },
+];
+
+const FAQ_ROTEADOR = [
+  {
+    q: "O router vem bloqueado a alguma operadora?",
+    a: "Não! É 100% livre e desbloqueado para qualquer rede em Angola (Africel, Unitel, Movicel) ou no mundo inteiro. Seja livre para escolher a sua operadora e trocar de chip quando quiser.",
+  },
+  {
+    q: "Qual a diferença entre um router normal e este Ultra 5G WiFi 6?",
+    a: "Um router normal 4G atinge velocidades baixas de até 100-300 Mbps e suporta poucos aparelhos. Este router Ultra Capta rede 5G verdadeira e alcança até 3600 Mbps (WiFi 6). Suporta até 256 dispositivos sem travar, garantindo velocidade para toda casa ou empresa.",
+  },
+  {
+    q: "Preciso de instalação técnica?",
+    a: "Não é necessário nenhum técnico. É 'Plug and Play'. Insira o cartão SIM, ligue à tomada e o seu WiFi estará pronto para uso. Para se conectar, tem inclusive o toque NFC: é só encostar o celular que já fica ligado no Wi-Fi.",
+  },
+  {
+    q: "Vale a pena o investimento?",
+    a: "Absolutamente! Se a qualidade e velocidade de internet são fundamentais para o seu trabalho, conforto ou empresa, ter acesso constante ao 5G mais rápido de Angola vai acabar com o seu stress diário com as redes convencionais.",
+  },
+];
+
 function AccordionItem({
   question,
   answer,
@@ -357,11 +405,14 @@ export default function App() {
     const product = params.get("product");
     if (product === "secador-uv") return "sales";
     if (product === "cabide-secador") return "sales-roupas";
+    if (product === "roteador-5g") return "sales-roteador";
     const storedView = localStorage.getItem("validaC_current_view");
     if (storedView) return storedView;
     return "home";
   });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const isSalesView =
+    view === "sales" || view === "sales-roupas" || view === "sales-roteador";
 
   const formatPhoneWithCensorship = (phone: string | undefined | null) => {
     if (!phone) return "";
@@ -412,6 +463,7 @@ export default function App() {
     area: "",
     province: "Luanda",
     customProvince: "",
+    observacoes: "",
     quantity: 1,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -568,6 +620,9 @@ export default function App() {
     } else if (view === "sales-roupas") {
       params.set("product", "cabide-secador");
       document.title = "Secador Expresso Pro - C Store Angola";
+    } else if (view === "sales-roteador") {
+      params.set("product", "roteador-5g");
+      document.title = "Roteador 5G Ultra Desbloqueado - C Store Angola";
     } else if (
       view === "admin" ||
       view === "pages" ||
@@ -668,7 +723,12 @@ export default function App() {
   }, [view, isAuthenticated]);
 
   useEffect(() => {
-    if (view !== "sales" && view !== "sales-roupas") return;
+    if (
+      view !== "sales" &&
+      view !== "sales-roupas" &&
+      view !== "sales-roteador"
+    )
+      return;
 
     const handleScroll = () => {
       const comprarEl = document.getElementById("comprar");
@@ -691,14 +751,25 @@ export default function App() {
   }, [view]);
 
   useEffect(() => {
-    if (view === "sales" || view === "sales-roupas") {
+    if (
+      view === "sales" ||
+      view === "sales-roupas" ||
+      view === "sales-roteador"
+    ) {
       const produtoName =
         view === "sales-roupas"
           ? "Secador Expresso Pro 35 000 Kz"
-          : "Secador Inteligente UV";
+          : view === "sales-roteador"
+            ? "Roteador 5G Ultra Desbloqueado"
+            : "Secador Inteligente UV";
       initTracking(produtoName, appSettings);
 
-      const imagesList = view === "sales-roupas" ? IMAGES_ROUPAS : IMAGES;
+      const imagesList =
+        view === "sales-roupas"
+          ? IMAGES_ROUPAS
+          : view === "sales-roteador"
+            ? IMAGES_ROTEADOR
+            : IMAGES;
 
       const timer = setInterval(() => {
         setActiveImage((prev) => (prev + 1) % imagesList.length);
@@ -708,7 +779,12 @@ export default function App() {
   }, [view, appSettings]);
 
   useEffect(() => {
-    if (view !== "sales" && view !== "sales-roupas") return;
+    if (
+      view !== "sales" &&
+      view !== "sales-roupas" &&
+      view !== "sales-roteador"
+    )
+      return;
 
     let timeoutId: NodeJS.Timeout;
 
@@ -750,8 +826,15 @@ export default function App() {
     const produtoName =
       view === "sales-roupas"
         ? "Secador Expresso Pro 35 000 Kz"
-        : "Secador Inteligente UV";
-    const pricePerUnit = view === "sales-roupas" ? 35000 : 25000;
+        : view === "sales-roteador"
+          ? "Roteador 5G Ultra Desbloqueado"
+          : "Secador Inteligente UV";
+    const pricePerUnit =
+      view === "sales-roupas"
+        ? 35000
+        : view === "sales-roteador"
+          ? 240000
+          : 25000;
 
     const tempLead = {
       name: formData.name,
@@ -762,6 +845,7 @@ export default function App() {
           ? formData.customProvince
           : formData.province,
       area: formData.area || "", // Bairro/Zona
+      observacoes: formData.observacoes,
       produto: produtoName,
       totalPrice: formData.quantity * pricePerUnit,
       quantity: formData.quantity,
@@ -800,7 +884,9 @@ export default function App() {
     const produtoName =
       view === "sales-roupas"
         ? "Secador Expresso Pro 34 900 Kz"
-        : "Secador Inteligente UV";
+        : view === "sales-roteador"
+          ? "Roteador 5G Ultra Desbloqueado"
+          : "Secador Inteligente UV";
 
     if (isAccepted) {
       setTimeout(() => setModalState("success"), 300);
@@ -934,13 +1020,13 @@ export default function App() {
   };
 
   const toggleAdmin = () => {
-    if (view === "sales") {
+    if (view === "admin") {
+      setView("sales");
+    } else {
       setView("admin");
       if (isAuthenticated) {
         loadAdminData();
       }
-    } else {
-      setView("sales");
     }
   };
 
@@ -1384,7 +1470,9 @@ Final do dia (16h - 18h)`;
     ]),
   );
 
-  const formatPageNameWithCensorship = (pageName: string | undefined | null) => {
+  const formatPageNameWithCensorship = (
+    pageName: string | undefined | null,
+  ) => {
     if (!pageName) return "";
     if (!hidePhones) return pageName;
     const index = uniquePages.indexOf(pageName);
@@ -1535,7 +1623,7 @@ Final do dia (16h - 18h)`;
             </div>
 
             <div
-              className={`flex items-center gap-4 ${view === "sales" || view === "sales-roupas" ? "hidden md:flex" : ""}`}
+              className={`flex items-center gap-4 ${isSalesView ? "hidden md:flex" : ""}`}
             >
               {isAuthenticated && (
                 <>
@@ -2915,8 +3003,634 @@ Final do dia (16h - 18h)`;
         </main>
       )}
 
+      {/* SALES ROTEADOR VIEW */}
+      {view === "sales-roteador" && (
+        <main className="pb-24">
+          {/* Nova Seção Hero Split-Pane */}
+          <section className="pt-8 sm:pt-16 pb-12 px-4 max-w-[85rem] mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16"
+            >
+              {/* Lado Direito: Imagem e Galeria (no Mobile aparece acima) */}
+              <div className="w-full lg:w-1/2 order-1 lg:order-2">
+                <div className="bg-slate-900 p-4 sm:p-5 rounded-[2.5rem] shadow-2xl border border-slate-800">
+                  <div className="relative aspect-square sm:aspect-video md:aspect-[4/3] rounded-[1.8rem] overflow-hidden bg-slate-50 shadow-inner w-full mb-4">
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-white pointer-events-none z-0"></div>
+                    <AnimatePresence mode="wait">
+                      <motion.img
+                        key={activeImage}
+                        src={IMAGES_ROTEADOR[activeImage]}
+                        initial={{ opacity: 0, scale: 1.05 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.5 }}
+                        className="absolute inset-0 w-full h-full object-contain p-6 z-10 drop-shadow-xl"
+                        referrerPolicy="no-referrer"
+                      />
+                    </AnimatePresence>
+                  </div>
+                  <div className="flex gap-3 overflow-x-auto pb-2 px-1 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] justify-center">
+                    {IMAGES_ROTEADOR.map((img, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setActiveImage(i)}
+                        className={`shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden snap-center transition-all bg-white ${
+                          activeImage === i
+                            ? "ring-4 ring-indigo-500 opacity-100 scale-105 shadow-md shadow-indigo-500/20"
+                            : "opacity-60 hover:opacity-100 hover:scale-105"
+                        }`}
+                      >
+                        <img
+                          src={img}
+                          alt={`Thumbnail ${i}`}
+                          className="w-full h-full object-contain p-1.5"
+                          referrerPolicy="no-referrer"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Lado Esquerdo: Texto */}
+              <div className="w-full lg:w-1/2 order-2 lg:order-1 text-center lg:text-left flex flex-col justify-center">
+                <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold px-4 py-2 rounded-full text-xs sm:text-sm mb-6 mx-auto lg:mx-0 w-fit">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
+                  </span>
+                  A Revolução da Internet Ilimitada em Luanda
+                </div>
+                <h1 className="text-4xl sm:text-5xl md:text-[3.5rem] font-black text-slate-900 leading-[1.05] tracking-tight mb-8">
+                  Roteador 5G Ultra Desbloqueado: Use qualquer operadora livremente
+                </h1>
+                <p className="text-lg text-slate-600 mb-10 font-medium leading-relaxed max-w-xl mx-auto lg:mx-0">
+                  Muitas famílias e empresas em Luanda estão a abandonar planos limitados de 500GB após recentes atualizações. Este Roteador ZTE 5G Ultra é 100% desbloqueado, facilitando a sua transição para planos realmente ILIMITADOS como o da Africel.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                  <button
+                    onClick={() => {
+                        document.getElementById("comprar")?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 px-8 rounded-2xl shadow-xl shadow-indigo-600/20 transition-all active:scale-[0.98] hover:scale-105 focus:ring-4 focus:ring-indigo-200 text-lg w-full sm:w-auto"
+                  >
+                    COMPRAR AGORA
+                  </button>
+                  <button
+                    onClick={() => {
+                      document.getElementById("motivos")?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 px-8 rounded-2xl transition-all active:scale-[0.98] border border-slate-200 w-full sm:w-auto"
+                  >
+                    SABER MAIS
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </section>
+
+          {/* Secção de Motivos Movida para o meio da página */}
+          <section id="motivos" className="px-4 max-w-3xl mx-auto pt-16 pb-12 scroll-mt-20">
+            <div className="text-center mb-16">
+              <h3 className="font-bold text-slate-400 uppercase tracking-widest text-[10px] sm:text-xs mb-6">
+                Motivos para mudar AGORA MESMO:
+              </h3>
+              <div className="grid grid-cols-1 gap-4 text-left">
+                {[
+                  "A sua operadora atual cortou a internet a meio do mês por limite de GB?",
+                  "Paga mais por um limite de tráfego de 500GB que não chega para a família toda?",
+                  "Quer aproveitar os planos verdadeiramente ILIMITADOS da nova rede, mas o seu roteador está bloqueado?",
+                  "A sua internet antiga é instável ou lenta nas horas de ponta?",
+                ].map((text, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-4 bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow"
+                  >
+                    <div className="bg-red-50 text-red-500 rounded-full p-2 sm:p-3 shrink-0">
+                      <TriangleAlert size={20} className="sm:w-6 sm:h-6" />
+                    </div>
+                    <span className="text-slate-700 font-semibold text-base sm:text-lg leading-snug">
+                      {text}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* BLOCO 4: VELOCIDADE E ESTABILIDADE */}
+              <div className="mb-24 py-12 bg-slate-50 -mx-4 px-6 rounded-[3rem] border border-slate-200">
+                <div className="max-w-4xl mx-auto">
+                  <h2 className="text-3xl font-black text-slate-900 mb-2 tracking-tight">
+                    Conectividade de outro nível
+                  </h2>
+                  <p className="text-slate-500 mb-10 font-medium">
+                    Do seu telemóvel à smart TV, tudo voa de forma estável.
+                  </p>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
+                    {[
+                      { title: "Streaming 4K/8K", desc: "Sem travamentos" },
+                      { title: "Downloads Pesados", desc: "Ultra-rápidos" },
+                      { title: "Jogos Online", desc: "Ping ultra baixo" },
+                      { title: "Videoconferências", desc: "Sempre fluidas" },
+                    ].map((item, i) => (
+                      <div
+                        key={i}
+                        className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col items-center text-center"
+                      >
+                        <div className="bg-sky-100 text-sky-600 w-10 h-10 rounded-full flex items-center justify-center mb-4 font-black">
+                          ✓
+                        </div>
+                        <h4 className="font-bold text-slate-900 mb-1 text-sm md:text-base leading-tight">
+                          {item.title}
+                        </h4>
+                        <p className="text-xs text-slate-500 font-medium">
+                          {item.desc}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* BLOCO 5: TABELA COMPARATIVA */}
+              <div className="mb-24 px-4 overflow-hidden">
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-10 tracking-tight">
+                  A sua internet hoje VS ZTE 5G Ultra
+                </h2>
+                <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden max-w-2xl mx-auto">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-[300px]">
+                      <thead>
+                        <tr className="bg-slate-50">
+                          <th className="p-4 border-b border-slate-100 font-black text-slate-400 uppercase text-[10px] tracking-widest">
+                            Critério
+                          </th>
+                          <th className="p-4 border-b border-slate-100 font-bold text-slate-700 bg-slate-100/50 text-center">
+                            Provedor Comum
+                          </th>
+                          <th className="p-4 border-b border-slate-100 font-bold text-sky-600 bg-sky-50 text-center">
+                            ZTE 5G Ultra
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-[13px] sm:text-sm">
+                        {[
+                          {
+                            c: "⭐ Velocidade Máxima",
+                            t: "10-50 Mbps",
+                            s: "Aceleração 5G até 3600 Mbps",
+                            highlight: true,
+                          },
+                          {
+                            c: "Bloqueio a Operadoras",
+                            t: "100% Bloqueado",
+                            s: "TOTALMENTE Livre (Africel, Unitel, etc)",
+                          },
+                          {
+                            c: "⭐ Número de Conexões",
+                            t: "10 e a rede cai",
+                            s: "Até 256 simultâneas de qualidade",
+                            highlight: true,
+                          },
+                          {
+                            c: "Wi-Fi",
+                            t: "Antigo e lento",
+                            s: "Wi-Fi 6 de última geração",
+                          },
+                          {
+                            c: "Instalação",
+                            t: "Técnico e demorado",
+                            s: "Plug & Play",
+                          },
+                        ].map((row, i) => (
+                          <tr
+                            key={i}
+                            className={`hover:bg-slate-50 transition-colors ${row.highlight ? "bg-sky-50/50" : ""}`}
+                          >
+                            <td
+                              className={`p-4 border-b border-slate-50 font-bold text-slate-800 ${row.highlight ? "bg-sky-100/30" : ""}`}
+                            >
+                              {row.c}
+                            </td>
+                            <td className="p-4 border-b border-slate-50 text-slate-500 text-center">
+                              {row.t}
+                            </td>
+                            <td
+                              className={`p-4 border-b border-slate-50 font-bold text-center ${row.highlight ? "text-sky-700" : "text-slate-900"}`}
+                            >
+                              {row.s}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* BLOCO 6: COMO FUNCIONA */}
+              <div className="mb-24">
+                <h2 className="text-3xl font-black text-slate-900 mb-12 tracking-tight">
+                  Simples assim — 3 passos e você tem 5G de verdade
+                </h2>
+                <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+                  <div className="relative p-8 bg-slate-50 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
+                    <div className="text-4xl mb-6">📶</div>
+                    <h4 className="font-bold text-slate-900 mb-2">Passo 1</h4>
+                    <p className="text-slate-600 text-sm leading-relaxed">
+                      Elege a tua operadora ou compra um cartão SIM da Unitel,
+                      Africel ou Movicel.
+                    </p>
+                  </div>
+                  <div className="relative p-8 bg-slate-50 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
+                    <div className="text-4xl mb-6">🔌</div>
+                    <h4 className="font-bold text-slate-900 mb-2">Passo 2</h4>
+                    <p className="text-slate-600 text-sm leading-relaxed">
+                      Insira o SIM card no Roteador e liga-o à tomada. Em
+                      segundos, ele inicializa.
+                    </p>
+                  </div>
+                  <div className="relative p-8 bg-slate-50 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
+                    <div className="text-4xl mb-6">🚀</div>
+                    <h4 className="font-bold text-slate-900 mb-2">Passo 3</h4>
+                    <p className="text-slate-600 text-sm leading-relaxed">
+                      Basta encostar o telemóvel no leitor NFC do Roteador para
+                      conectar, e já começas a navegar a velocidades máximas!
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* BLOCO 7: ESPECIFICAÇÕES TÉCNICAS */}
+              <div className="mt-20 text-left max-w-3xl mx-auto mb-20 px-4">
+                <h2 className="text-2xl font-bold text-slate-800 mb-8 text-center">
+                  Especificações Técnicas
+                </h2>
+                <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                  <div className="divide-y divide-slate-100">
+                    <div className="p-5 grid grid-cols-2 gap-4 hover:bg-slate-50 transition-colors">
+                      <span className="font-bold text-slate-600">
+                        Tecnologia Rede
+                      </span>
+                      <span className="font-bold text-slate-900 text-right">
+                        5G NSA/SA + Wi-Fi 6
+                      </span>
+                    </div>
+                    <div className="p-5 grid grid-cols-2 gap-4 hover:bg-slate-50 transition-colors">
+                      <span className="font-bold text-slate-600">
+                        Dispositivos max
+                      </span>
+                      <span className="font-bold text-slate-900 text-right">
+                        Até 256 Wi-Fi
+                      </span>
+                    </div>
+                    <div className="p-5 grid grid-cols-2 gap-4 hover:bg-slate-50 transition-colors">
+                      <span className="font-bold text-slate-600">Antena</span>
+                      <span className="font-bold text-slate-900 text-right">
+                        Super direcional 360°
+                      </span>
+                    </div>
+                    <div className="p-5 grid grid-cols-2 gap-4 hover:bg-slate-50 transition-colors">
+                      <span className="font-bold text-slate-600">Bloqueio</span>
+                      <span className="font-bold text-slate-900 text-right">
+                        100% Desbloqueado
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+          {/* Testimonials */}
+          {/* BLOCO 8: PROVAS SOCIAIS */}
+          <section className="mb-24 px-4 py-20 bg-slate-50 border-y border-slate-200">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mb-4 tracking-tight">
+                Quem comprou, recomenda!
+              </h2>
+              <p className="text-slate-500 font-medium max-w-lg mx-auto">
+                Vê o que os nossos clientes dizem sobre a revolução do ZTE 5G
+                Ultra com Africel.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+              {[
+                {
+                  name: "Ana P.",
+                  text: "Antes a internet da Unitel acabava a meio do mês por limite. Comprei o roteador, pus um chip Africel ilimitado e a minha vida mudou!",
+                },
+                {
+                  name: "Carlos M.",
+                  text: "Trabalho em casa e o ping estava péssimo. O ZTE 5G Ultra resolveu. E foi só pôr na tomada.",
+                },
+                {
+                  name: "Marta S.",
+                  text: "Finalmente uma internet digna em Luanda. Liguei mais de 10 dispositivos, Netflix a decorrer e nem sente engasgos.",
+                },
+                {
+                  name: "José B.",
+                  text: "Como é desbloqueado, posso levar para onde eu quiser! Chegou ao Kilamba bem embalado. Serviço top.",
+                },
+              ].map((t, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col h-full group hover:shadow-xl transition-all"
+                >
+                  <div className="flex gap-1 mb-6 text-amber-400">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Star key={i} size={16} fill="currentColor" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-slate-600 mb-8 italic leading-relaxed flex-grow">
+                    "{t.text}"
+                  </p>
+                  <div className="flex items-center gap-3 pt-6 border-t border-slate-50">
+                    <div className="w-10 h-10 bg-sky-600 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-md">
+                      {t.name.charAt(0)}
+                    </div>
+                    <span className="text-sm font-bold text-slate-900">
+                      {t.name}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* BLOCO 9: GARANTIA */}
+          <div className="max-w-4xl mx-auto px-4 mb-24">
+            <div className="bg-indigo-900 text-white p-10 rounded-[3rem] shadow-2xl relative overflow-hidden ring-8 ring-indigo-500/10">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-[100px] -mr-32 -mt-32" />
+              <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
+                <div className="w-24 h-24 bg-white/10 backdrop-blur-md rounded-3xl flex items-center justify-center shrink-0 border border-white/20">
+                  <ShieldCheck size={56} className="text-indigo-200" />
+                </div>
+                <div className="text-center md:text-left">
+                  <h2 className="text-2xl sm:text-3xl font-black mb-4 tracking-tight">
+                    Garantia Blindada C Store
+                  </h2>
+                  <p className="text-indigo-100 text-lg leading-relaxed font-medium">
+                    Compra sem risco. Se o produto chegar com defeito ou não
+                    funcionar como prometido, entre em contacto pelo WhatsApp e
+                    resolvemos. Sem complicação.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* BLOCO 10 & 11: PREÇOS E CHECKOUT */}
+          <div id="comprar" className="pt-8 scroll-mt-20 px-4 mb-20">
+            <section className="bg-white rounded-[3.5rem] shadow-2xl border border-slate-200 overflow-hidden max-w-6xl mx-auto flex flex-col lg:flex-row">
+              {/* Esquerda: Info e Benefícios */}
+              <div className="lg:w-[42%] bg-sky-600 p-10 text-white flex flex-col relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[100px] -mr-32 -mt-32" />
+
+                <div className="relative z-10 mb-auto">
+                  <div className="inline-block bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-6 border border-white/20">
+                    Oferta por Tempo Limitado
+                  </div>
+                  <h2 className="text-3xl sm:text-5xl font-black mb-8 leading-tight tracking-tight">
+                    Adeus lentidão.
+                    <br />
+                    Olá internet de verdade.
+                  </h2>
+
+                  <div className="space-y-4 mb-12">
+                    {[
+                      "Venda Exclusiva e Entrega Gratuita em Luanda",
+                      "Sem envio para outras províncias de momento",
+                      "Pagas no Momento da Entrega",
+                      "Garantia de Satisfação total",
+                      "Suporte via WhatsApp 24/7",
+                    ].map((item, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-4 text-[15px] font-bold bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/10"
+                      >
+                        <div className="bg-white text-sky-600 p-1 rounded-full">
+                          <CheckCircle size={16} />
+                        </div>
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="relative z-10 p-6 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-sm">
+                  <p className="text-sky-100 text-sm mb-4 font-bold">
+                    +500 famílias satisfeitas em Angola
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="flex -space-x-3">
+                      {[1, 2, 3, 4].map((i) => (
+                        <div
+                          key={i}
+                          className="w-10 h-10 rounded-full border-2 border-sky-600 bg-slate-200 overflow-hidden ring-2 ring-sky-500/50"
+                        >
+                          <img
+                            src={`https://i.pravatar.cc/100?img=${i + 20}`}
+                            alt="User"
+                          />
+                        </div>
+                      ))}
+                      <div className="w-10 h-10 rounded-full border-2 border-sky-600 bg-emerald-500 flex items-center justify-center text-[10px] font-black text-white ring-2 ring-sky-500/50">
+                        +500
+                      </div>
+                    </div>
+                    <div className="h-8 w-px bg-white/20 mx-2" />
+                    <div className="text-amber-400 flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <Star key={i} size={14} fill="currentColor" />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Direita: Formulário */}
+              <div className="lg:w-[58%] p-8 sm:p-12">
+                <div className="text-center sm:text-left mb-12 relative flex flex-col items-center sm:items-start">
+                  <div className="bg-red-500 text-white font-black py-2 px-5 rounded-full text-xs shadow-xl animate-bounce mb-6">
+                    POUPA{" "}
+                    {new Intl.NumberFormat("pt-AO").format(
+                      formData.quantity * 70000,
+                    )}{" "}
+                    KZ HOJE
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-slate-400 line-through text-2xl font-bold tracking-tight">
+                      {new Intl.NumberFormat("pt-AO").format(
+                        formData.quantity * 310000,
+                      )}{" "}
+                      Kz
+                    </p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-7xl font-black text-slate-900 tracking-tighter">
+                        {new Intl.NumberFormat("pt-AO").format(
+                          formData.quantity * 240000,
+                        )}
+                      </span>
+                      <span className="text-2xl font-black text-slate-400">
+                        Kz
+                      </span>
+                    </div>
+                  </div>
+                  <p className="mt-4 text-slate-500 font-bold flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />{" "}
+                    Em Stock - Pronta Entrega
+                  </p>
+                </div>
+
+                <form onSubmit={handleFormSubmit} className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="sm:col-span-2">
+                      <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+                        Nome Completo
+                      </label>
+                      <input
+                        id="name-input-roupas"
+                        ref={nameInputRoupasRef}
+                        type="text"
+                        required
+                        value={formData.name}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
+                        className="w-full px-6 py-4 bg-slate-50 rounded-2xl border border-slate-200 focus:bg-white focus:ring-4 focus:ring-sky-100 focus:border-sky-500 outline-none transition-all placeholder:text-slate-300 font-bold"
+                        placeholder="Ex: Marta Silva"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+                        Número de WhatsApp
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        value={formData.phone}
+                        onChange={(e) =>
+                          setFormData({ ...formData, phone: e.target.value })
+                        }
+                        className="w-full px-6 py-4 bg-slate-50 rounded-2xl border border-slate-200 focus:bg-white focus:ring-4 focus:ring-sky-100 focus:border-sky-500 outline-none transition-all placeholder:text-slate-300 font-bold"
+                        placeholder="Ex: 921 167 980"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+                        Província
+                      </label>
+                      <div className="relative">
+                        <select
+                          disabled
+                          value="Luanda"
+                          className="w-full px-6 py-4 bg-slate-100/60 rounded-2xl border border-slate-200 outline-none transition-all appearance-none font-bold text-slate-500 cursor-not-allowed opacity-100 uppercase"
+                        >
+                          <option value="Luanda">Somente Luanda</option>
+                        </select>
+                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                          <Lock size={16} />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+                        Bairro, Zona, Município
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.area}
+                        onChange={(e) =>
+                          setFormData({ ...formData, area: e.target.value })
+                        }
+                        className="w-full px-6 py-4 bg-slate-50 rounded-2xl border border-slate-200 focus:bg-white focus:ring-4 focus:ring-sky-100 focus:border-sky-500 outline-none transition-all placeholder:text-slate-300 font-bold"
+                        placeholder="Ex: Talatona, Rua 4, perto do banco..."
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+                        Observações (opcional)
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={formData.observacoes || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, observacoes: e.target.value })
+                        }
+                        className="w-full px-6 py-4 bg-slate-50 rounded-2xl border border-slate-200 focus:bg-white focus:ring-4 focus:ring-sky-100 focus:border-sky-500 outline-none transition-all placeholder:text-slate-300 font-bold resize-none"
+                        placeholder="Alguma nota para o entregador...?"
+                      />
+                    </div>
+                    <div className="sm:col-span-2 flex flex-col gap-4">
+                      <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">
+                        Quantas unidades?
+                      </label>
+                      <div className="flex gap-3">
+                        {[1, 2, 3, 4].map((q) => (
+                          <button
+                            key={q}
+                            type="button"
+                            onClick={() =>
+                              setFormData({ ...formData, quantity: q })
+                            }
+                            className={`flex-1 py-4 rounded-2xl border-2 transition-all font-black flex flex-col items-center justify-center gap-1 ${formData.quantity === q ? "bg-sky-50 border-sky-500 text-sky-700 shadow-lg shadow-sky-500/10" : "bg-white border-slate-100 text-slate-400 hover:border-slate-200"}`}
+                          >
+                            <span className="text-xl">{q}</span>
+                            <span className="text-[10px] uppercase tracking-wider">
+                              {q === 1 ? "Unidade" : "Unidades"}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-6">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className={`w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black text-lg py-5 rounded-3xl shadow-2xl shadow-emerald-500/30 transition-all transform active:scale-95 flex flex-col justify-center items-center ${isSubmitting ? "opacity-70 cursor-wait" : "hover:-translate-y-1"}`}
+                    >
+                      {isSubmitting ? (
+                        <Loader2 className="animate-spin" size={32} />
+                      ) : (
+                        <>
+                          <span>EFECTUAR MINHA RESERVA AGORA</span>
+                          <span className="text-[10px] opacity-90 font-black uppercase tracking-[0.2em] mt-1.5">
+                            Pagas só no momento da entrega
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <p className="text-center text-[11px] text-slate-400 font-bold uppercase tracking-widest">
+                    🔒 Pagamento Seguro no Acto da Entrega
+                  </p>
+                </form>
+              </div>
+            </section>
+          </div>
+
+          <section className="mb-24 text-left max-w-2xl mx-auto px-4">
+            <h2 className="text-3xl font-black text-slate-900 mb-12 tracking-tight text-center">
+              As tuas dúvidas respondidas de forma honesta
+            </h2>
+            <div className="space-y-4">
+              {FAQ_ROTEADOR.map((item, i) => (
+                <AccordionItem key={i} question={item.q} answer={item.a} />
+              ))}
+            </div>
+          </section>
+        </main>
+      )}
+
       {/* FOOTER */}
-      {(view === "sales" || view === "sales-roupas") && (
+      {isSalesView && (
         <footer className="bg-slate-900 text-slate-400 py-12 px-4 text-center mt-auto pb-28 md:pb-12 shadow-[inset_0_10px_30px_rgba(0,0,0,0.5)]">
           <div className="max-w-4xl mx-auto flex flex-col items-center">
             <img
@@ -3378,7 +4092,11 @@ Final do dia (16h - 18h)`;
                             ? "bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-850 shadow-2xl"
                             : "bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200 shadow-sm"
                       }`}
-                      title={hidePhones ? "Mostrar Números de WhatsApp e Páginas" : "Censurar Números de WhatsApp e Páginas"}
+                      title={
+                        hidePhones
+                          ? "Mostrar Números de WhatsApp e Páginas"
+                          : "Censurar Números de WhatsApp e Páginas"
+                      }
                     >
                       {hidePhones ? (
                         <>
@@ -3453,9 +4171,11 @@ Final do dia (16h - 18h)`;
                     {conversionRate}%
                   </p>
                   <div className="w-full bg-slate-205 dark:bg-slate-950/40 h-2 rounded-full mt-3 overflow-hidden">
-                    <div 
-                      className="bg-indigo-500 h-full rounded-full transition-all duration-500" 
-                      style={{ width: `${Math.min(100, parseFloat(conversionRate) || 85)}%` }}
+                    <div
+                      className="bg-indigo-500 h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.min(100, parseFloat(conversionRate) || 85)}%`,
+                      }}
                     />
                   </div>
                 </div>
@@ -3703,7 +4423,7 @@ Final do dia (16h - 18h)`;
                   </div>
                 ) : (
                   <>
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto min-h-[400px] pb-56">
                       <table
                         className={`min-w-full divide-y ${isDark ? "divide-slate-800" : "divide-slate-100"}`}
                       >
@@ -3781,7 +4501,9 @@ Final do dia (16h - 18h)`;
                               <td
                                 className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? "text-slate-300" : "text-slate-655"}`}
                               >
-                                {formatPageNameWithCensorship(lead.produto || "Secador Inteligente UV")}
+                                {formatPageNameWithCensorship(
+                                  lead.produto || "Secador Inteligente UV",
+                                )}
                               </td>
                               <td
                                 className={`px-6 py-4 whitespace-nowrap text-sm font-extrabold ${isDark ? "text-emerald-400" : "text-slate-800"}`}
@@ -3863,11 +4585,7 @@ Final do dia (16h - 18h)`;
                                       />
                                       <div
                                         onClick={(e) => e.stopPropagation()}
-                                        className={`absolute right-0 z-50 w-44 rounded-xl border py-1 shadow-2xl ${
-                                          i >= displayedLeads.length - 3 && displayedLeads.length > 2
-                                            ? "bottom-full mb-2"
-                                            : "top-full mt-2"
-                                        } ${
+                                        className={`absolute right-0 z-50 w-44 rounded-xl border py-1 shadow-2xl top-full mt-2 ${
                                           isDark
                                             ? "border-slate-800 bg-slate-950 text-slate-200"
                                             : "border-slate-200 bg-white text-slate-805"
@@ -4287,6 +5005,57 @@ Final do dia (16h - 18h)`;
                 </div>
               </div>
             </div>
+
+            {/* Produto 3: Roteador ZTE */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col hover:shadow-md transition">
+              <div className="aspect-video bg-slate-100 relative group overflow-hidden">
+                <img
+                  src={IMAGES_ROTEADOR[0]}
+                  alt="Roteador 5G Ultra Desbloqueado"
+                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                />
+                <div className="absolute top-3 right-3 bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded shadow-sm uppercase">
+                  Ativa
+                </div>
+              </div>
+              <div className="p-5 flex-grow flex flex-col">
+                <h3 className="font-bold text-lg text-slate-900 mb-1 leading-tight">
+                  Roteador 5G Ultra Desbloqueado
+                </h3>
+                <p className="text-sm text-slate-500 mb-6 flex-grow">
+                  Nova landing page focada em internet de alto desempenho.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setView("sales-roteador")}
+                    className="flex-1 text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-bold transition flex justify-center items-center gap-1.5 shadow-sm"
+                  >
+                    <Eye size={14} /> Pré-visualizar
+                  </button>
+                  <button
+                    onClick={() => {
+                      setFilterProduct("Roteador 5G Ultra Desbloqueado");
+                      setView("admin");
+                    }}
+                    className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold transition border border-slate-200 shadow-sm"
+                  >
+                    Leads
+                  </button>
+                  <button
+                    onClick={() => {
+                      const link =
+                        window.location.origin + "?product=roteador-5g";
+                      navigator.clipboard.writeText(link);
+                      alert("Link copiado: " + link);
+                    }}
+                    className="text-sm bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 px-3 py-2 rounded-xl font-bold transition flex items-center justify-center shrink-0 w-[42px] shadow-sm"
+                    title="Copiar Link da Página"
+                  >
+                    <Copy size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       )}
@@ -4419,7 +5188,9 @@ Final do dia (16h - 18h)`;
                     <strong>
                       {view === "sales-roupas"
                         ? "Secador Expresso Portátil"
-                        : "Secador Inteligente UV"}
+                        : view === "sales-roteador"
+                          ? "ZTE 5G WiFi 6 CPE"
+                          : "Secador Inteligente UV"}
                     </strong>{" "}
                     para entrega imediata terminou devido à altíssima procura
                     nas últimas horas.
@@ -4428,7 +5199,13 @@ Final do dia (16h - 18h)`;
                     Mas <b>não te preocupes!</b> O novo lote chega em breve.
                     Queres garantir a tua reserva e manter o preço promocional
                     de{" "}
-                    <b>{view === "sales-roupas" ? "35.000 Kz" : "25.000 Kz"}</b>
+                    <b>
+                      {view === "sales-roupas"
+                        ? "35.000 Kz"
+                        : view === "sales-roteador"
+                          ? "240.000 Kz"
+                          : "25.000 Kz"}
+                    </b>
                     ?{" "}
                     <span className="text-indigo-600 font-bold block mt-2">
                       (Não pagas nada hoje!)
@@ -4472,10 +5249,34 @@ Final do dia (16h - 18h)`;
                     Sem o{" "}
                     {view === "sales-roupas"
                       ? "Secador Expresso Portátil"
-                      : "Secador UV"}
+                      : view === "sales-roteador"
+                        ? "Roteador 5G Ultra"
+                        : "Secador UV"}
                     , vais continuar a:
                   </p>
-                  {view === "sales-roupas" ? (
+                  {view === "sales-roteador" ? (
+                    <ul className="text-left text-slate-600 mb-8 space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                      <li className="flex items-start gap-3">
+                        <span className="text-xl">🛜</span>{" "}
+                        <span className="font-medium">
+                          Depender de provedores com sinal fraco
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-xl">🐢</span>{" "}
+                        <span className="font-medium">
+                          Ficar com internet super lenta quando muita gente
+                          conecta
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-xl">💸</span>{" "}
+                        <span className="font-medium">
+                          Gastar num plano de internet caro e limitado
+                        </span>
+                      </li>
+                    </ul>
+                  ) : view === "sales-roupas" ? (
                     <ul className="text-left text-slate-600 mb-8 space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
                       <li className="flex items-start gap-3">
                         <span className="text-xl">🩲</span>{" "}
@@ -4535,7 +5336,13 @@ Final do dia (16h - 18h)`;
                   )}
                   <p className="text-sm text-slate-900 font-bold mb-8 p-4 bg-red-50 rounded-xl border border-red-100 text-center">
                     O próximo lote custará{" "}
-                    <b>{view === "sales-roupas" ? "50.000 Kz" : "45.000 Kz"}</b>
+                    <b>
+                      {view === "sales-roupas"
+                        ? "50.000 Kz"
+                        : view === "sales-roteador"
+                          ? "310.000 Kz"
+                          : "45.000 Kz"}
+                    </b>
                     . Vais mesmo deixar passar?
                   </p>
                   <div className="space-y-3">
@@ -4584,7 +5391,9 @@ Final do dia (16h - 18h)`;
                       "
                       {view === "sales-roupas"
                         ? "A Maria de Talatona também hesitou. Hoje agradece todos os dias por ter reservado. Nunca pensei que ia fazer tanta diferença. A minha roupa íntima seca em 2 horas dentro do quarto. Sem vergonha, sem bafio."
-                        : "O Paulo do Kilamba também hesitou. Hoje agradece todos os dias por ter reservado. O mau cheiro dos ténis de treino desapareceu completamente. Sinto os pés muito mais saudáveis e frescos."}
+                        : view === "sales-roteador"
+                          ? "O Mário de Talatona também hesitou. Hoje agradece por ter mudado para este roteador 5G libertando-se de internet que caía toda a hora, agora desfruta de 3600Mbps mesmo no pico."
+                          : "O Paulo do Kilamba também hesitou. Hoje agradece todos os dias por ter reservado. O mau cheiro dos ténis de treino desapareceu completamente. Sinto os pés muito mais saudáveis e frescos."}
                       "
                     </p>
                     <div className="flex items-center gap-1 text-amber-400">
@@ -4646,11 +5455,17 @@ Final do dia (16h - 18h)`;
                     <strong>
                       {view === "sales-roupas"
                         ? "Secador Expresso Portátil"
-                        : "Secador UV"}
+                        : view === "sales-roteador"
+                          ? "ZTE 5G Ultra"
+                          : "Secador UV"}
                     </strong>{" "}
                     está reservada ao preço de{" "}
                     <strong>
-                      {view === "sales-roupas" ? "35.000 Kz" : "25.000 Kz"}
+                      {view === "sales-roupas"
+                        ? "35.000 Kz"
+                        : view === "sales-roteador"
+                          ? "240.000 Kz"
+                          : "25.000 Kz"}
                     </strong>
                     .
                   </p>
@@ -5229,7 +6044,10 @@ Final do dia (16h - 18h)`;
                         Segmento / Produto
                       </span>
                       <p className="font-semibold text-slate-900">
-                        {formatPageNameWithCensorship(selectedLeadForPreview.produto || "Secador Inteligente UV")}
+                        {formatPageNameWithCensorship(
+                          selectedLeadForPreview.produto ||
+                            "Secador Inteligente UV",
+                        )}
                       </p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -5238,7 +6056,9 @@ Final do dia (16h - 18h)`;
                           WhatsApp
                         </span>
                         <p className="font-semibold text-slate-900">
-                          {formatPhoneWithCensorship(selectedLeadForPreview.phone)}
+                          {formatPhoneWithCensorship(
+                            selectedLeadForPreview.phone,
+                          )}
                         </p>
                       </div>
                       <div>
@@ -5315,33 +6135,31 @@ Final do dia (16h - 18h)`;
       </AnimatePresence>
 
       {/* Sticky Mobile CTA (Only visible on mobile when scrolling) */}
-      {(view === "sales" || view === "sales-roupas") &&
-        modalState === "none" &&
-        !isCheckoutVisible && (
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 md:hidden z-30">
-            <button
-              onClick={() => {
-                const targetId = "comprar";
-                const inputId =
-                  view === "sales" ? "name-input" : "name-input-roupas";
-                document
-                  .getElementById(targetId)
-                  ?.scrollIntoView({ behavior: "smooth" });
-                setTimeout(() => {
-                  if (view === "sales") nameInputRef.current?.focus();
-                  else nameInputRoupasRef.current?.focus();
-                }, 800);
-              }}
-              className="w-full bg-emerald-500 text-white font-bold text-lg py-3.5 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)]"
-            >
-              QUERO APROVEITAR
-            </button>
-          </div>
-        )}
+      {isSalesView && modalState === "none" && !isCheckoutVisible && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 md:hidden z-30">
+          <button
+            onClick={() => {
+              const targetId = "comprar";
+              const inputId =
+                view === "sales" ? "name-input" : "name-input-roupas";
+              document
+                .getElementById(targetId)
+                ?.scrollIntoView({ behavior: "smooth" });
+              setTimeout(() => {
+                if (view === "sales") nameInputRef.current?.focus();
+                else nameInputRoupasRef.current?.focus();
+              }, 800);
+            }}
+            className="w-full bg-emerald-500 text-white font-bold text-lg py-3.5 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+          >
+            QUERO APROVEITAR
+          </button>
+        </div>
+      )}
 
       {/* Social Proof Popup */}
       <AnimatePresence>
-        {(view === "sales" || view === "sales-roupas") && activePopup && (
+        {isSalesView && activePopup && (
           <motion.div
             initial={{ opacity: 0, y: 50, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
