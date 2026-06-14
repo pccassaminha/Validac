@@ -1,0 +1,420 @@
+const fs = require('fs');
+
+let content = fs.readFileSync('src/App.tsx', 'utf8');
+
+const roteadorStart = content.indexOf('{/* SALES ROTEADOR VIEW */}');
+const roteadorEnd = content.indexOf('{/* FOOTER */}');
+
+if (roteadorStart === -1 || roteadorEnd === -1) {
+  console.log("Could not find SALES ROTEADOR VIEW boundaries");
+  process.exit(1);
+}
+
+const beforeRoteador = content.slice(0, roteadorStart);
+const afterRoteador = content.slice(roteadorEnd);
+
+const newRoteadorView = \`{/* SALES ROTEADOR VIEW */}
+      {view === "sales-roteador" && (
+        <main className="bg-slate-950 text-slate-300 min-h-screen selection:bg-cyan-500/30 pb-24 overflow-x-hidden font-sans">
+          
+          {/* Hero Section */}
+          <section className="relative pt-12 sm:pt-24 pb-20 px-4 max-w-7xl mx-auto">
+            {/* Ambient Base Blur */}
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-full max-w-[800px] h-[400px] bg-cyan-500/20 blur-[120px] rounded-full pointer-events-none"></div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20 relative z-10"
+            >
+              {/* Lado Esquerdo: Texto (Cyber/Tech Style) */}
+              <div className="w-full lg:w-1/2 text-center lg:text-left flex flex-col justify-center order-2 lg:order-1">
+                <div className="inline-flex items-center justify-center lg:justify-start gap-2 text-cyan-400 font-bold mb-6 mx-auto lg:mx-0 w-fit">
+                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-cyan-500/20 border border-cyan-500/30">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping absolute"></span>
+                    <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
+                  </div>
+                  <span className="tracking-widest text-xs uppercase">Conexão Ilimitada Luanda</span>
+                </div>
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white leading-[1.05] tracking-tight mb-8">
+                  Roteador 5G Ultra Desbloqueado: Use qualquer operadora.
+                </h1>
+                <p className="text-lg text-slate-400 mb-10 font-normal leading-relaxed max-w-xl mx-auto lg:mx-0">
+                  Diga adeus aos limites de 500GB mensais. Com este equipamento <strong className="text-cyan-400 font-bold">100% livre</strong>, você tem acesso imediato aos roteamentos ilimitados da nova rede Africel, garantindo Wi-Fi 6 em todos os cantos da casa.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                  <button
+                    onClick={() => document.getElementById("comprar")?.scrollIntoView({ behavior: "smooth" })}
+                    className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black py-4 px-8 rounded-2xl transition-all shadow-[0_0_40px_rgba(6,182,212,0.3)] hover:shadow-[0_0_60px_rgba(6,182,212,0.5)] active:scale-95 text-lg w-full sm:w-auto"
+                  >
+                    COMPRAR AGORA
+                  </button>
+                  <button
+                    onClick={() => document.getElementById("recursos")?.scrollIntoView({ behavior: "smooth" })}
+                    className="bg-transparent hover:bg-white/5 text-white font-bold py-4 px-8 rounded-2xl transition-all active:scale-95 border border-white/10 w-full sm:w-auto backdrop-blur-sm"
+                  >
+                    VER RECURSOS
+                  </button>
+                </div>
+              </div>
+
+              {/* Lado Direito: Imagem Hero */}
+              <div className="w-full lg:w-1/2 order-1 lg:order-2">
+                <div className="relative w-full aspect-square sm:aspect-[4/3] flex items-center justify-center">
+                  {/* Glowing backdrop rings */}
+                  <div className="absolute inset-0 rounded-full border border-cyan-500/20 scale-75 animate-[spin_30s_linear_infinite]"></div>
+                  <div className="absolute inset-0 rounded-full border border-blue-500/20 scale-90 animate-[spin_40s_linear_infinite_reverse]"></div>
+                  
+                  {/* Main Image */}
+                  <AnimatePresence mode="wait">
+                    <motion.img
+                      key={activeImage}
+                      src={IMAGES_ROTEADOR[activeImage]}
+                      initial={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
+                      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                      exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
+                      transition={{ duration: 0.5 }}
+                      className="absolute inset-0 w-full h-full object-contain z-10 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                      referrerPolicy="no-referrer"
+                    />
+                  </AnimatePresence>
+                </div>
+
+                {/* Thumbnails Row */}
+                <div className="flex gap-4 justify-center mt-6">
+                  {IMAGES_ROTEADOR.map((img, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveImage(i)}
+                      className={\`relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden transition-all bg-white/5 backdrop-blur-md border \${
+                        activeImage === i
+                          ? "border-cyan-400 opacity-100 scale-110 shadow-[0_0_20px_rgba(6,182,212,0.4)]"
+                          : "border-white/10 opacity-50 hover:opacity-100 hover:scale-105"
+                      }\`}
+                    >
+                      <img
+                        src={img}
+                        alt={\`Vista \${i+1}\`}
+                        className="w-full h-full object-contain p-2"
+                        referrerPolicy="no-referrer"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </section>
+
+          {/* Dores (Motivos) */}
+          <section className="px-4 py-20 relative border-t border-white/5">
+            <div className="max-w-7xl mx-auto">
+              <div className="text-center mb-16">
+                <h2 className="text-2xl sm:text-4xl font-black text-white mb-4">
+                  A sua operadora deixou-o sem opções?
+                </h2>
+                <p className="text-slate-400 max-w-2xl mx-auto">
+                  Os cortes abruptos na internet por novos limites de GB afectam milhares de lares em Luanda. Aqui está o porquê de precisar deste roteador.
+                </p>
+              </div>
+              <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+                {[
+                  { title: "Limites de Tráfego", desc: "A internet corta a meio do mês e exige recargas absurdamente caras." },
+                  { title: "Roteador Bloqueado", desc: "Com o aparelho antigo, não podes usar a rede concorrente que é mais barata." },
+                  { title: "Instabilidade Crónica", desc: "Nas horas de ponta, ver vídeos em 1080p ou 4K vira uma tortura de buffering." },
+                  { title: "Poucos Dispositivos", desc: "Se ligarem mais do que 4 telefones, a rede vai abaixo constantemente." }
+                ].map((item, i) => (
+                  <div key={i} className="bg-white/5 backdrop-blur-md border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-colors group">
+                    <div className="w-12 h-12 bg-rose-500/20 text-rose-400 rounded-2xl flex items-center justify-center mb-6 border border-rose-500/20 group-hover:bg-rose-500 group-hover:text-white transition-all">
+                      <TriangleAlert size={24} />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-2">{item.title}</h3>
+                    <p className="text-slate-400 leading-relaxed">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Funcionalidades Bento Grid */}
+          <section id="recursos" className="px-4 py-20 relative bg-black/50 border-y border-white/5 scroll-mt-10">
+            <div className="max-w-7xl mx-auto">
+              <div className="text-center mb-16">
+                <span className="text-cyan-400 font-bold tracking-widest uppercase text-xs">Especificações Base</span>
+                <h2 className="text-3xl sm:text-5xl font-black text-white mt-3 mb-6">
+                  ZTE 5G Ultra Wi-Fi 6
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-2 bg-gradient-to-br from-indigo-900/40 to-slate-900/40 border border-white/10 p-8 sm:p-12 rounded-[2.5rem] relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 blur-[100px] rounded-full group-hover:bg-cyan-500/20 transition-all"></div>
+                  <div className="relative z-10 w-full h-full flex flex-col justify-end">
+                    <div className="w-16 h-16 bg-cyan-500 rounded-3xl flex items-center justify-center text-slate-900 mb-8 font-black text-2xl shadow-[0_0_30px_rgba(6,182,212,0.5)]">
+                      5G
+                    </div>
+                    <h3 className="text-3xl md:text-5xl font-black text-white mb-4">Velocidade Absurda<br/>até 3.6 Gbps</h3>
+                    <p className="text-slate-400 max-w-md text-lg">Faça downloads pesados em segundos, jogue online sem ping e usufrua de streaming 4K instantâneo.</p>
+                  </div>
+                </div>
+                
+                <div className="bg-white/5 border border-white/10 p-8 rounded-[2.5rem] flex flex-col">
+                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-white mb-6">
+                    <ShieldCheck size={24} />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-3">100% Desbloqueado</h3>
+                  <p className="text-slate-400 text-sm flex-grow">A liberdade é sua. Funciona com chips da Africel, Unitel ou Movicel indubitavelmente.</p>
+                </div>
+                
+                <div className="bg-white/5 border border-white/10 p-8 rounded-[2.5rem] flex flex-col">
+                   <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-white mb-6">
+                      <Zap size={24} />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-3">Wi-Fi 6 & NFC</h3>
+                    <p className="text-slate-400 text-sm">Emparelhe o telemóvel por NFC com um simples toque. A rede tem menor latência e suporta mais dispositivos.</p>
+                </div>
+
+                <div className="md:col-span-2 bg-gradient-to-tr from-slate-900/60 to-slate-800/60 border border-white/10 p-8 sm:p-10 rounded-[2.5rem] flex items-center overflow-hidden relative">
+                   <div className="absolute right-0 bottom-0 text-[10rem] font-black leading-none text-white/5 -mb-10 mr-10 select-none">
+                     256
+                   </div>
+                   <div className="relative z-10">
+                     <h3 className="text-2xl sm:text-4xl font-black text-white mb-3">Conecte até 256 Utilizadores</h3>
+                     <p className="text-slate-400">Ideal para casas grandes, condomínios ou pequenos escritórios empresariais onde ninguém pode ficar parado.</p>
+                   </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Comparativo Dark */}
+          <section className="px-4 py-20 relative">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl sm:text-4xl font-black text-white">
+                  A Verdade sobre o Seu Roteador Atual
+                </h2>
+              </div>
+              
+              <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse min-w-[500px]">
+                    <thead>
+                      <tr>
+                        <th className="p-6 border-b border-white/5 font-black text-slate-500 uppercase text-xs tracking-widest w-1/3">Critério</th>
+                        <th className="p-6 border-b border-white/5 font-bold text-slate-400 bg-white/5 text-center w-1/3">O Atual (Padrão)</th>
+                        <th className="p-6 border-b border-white/5 font-bold text-cyan-400 bg-cyan-900/20 text-center w-1/3">ZTE 5G Ultra</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-sm">
+                      {[
+                        { label: "Velocidade Média", old: "10-20 Mbps", new: "Aceleração 5G Giga" },
+                        { label: "Rede / SIM", old: "Bloqueado à origem", new: "Totalmente Livre" },
+                        { label: "Dispositivos Sup.", old: "Até 10 simultâneos", new: "Até 256 simultâneos" },
+                        { label: "Wi-Fi", old: "Wi-Fi 4 / 5 Antigo", new: "Wi-Fi 6 c/ NFC" },
+                        { label: "Antenas", old: "Internas Fracas", new: "Super Direcional 360°" },
+                      ].map((row, i) => (
+                        <tr key={i} className="hover:bg-white/5 transition-colors">
+                          <td className="p-6 border-b border-white/5 font-bold text-white">{row.label}</td>
+                          <td className="p-6 border-b border-white/5 text-slate-500 text-center">{row.old}</td>
+                          <td className="p-6 border-b border-white/5 text-cyan-300 font-bold text-center bg-cyan-900/10">{row.new}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Provas Sociais */}
+          <section className="py-20 relative bg-black/30 border-y border-white/5">
+            <div className="max-w-7xl mx-auto px-4">
+              <div className="text-center mb-16">
+                <h2 className="text-3xl font-black text-white">Compradores Satisfeitos</h2>
+                <p className="text-slate-400 mt-2">Vê quem já migrou para a internet sem limites.</p>
+              </div>
+              
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                  { name: "Ana P.", letter: "A", text: "Antes a internet caía a meio da semana. Pus um chip novo e nunca mais sofri." },
+                  { name: "Carlos M.", letter: "C", text: "O ping em COD e Fortnite é surreal de tão baixo. Simplesmente mágico." },
+                  { name: "Marta S.", letter: "M", text: "Trabalho em home office, ligo tudo e nada falha. Melhor investimento do ano." },
+                  { name: "José B.", letter: "J", text: "Entrega super rápida. Desbloqueado de verdade, já testei Unitel e Africel." }
+                ].map((testimonial, i) => (
+                  <div key={i} className="bg-slate-900/80 border border-white/10 p-8 rounded-3xl flex flex-col relative group hover:-translate-y-2 transition-transform duration-300">
+                    <div className="flex gap-1 text-cyan-400 mb-6">
+                      {[1,2,3,4,5].map((s) => <Star key={s} size={14} fill="currentColor"/>)}
+                    </div>
+                    <p className="text-slate-300 italic flex-grow mb-8 text-sm leading-relaxed">"{testimonial.text}"</p>
+                    <div className="flex items-center gap-4">
+                       <div className="w-10 h-10 rounded-full bg-cyan-500 flex justify-center items-center font-bold text-slate-900">
+                         {testimonial.letter}
+                       </div>
+                       <span className="text-white font-bold">{testimonial.name}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Preços e Checkout Form (The main conversion point) */}
+          <section id="comprar" className="py-20 px-4 relative scroll-mt-10">
+            <div className="max-w-6xl mx-auto bg-slate-900 rounded-[3rem] border border-cyan-500/30 overflow-hidden shadow-[0_0_50px_rgba(6,182,212,0.15)] flex flex-col lg:flex-row relative">
+              
+              {/* Esquerda: Info e Urgência */}
+              <div className="lg:w-[45%] bg-gradient-to-b from-cyan-900 to-slate-900 p-10 sm:p-14 text-white relative">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/20 blur-[100px] rounded-full pointer-events-none"></div>
+                <div className="relative z-10">
+                   <div className="inline-block bg-rose-500 text-white font-black px-4 py-1.5 rounded-full text-[10px] tracking-widest uppercase mb-6 shadow-[0_0_20px_rgba(244,63,94,0.4)] animate-pulse">
+                     Stock Ultra Limitado
+                   </div>
+                   <h2 className="text-3xl sm:text-5xl font-black leading-tight mb-8">Não fique de<br/>fora do 5G.</h2>
+                   <div className="space-y-4 mb-10">
+                    {[
+                      "Venda Exclusiva e Entrega Imediata",
+                      "Pagamentos SOMENTE no Acto da Entrega",
+                      "Suporte e Garantia Blindada"
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-3 text-sm font-bold bg-black/20 p-4 rounded-xl border border-white/5 backdrop-blur-sm">
+                        <CheckCircle size={18} className="text-cyan-400 shrink-0"/>
+                        {item}
+                      </div>
+                    ))}
+                   </div>
+                   
+                   <p className="text-cyan-200 text-sm font-medium opacity-80 mb-4">Em Stock • Entrega p/ Luanda</p>
+                </div>
+              </div>
+
+              {/* Direita: Formulário */}
+              <div className="lg:w-[55%] p-8 sm:p-12 relative bg-slate-950">
+                 <div className="mb-10 text-center sm:text-left">
+                    <p className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-3">Valor de Investimento</p>
+                    <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4 justify-center sm:justify-start">
+                       <p className="text-rose-500/60 line-through text-2xl font-black">
+                         {new Intl.NumberFormat("pt-AO").format(formData.quantity * 310000)} Kz
+                       </p>
+                       <div className="flex items-baseline gap-2">
+                         <span className="text-5xl sm:text-6xl font-black text-white tracking-tighter">
+                            {new Intl.NumberFormat("pt-AO").format(formData.quantity * 240000)}
+                         </span>
+                         <span className="text-xl font-bold text-cyan-500">Kz</span>
+                       </div>
+                    </div>
+                    <div className="mt-3 inline-block bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-bold text-xs px-3 py-1 rounded-full">
+                       Poupe {new Intl.NumberFormat("pt-AO").format(formData.quantity * 70000)} KZ hoje
+                    </div>
+                 </div>
+
+                 <form onSubmit={handleFormSubmit} className="space-y-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                       <div className="sm:col-span-2">
+                          <label className="block text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2">Nome Completo</label>
+                          <input
+                            required
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => setFormData({...formData, name: e.target.value})}
+                            className="w-full bg-slate-900 border border-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none px-5 py-4 rounded-xl text-white placeholder:text-slate-600 font-medium transition-colors"
+                            placeholder="Ex: João Baptista"
+                          />
+                       </div>
+                       <div>
+                          <label className="block text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2">WhatsApp</label>
+                          <input
+                            required
+                            type="tel"
+                            value={formData.phone}
+                            onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                            className="w-full bg-slate-900 border border-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none px-5 py-4 rounded-xl text-white placeholder:text-slate-600 font-medium transition-colors"
+                            placeholder="Ex: 923 000 000"
+                          />
+                       </div>
+                       <div>
+                          <label className="block text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2">Província</label>
+                          <div className="relative">
+                            <select disabled className="w-full bg-slate-900/50 border border-slate-800 outline-none px-5 py-4 rounded-xl text-slate-500 appearance-none font-bold uppercase disabled:opacity-100">
+                               <option>Somente Luanda</option>
+                            </select>
+                            <Lock size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600" />
+                          </div>
+                       </div>
+                       <div className="sm:col-span-2">
+                          <label className="block text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2">Endereço (Bairro/Município)</label>
+                          <input
+                            required
+                            type="text"
+                            value={formData.area}
+                            onChange={(e) => setFormData({...formData, area: e.target.value})}
+                            className="w-full bg-slate-900 border border-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none px-5 py-4 rounded-xl text-white placeholder:text-slate-600 font-medium transition-colors"
+                            placeholder="Ex: Talatona, Rua 2"
+                          />
+                       </div>
+                       <div className="sm:col-span-2">
+                          <label className="block text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2">Observações (Opcional)</label>
+                          <textarea
+                            rows={2}
+                            value={formData.observacoes || ""}
+                            onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
+                            className="w-full bg-slate-900 border border-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none px-5 py-4 rounded-xl text-white placeholder:text-slate-600 font-medium transition-colors resize-none"
+                            placeholder="Algum ponto de referência?"
+                          />
+                       </div>
+                       <div className="sm:col-span-2">
+                          <label className="block text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3">Quantidade (Aparelhos)</label>
+                          <div className="flex gap-3">
+                            {[1,2,3,4].map(q => (
+                              <button
+                                key={q} type="button"
+                                onClick={() => setFormData({...formData, quantity: q})}
+                                className={\`flex-1 py-3 border \${formData.quantity === q ? 'bg-cyan-500 border-cyan-400 text-slate-950 font-black shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'} rounded-xl transition-all\`}
+                              >
+                                {q}
+                              </button>
+                            ))}
+                          </div>
+                       </div>
+                    </div>
+
+                    <div className="pt-6">
+                       <button
+                         type="submit" disabled={isSubmitting}
+                         className={\`w-full py-5 rounded-2xl font-black text-lg flex flex-col items-center justify-center transition-all bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-[0_0_30px_rgba(6,182,212,0.3)] hover:shadow-[0_0_50px_rgba(6,182,212,0.5)] \${isSubmitting ? 'opacity-70 scale-95 cursor-wait' : 'hover:-translate-y-1'}\`}
+                       >
+                         {isSubmitting ? (
+                           <Loader2 className="animate-spin" size={32} />
+                         ) : (
+                           <>
+                             <span>ENCOMENDAR AGORA</span>
+                             <span className="text-[9px] uppercase tracking-[0.2em] mt-1 opacity-80">(Pagamento na Entrega)</span>
+                           </>
+                         )}
+                       </button>
+                    </div>
+                 </form>
+              </div>
+
+            </div>
+          </section>
+
+          {/* FAQ */}
+          <section className="px-4 py-20 pb-40 relative">
+             <div className="max-w-3xl mx-auto">
+               <div className="text-center mb-16">
+                 <h2 className="text-3xl font-black text-white">Perguntas Frequentes</h2>
+               </div>
+               <div className="space-y-4">
+                 {FAQ_ROTEADOR.map((item, i) => (
+                    <AccordionItem key={i} question={item.q} answer={item.a} isDarkTheme />
+                 ))}
+               </div>
+             </div>
+          </section>
+
+        </main>
+      )}
+\`;
+
+fs.writeFileSync('src/App.tsx', beforeRoteador + newRoteadorView + '\\n      ' + afterRoteador);
+console.log('App.tsx successfully overwritten with dramatic new tech theme.');
