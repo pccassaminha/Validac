@@ -538,6 +538,26 @@ export default function App() {
   const nameInputRef = useRef<HTMLInputElement>(null);
   const nameInputRoupasRef = useRef<HTMLInputElement>(null);
 
+  // Smooth scroll to checkout section and focus the Name input field
+  const handleScrollToCheckout = () => {
+    const checkoutElem = document.getElementById("comprar");
+    if (checkoutElem) {
+      checkoutElem.scrollIntoView({ behavior: "smooth" });
+      setTimeout(() => {
+        const nameInput = checkoutElem.querySelector<HTMLInputElement>(
+          'input[type="text"], input[id*="name"]'
+        );
+        if (nameInput) {
+          nameInput.focus();
+        } else if (nameInputRef.current) {
+          nameInputRef.current.focus();
+        } else if (nameInputRoupasRef.current) {
+          nameInputRoupasRef.current.focus();
+        }
+      }, 400);
+    }
+  };
+
   // Admin Auth State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
@@ -3112,7 +3132,7 @@ Final do dia (16h - 18h)`;
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                   <button
-                    onClick={() => document.getElementById("comprar")?.scrollIntoView({ behavior: "smooth" })}
+                    onClick={handleScrollToCheckout}
                     className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black py-4 px-8 rounded-2xl transition-all shadow-[0_0_40px_rgba(6,182,212,0.3)] hover:shadow-[0_0_60px_rgba(6,182,212,0.5)] active:scale-95 text-lg w-full sm:w-auto"
                   >
                     COMPRAR AGORA
@@ -3555,7 +3575,7 @@ Final do dia (16h - 18h)`;
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                   <button
-                    onClick={() => document.getElementById("comprar")?.scrollIntoView({ behavior: "smooth" })}
+                    onClick={handleScrollToCheckout}
                     className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 px-8 rounded-2xl transition-all shadow-[0_0_30px_rgba(245,158,11,0.35)] active:scale-95 text-base sm:text-lg flex items-center justify-center gap-3 w-full sm:w-auto"
                   >
                     <span>RESERVAR O MEU PAR AGORA (15.000 Kz)</span>
@@ -3678,7 +3698,7 @@ Final do dia (16h - 18h)`;
                     </p>
                   </div>
                   <button
-                    onClick={() => document.getElementById("comprar")?.scrollIntoView({ behavior: "smooth" })}
+                    onClick={handleScrollToCheckout}
                     className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-6 py-4 rounded-xl text-sm whitespace-nowrap transition-transform active:scale-95 shadow-lg shrink-0"
                   >
                     Garantir Reserva (15.000 Kz / Par)
@@ -3837,7 +3857,7 @@ Final do dia (16h - 18h)`;
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
-                  onClick={() => document.getElementById("comprar")?.scrollIntoView({ behavior: "smooth" })}
+                  onClick={handleScrollToCheckout}
                   className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 px-8 rounded-2xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 text-base"
                 >
                   <span>RESERVAR O MEU PAR AGORA (15.000 Kz)</span>
@@ -4042,7 +4062,7 @@ Final do dia (16h - 18h)`;
                 <span className="text-lg font-black text-amber-400 leading-none">15.000 Kz</span>
               </div>
               <button
-                onClick={() => document.getElementById("comprar")?.scrollIntoView({ behavior: "smooth" })}
+                onClick={handleScrollToCheckout}
                 className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-lg active:scale-95 transition-transform"
               >
                 <span>RESERVAR (15.000 Kz)</span>
