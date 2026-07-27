@@ -21,6 +21,7 @@ import {
   Filter,
   Download,
   User,
+  Users,
   LayoutDashboard,
   Settings,
   ExternalLink,
@@ -48,7 +49,6 @@ import {
   Sun,
   Moon,
   MoreVertical,
-  Zap,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { db, auth, handleFirestoreError, OperationType } from "./firebase";
@@ -361,6 +361,59 @@ const FAQ_ROTEADOR = [
   },
 ];
 
+const IMAGES_BASE_MOVEL = [
+  "https://i.postimg.cc/7Lq3782G/main-image-1.webp",
+  "https://i.postimg.cc/ZqJ83td0/main-image-2.webp",
+  "https://i.postimg.cc/k57Q83bn/main-image-3.webp",
+  "https://i.postimg.cc/ZqJ83tdY/main-image-4.webp",
+  "https://i.postimg.cc/xd9vHDzf/main-image-5.webp",
+  "https://i.postimg.cc/W4sGrLkj/main-image-6.webp",
+];
+
+const TESTIMONIALS_BASE_MOVEL = [
+  {
+    name: "Dona Maria, Talatona",
+    comment:
+      "O par por 15.000 Kz é um achado! Encaixei debaixo da geladeira e do fogão. Agora puxo tudo com uma mão para limpar sem riscar o chão nem fazer força!",
+    rating: 5,
+  },
+  {
+    name: "Teresa K., Kilamba",
+    comment:
+      "Super resistente! Coloquei no meu fogão e na máquina de lavar de 12kg. Antes era uma luta e arriscava estragar o azulejo, agora limpo por trás em segundos e travo no lugar.",
+    rating: 5,
+  },
+  {
+    name: "António P., Maianga",
+    comment:
+      "Chegou super rápido aqui em Luanda. Paguei no ato da entrega. O par vem completo com 2 bases ajustáveis. O metal é forte e sustenta a arca e o fogão sem arranhar nada.",
+    rating: 5,
+  },
+];
+
+const FAQ_BASE_MOVEL = [
+  {
+    q: "Serve para qualquer fogão, máquina de lavar, geladeira ou arca?",
+    a: "Sim! A base é totalmente ajustável (de 72 x 4 x 5,2 cm) e suporta aparelhos pesados de praticamente qualquer tamanho doméstico, como fogões, máquinas de lavar, geladeiras, frigoríficos, arcas e até móveis pesados — movimentando tudo sem danificar nem riscar o piso.",
+  },
+  {
+    q: "O valor de 15.000 Kz inclui o par completo?",
+    a: "Sim! Por apenas 15.000 Kz (50% de desconto sobre o preço normal de 30.000 Kz) você recebe 1 PAR COMPLETO (2 hastes metálicas ajustáveis com rodízios 360° para apoiar ambos os lados do eletrodoméstico). Não paga nada antecipado — paga apenas na entrega (COD).",
+  },
+  {
+    q: "Preciso de ferramentas ou técnico para instalar?",
+    a: "Não precisa de nada! Basta levantar ligeiramente os cantos do seu aparelho, posicionar as bases metálicas por baixo e acionar as travas de segurança dos rodízios. Simples e sem complicações.",
+  },
+  {
+    q: "O aparelho não vai ficar a deslizar sozinho quando estiver a trabalhar?",
+    a: "Não! Os rodízios têm trava de segurança reforçada. Quando a trava está acionada, a base fica completamente fixa e estável, mesmo durante a centrifugação pesada da máquina de lavar ou trepidação do fogão.",
+  },
+  {
+    q: "Quanto tempo demora a entrega em Luanda?",
+    a: "Entregas em Luanda são feitas rapidamente por estafeta próprio em poucos dias úteis após a confirmação da sua reserva. Pagamento seguro feito no ato da entrega.",
+  },
+];
+
 function AccordionItem({
   question,
   answer,
@@ -409,13 +462,17 @@ export default function App() {
     if (product === "secador-uv") return "sales";
     if (product === "cabide-secador") return "sales-roupas";
     if (product === "roteador-5g") return "sales-roteador";
+    if (product === "base-movel" || product === "base-movel-360") return "sales-base-movel";
     const storedView = localStorage.getItem("validaC_current_view");
     if (storedView) return storedView;
     return "home";
   });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const isSalesView =
-    view === "sales" || view === "sales-roupas" || view === "sales-roteador";
+    view === "sales" ||
+    view === "sales-roupas" ||
+    view === "sales-roteador" ||
+    view === "sales-base-movel";
 
   const formatPhoneWithCensorship = (phone: string | undefined | null) => {
     if (!phone) return "";
@@ -626,6 +683,9 @@ export default function App() {
     } else if (view === "sales-roteador") {
       params.set("product", "roteador-5g");
       document.title = "Roteador 5G Ultra Desbloqueado - C Store Angola";
+    } else if (view === "sales-base-movel") {
+      params.set("product", "base-movel-360");
+      document.title = "Base Móvel 360° — Deslizador para Máquina e Geladeira";
     } else if (
       view === "admin" ||
       view === "pages" ||
@@ -729,7 +789,8 @@ export default function App() {
     if (
       view !== "sales" &&
       view !== "sales-roupas" &&
-      view !== "sales-roteador"
+      view !== "sales-roteador" &&
+      view !== "sales-base-movel"
     )
       return;
 
@@ -757,14 +818,17 @@ export default function App() {
     if (
       view === "sales" ||
       view === "sales-roupas" ||
-      view === "sales-roteador"
+      view === "sales-roteador" ||
+      view === "sales-base-movel"
     ) {
       const produtoName =
         view === "sales-roupas"
           ? "Secador Expresso Pro 35 000 Kz"
           : view === "sales-roteador"
             ? "Roteador 5G Ultra Desbloqueado"
-            : "Secador Inteligente UV";
+            : view === "sales-base-movel"
+              ? "Base Móvel 360°"
+              : "Secador Inteligente UV";
       initTracking(produtoName, appSettings);
 
       const imagesList =
@@ -772,7 +836,9 @@ export default function App() {
           ? IMAGES_ROUPAS
           : view === "sales-roteador"
             ? IMAGES_ROTEADOR
-            : IMAGES;
+            : view === "sales-base-movel"
+              ? IMAGES_BASE_MOVEL
+              : IMAGES;
 
       const timer = setInterval(() => {
         setActiveImage((prev) => (prev + 1) % imagesList.length);
@@ -785,7 +851,8 @@ export default function App() {
     if (
       view !== "sales" &&
       view !== "sales-roupas" &&
-      view !== "sales-roteador"
+      view !== "sales-roteador" &&
+      view !== "sales-base-movel"
     )
       return;
 
@@ -831,13 +898,17 @@ export default function App() {
         ? "Secador Expresso Pro 35 000 Kz"
         : view === "sales-roteador"
           ? "Roteador 5G Ultra Desbloqueado"
-          : "Secador Inteligente UV";
+          : view === "sales-base-movel"
+            ? "Base Móvel 360°"
+            : "Secador Inteligente UV";
     const pricePerUnit =
       view === "sales-roupas"
         ? 35000
         : view === "sales-roteador"
           ? 240000
-          : 25000;
+          : view === "sales-base-movel"
+            ? 15000
+            : 25000;
 
     const tempLead = {
       name: formData.name,
@@ -889,7 +960,9 @@ export default function App() {
         ? "Secador Expresso Pro 34 900 Kz"
         : view === "sales-roteador"
           ? "Roteador 5G Ultra Desbloqueado"
-          : "Secador Inteligente UV";
+          : view === "sales-base-movel"
+            ? "Base Móvel 360°"
+            : "Secador Inteligente UV";
 
     if (isAccepted) {
       setTimeout(() => setModalState("success"), 300);
@@ -1469,6 +1542,8 @@ Final do dia (16h - 18h)`;
     new Set([
       "Secador Inteligente UV",
       "Secador Expresso Pro 35 000 Kz",
+      "Roteador 5G Ultra Desbloqueado",
+      "Base Móvel 360°",
       ...adminData.map((l) => l.produto).filter(Boolean),
     ]),
   );
@@ -3422,6 +3497,562 @@ Final do dia (16h - 18h)`;
         </main>
       )}
 
+      {/* SALES PAGE: BASE MÓVEL UNIVERSAL 360° */}
+      {view === "sales-base-movel" && (
+        <main className="bg-slate-950 text-slate-200 min-h-screen selection:bg-amber-500/30 pb-24 overflow-x-hidden font-sans">
+          
+          {/* Hero Section (BLOCO 1) */}
+          <section className="relative pt-12 sm:pt-20 pb-16 px-4 max-w-7xl mx-auto">
+            {/* Ambient Background Glow */}
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-full max-w-[800px] h-[400px] bg-amber-500/10 blur-[130px] rounded-full pointer-events-none"></div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16 relative z-10"
+            >
+              {/* Lado Esquerdo: Textos & Preço */}
+              <div className="w-full lg:w-1/2 text-center lg:text-left flex flex-col justify-center order-2 lg:order-1">
+                <div className="inline-flex items-center justify-center lg:justify-start gap-2 bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold px-4 py-2 rounded-full text-xs uppercase tracking-wider mb-6 mx-auto lg:mx-0 w-fit backdrop-blur-md">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                  <span>🔥 Reserva Aberta — Unidades Limitadas em Luanda</span>
+                </div>
+
+                <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-white leading-[1.1] tracking-tight mb-6">
+                  Mover o fogão, geladeira ou máquina <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">nunca foi tão fácil</span>
+                </h1>
+
+                <p className="text-base sm:text-lg text-slate-300 mb-6 font-normal leading-relaxed max-w-xl mx-auto lg:mx-0">
+                  A <strong>Base Móvel 360°</strong> coloca rodízios industriais debaixo do seu <strong>fogão, máquina de lavar, geladeira ou arca</strong>. Você desliza tudo com uma única mão — sem esforço, sem danificar nem riscar o piso e sem dor nas costas.
+                </p>
+
+                {/* Destaque para móveis pesados */}
+                <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl mb-8 backdrop-blur-md">
+                  <p className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-2">Ideal Para Equipamentos Pesados:</p>
+                  <p className="text-xs sm:text-sm text-slate-300 font-medium">
+                    🔥 Fogões de Cozinha • 🧊 Geladeiras & Frigoríficos • 🧺 Máquinas de Lavar • ❄️ Arcas Congeladoras • 📦 Outros Móveis Pesados
+                  </p>
+                </div>
+
+                {/* Âncora de Preço Hero */}
+                <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 p-5 rounded-2xl mb-8 flex items-center justify-between flex-wrap gap-4 max-w-xl mx-auto lg:mx-0">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded mb-1 inline-block">
+                      ✓ Pacote: 1 Par Completo (2 Bases)
+                    </span>
+                    <span className="text-xs text-slate-400 line-through block font-medium">Preço Normal: 30.000 Kz</span>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl sm:text-4xl font-black text-amber-400">15.000 Kz</span>
+                      <span className="text-xs font-bold bg-amber-500 text-slate-950 px-2 py-0.5 rounded-md uppercase">50% OFF</span>
+                    </div>
+                  </div>
+                  <div className="text-right text-xs text-slate-400">
+                    <span className="text-emerald-400 font-bold block">✓ Economiza 15.000 Kz</span>
+                    <span className="text-slate-300 font-bold block">1 Par = 15.000 Kz</span>
+                    <span>Pagamento na entrega</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                  <button
+                    onClick={() => document.getElementById("comprar")?.scrollIntoView({ behavior: "smooth" })}
+                    className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 px-8 rounded-2xl transition-all shadow-[0_0_30px_rgba(245,158,11,0.35)] active:scale-95 text-base sm:text-lg flex items-center justify-center gap-3 w-full sm:w-auto"
+                  >
+                    <span>RESERVAR O MEU PAR AGORA (15.000 Kz)</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Lado Direito: Galeria do Produto */}
+              <div className="w-full lg:w-1/2 order-1 lg:order-2">
+                <div className="relative w-full aspect-square sm:aspect-[4/3] flex items-center justify-center bg-slate-900/60 rounded-3xl border border-slate-800 overflow-hidden shadow-2xl p-4">
+                  <AnimatePresence mode="wait">
+                    <motion.img
+                      key={activeImage}
+                      src={IMAGES_BASE_MOVEL[activeImage]}
+                      alt="Base Móvel 360° para Máquina de Lavar e Geladeira"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 1.05 }}
+                      transition={{ duration: 0.4 }}
+                      className="w-full h-full object-contain rounded-2xl"
+                      referrerPolicy="no-referrer"
+                    />
+                  </AnimatePresence>
+
+                  <div className="absolute top-4 right-4 bg-slate-950/80 border border-slate-800 text-amber-400 text-xs font-black px-3 py-1.5 rounded-full backdrop-blur-md">
+                    Giro 360° Industrial
+                  </div>
+                </div>
+
+                {/* Thumbnails */}
+                <div className="grid grid-cols-6 gap-2 sm:gap-3 mt-4">
+                  {IMAGES_BASE_MOVEL.map((img, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveImage(i)}
+                      className={`relative aspect-square rounded-xl overflow-hidden transition-all bg-slate-900 border ${
+                        activeImage === i
+                          ? "border-amber-400 opacity-100 scale-105 shadow-[0_0_15px_rgba(245,158,11,0.4)]"
+                          : "border-slate-800 opacity-60 hover:opacity-100"
+                      }`}
+                    >
+                      <img
+                        src={img}
+                        alt={`Vista ${i + 1}`}
+                        className="w-full h-full object-contain p-1"
+                        referrerPolicy="no-referrer"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </section>
+
+          {/* DORES / PROBLEMAS (BLOCO 2) */}
+          <section className="px-4 py-16 relative border-t border-slate-900 bg-slate-900/40">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-12">
+                <span className="text-rose-400 font-bold uppercase tracking-widest text-xs">O Problema Real Em Casa</span>
+                <h2 className="text-2xl sm:text-4xl font-black text-white mt-2 mb-4">
+                  Se o seu fogão, máquina de lavar ou geladeira já ficou "presa" no mesmo canto por meses...
+                </h2>
+                <p className="text-slate-400 max-w-2xl mx-auto text-sm sm:text-base">
+                  Mover eletrodomésticos pesados em Luanda costuma ser um pesadelo físico e desgastante. Veja se você identifica este cenário:
+                </p>
+              </div>
+
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                  {
+                    icon: <Users size={24} />,
+                    title: "Precisa de 2 ou 3 Pessoas",
+                    desc: "Sempre que precisa deslocar o aparelho alguns centímetros na cozinha ou lavandaria, tem de chamar vizinhos ou familiares.",
+                  },
+                  {
+                    icon: <TriangleAlert size={24} />,
+                    title: "Sujeira e Mofo Acumulados",
+                    desc: "Poeira, gordura, mofo e até insetos acumulam-se atrás da geladeira e da máquina porque é impossível limpar por trás.",
+                  },
+                  {
+                    icon: <Zap size={24} />,
+                    title: "Dor nas Costas e Piso Riscado",
+                    desc: "Empurrar aparelhos pesados no chão duro provoca lesões na coluna e arranha os azulejos do seu apartamento.",
+                  },
+                  {
+                    icon: <ShieldCheck size={24} />,
+                    title: "Gastos com Ajudantes",
+                    desc: "Contratar terceiros só para mover móveis pesados durante limpezas custa caro e exige esperar disponibilidade.",
+                  },
+                ].map((item, i) => (
+                  <div key={i} className="bg-slate-900 border border-slate-800 p-6 rounded-2xl hover:border-slate-700 transition-all flex flex-col">
+                    <div className="w-12 h-12 bg-rose-500/10 text-rose-400 rounded-xl flex items-center justify-center mb-5 border border-rose-500/20">
+                      {item.icon}
+                    </div>
+                    <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
+                    <p className="text-slate-400 text-xs sm:text-sm leading-relaxed flex-grow">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* SOLUÇÃO (BLOCO 3) */}
+          <section className="px-4 py-16 relative bg-gradient-to-b from-slate-900/80 to-slate-950 border-y border-slate-900">
+            <div className="max-w-5xl mx-auto text-center">
+              <span className="text-amber-400 font-bold uppercase tracking-widest text-xs">A Solução Definitiva</span>
+              <h2 className="text-3xl sm:text-5xl font-black text-white mt-2 mb-6">
+                Uma base, quatro rodízios, e o problema acaba.
+              </h2>
+              <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-3xl mx-auto mb-10">
+                A <strong>Base Móvel 360°</strong> encaixa perfeitamente debaixo de <strong>fogões, máquinas de lavar, geladeiras, frigoríficos, arcas congeladoras e móveis pesados</strong>. Basta posicionar o par de hastes metálicas e, a partir daí, o seu aparelho desliza suavemente com o toque de uma mão — permitindo mover para limpar por trás sem danificar o chão, sem riscar os azulejos e sem fazer força física.
+              </p>
+
+              <div className="p-1 rounded-3xl bg-gradient-to-r from-amber-500/30 via-orange-500/20 to-emerald-500/30">
+                <div className="bg-slate-900 p-8 sm:p-12 rounded-[22px] flex flex-col md:flex-row items-center justify-between gap-8 text-left">
+                  <div className="space-y-4 max-w-xl">
+                    <h3 className="text-2xl font-black text-white">Sem Ferramentas, Sem Complicação</h3>
+                    <p className="text-slate-300 text-sm leading-relaxed">
+                      Instalação direta no tipo piso. Ajuste a largura, coloque por baixo das patas do aparelho e trave as rodas. Pronto para deslizar com facilidade incomparável!
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => document.getElementById("comprar")?.scrollIntoView({ behavior: "smooth" })}
+                    className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-6 py-4 rounded-xl text-sm whitespace-nowrap transition-transform active:scale-95 shadow-lg shrink-0"
+                  >
+                    Garantir Reserva (15.000 Kz / Par)
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* BENEFÍCIOS (BLOCO 4) */}
+          <section className="px-4 py-20 relative max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <span className="text-amber-400 font-bold uppercase tracking-widest text-xs">Por que esta base é superior</span>
+              <h2 className="text-3xl sm:text-4xl font-black text-white mt-2">
+                Diferenciais da Base Móvel 360°
+              </h2>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                {
+                  title: "Metal Reforçado Industrial",
+                  desc: "Construção ultra resistente fabricada para suportar o peso elevado de geladeiras de grande porte, arcas congeladoras e máquinas de lavar.",
+                  badge: "Alta Durabilidade",
+                },
+                {
+                  title: "Giro Duplo 360°",
+                  desc: "Rodízios duplos com giro fluido de 360 graus para movimentar eletrodomésticos para frente, para trás e para os lados com leveza.",
+                  badge: "Sem Esforço",
+                },
+                {
+                  title: "Design Ajustável e Flexível",
+                  desc: "Hastes telescópicas extensíveis (de 72 x 4 x 5,2 cm) que se adaptam perfeitamente à largura do seu eletrodoméstico.",
+                  badge: "Universal",
+                },
+                {
+                  title: "Trava de Segurança Reforçada",
+                  desc: "Mecanismo de travamento nas rodas que fixa o aparelho no lugar quando não estiver em movimento, evitando vibrações.",
+                  badge: "100% Estável",
+                },
+              ].map((b, i) => (
+                <div key={i} className="bg-slate-900 border border-slate-800 p-8 rounded-3xl relative flex flex-col justify-between hover:border-amber-500/40 transition-all group">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20 inline-block mb-4">
+                      {b.badge}
+                    </span>
+                    <h3 className="text-xl font-bold text-white mb-3">{b.title}</h3>
+                    <p className="text-slate-400 text-sm leading-relaxed">{b.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ESPECIFICAÇÕES TÉCNICAS (BLOCO 5) */}
+          <section className="px-4 py-16 bg-slate-900/50 border-y border-slate-900">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-12">
+                <span className="text-amber-400 font-bold uppercase tracking-widest text-xs">Ficha do Fornecedor</span>
+                <h2 className="text-2xl sm:text-4xl font-black text-white mt-2">
+                  Especificações Técnicas Reais
+                </h2>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+                <div className="divide-y divide-slate-800 text-sm">
+                  {[
+                    { label: "Material", val: "Metal reforçado de alta resistência" },
+                    { label: "Dimensões", val: "72 × 4 × 5,2 cm (ajustável)" },
+                    { label: "Tipo de Rodízio", val: "Duplo, giro 360° com trava de segurança" },
+                    { label: "Instalação", val: "Tipo piso, sem necessidade de ferramentas" },
+                    { label: "Tolerância de Peso", val: "±1%" },
+                    { label: "Tolerância Dimensional", val: "±1mm" },
+                    { label: "Cor", val: "Preto acetinado industrial" },
+                    { label: "Design", val: "Ajustável, portátil, flexível" },
+                    { label: "Uso Indicado", val: "Máquinas de lavar, geladeiras, frigoríficos, arcas e móveis pesados" },
+                  ].map((row, i) => (
+                    <div key={i} className="p-4 sm:p-5 flex flex-col sm:flex-row justify-between sm:items-center gap-2 hover:bg-slate-800/40 transition-colors">
+                      <span className="font-bold text-slate-400 text-xs sm:text-sm uppercase tracking-wider">{row.label}</span>
+                      <span className="font-semibold text-white text-sm sm:text-base">{row.val}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* PROVA SOCIAL (BLOCO 6) */}
+          <section className="px-4 py-20 max-w-7xl mx-auto">
+            <div className="text-center mb-12">
+              <span className="text-amber-400 font-bold uppercase tracking-widest text-xs">Aprovação em Luanda</span>
+              <h2 className="text-3xl sm:text-4xl font-black text-white mt-2">
+                Quem já resolveu o problema
+              </h2>
+            </div>
+
+            {/* Números Metricos */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12 max-w-4xl mx-auto text-center">
+              <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                <span className="text-3xl sm:text-4xl font-black text-amber-400 block">+1.240</span>
+                <span className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1 block">Unidades Entregues em Luanda</span>
+              </div>
+              <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                <span className="text-3xl sm:text-4xl font-black text-amber-400 block">98%</span>
+                <span className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1 block">Satisfação das Famílias</span>
+              </div>
+              <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                <span className="text-3xl sm:text-4xl font-black text-amber-400 block">100%</span>
+                <span className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1 block">Pagamento Seguro na Entrega</span>
+              </div>
+            </div>
+
+            {/* Testemunhos */}
+            <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+              {TESTIMONIALS_BASE_MOVEL.map((t, i) => (
+                <div key={i} className="bg-slate-900 border border-slate-800 p-8 rounded-3xl flex flex-col justify-between">
+                  <div>
+                    <div className="flex gap-1 text-amber-400 mb-4">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star key={s} size={16} fill="currentColor" />
+                      ))}
+                    </div>
+                    <p className="text-slate-300 italic text-sm leading-relaxed mb-6">"{t.comment}"</p>
+                  </div>
+                  <div className="border-t border-slate-800 pt-4">
+                    <span className="font-bold text-white text-sm block">{t.name}</span>
+                    <span className="text-xs text-emerald-400 font-medium">✓ Cliente Verificado em Luanda</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ANCORAGEM DE PREÇO (BLOCO 7) */}
+          <section className="px-4 py-16 bg-gradient-to-b from-slate-950 to-slate-900 border-t border-slate-900">
+            <div className="max-w-4xl mx-auto bg-slate-900 border border-amber-500/30 p-8 sm:p-12 rounded-3xl text-center shadow-[0_0_50px_rgba(245,158,11,0.15)] relative overflow-hidden">
+              <span className="text-amber-400 font-black uppercase tracking-widest text-xs bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full inline-block mb-6">
+                Investimento Único Inteligente
+              </span>
+
+              <h2 className="text-2xl sm:text-4xl font-black text-white mb-6">
+                Menos do que custa contratar alguém para mover o aparelho uma única vez
+              </h2>
+
+              <div className="flex items-center justify-center gap-4 my-6 flex-wrap">
+                <span className="text-slate-500 line-through text-xl sm:text-2xl font-bold">30.000 Kz</span>
+                <span className="text-4xl sm:text-6xl font-black text-amber-400">15.000 Kz</span>
+                <span className="bg-amber-500 text-slate-950 font-black px-3 py-1 rounded-xl text-xs sm:text-sm uppercase shadow-md">
+                  Economize 15.000 Kz
+                </span>
+              </div>
+
+              <p className="text-slate-300 text-sm sm:text-base max-w-xl mx-auto mb-8">
+                Incluso: Entrega rápida em Luanda por estafeta próprio • Pagamento exclusivamente no ato da entrega (COD) • Suporte via WhatsApp.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={() => document.getElementById("comprar")?.scrollIntoView({ behavior: "smooth" })}
+                  className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 px-8 rounded-2xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 text-base"
+                >
+                  <span>RESERVAR O MEU PAR AGORA (15.000 Kz)</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {/* GARANTIA (BLOCO 8) */}
+          <section className="px-4 py-12 max-w-4xl mx-auto">
+            <div className="bg-slate-900/60 border border-slate-800 p-8 rounded-3xl flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
+              <div className="w-16 h-16 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center shrink-0 border border-emerald-500/20">
+                <ShieldCheck size={36} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white mb-2">Garantia de Satisfação</h3>
+                <p className="text-slate-300 text-sm leading-relaxed">
+                  Se a base não encaixar corretamente no seu aparelho ou não atender às suas expectativas de transporte, você troca ou devolve no ato da entrega — sem complicações.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* URGÊNCIA E ESCASSEZ (BLOCO 9) */}
+          <section className="px-4 py-10 max-w-4xl mx-auto">
+            <div className="bg-amber-500/10 border border-amber-500/30 p-6 sm:p-8 rounded-2xl text-center backdrop-blur-md">
+              <p className="text-amber-300 text-sm sm:text-base font-bold leading-relaxed">
+                ⚠️ Restam poucas unidades neste lote ao preço de reserva. Novo lote só chega em algumas semanas — quem reserva hoje garante o preço promocional de 15.000 Kz e entrega esta semana em Luanda.
+              </p>
+            </div>
+          </section>
+
+          {/* FORMULÁRIO DE CHECKOUT (#comprar) & CTA FINAL */}
+          <section id="comprar" className="py-20 px-4 relative scroll-mt-6">
+            <div className="max-w-5xl mx-auto bg-slate-900 rounded-3xl border border-amber-500/30 overflow-hidden shadow-2xl flex flex-col md:flex-row">
+              
+              {/* Lado Esquerdo: Info Resumo */}
+              <div className="md:w-[45%] bg-gradient-to-b from-amber-950/60 via-slate-900 to-slate-900 p-8 sm:p-12 text-white flex flex-col justify-between">
+                <div>
+                  <span className="inline-block bg-rose-500 text-white font-black px-3 py-1 rounded-full text-[10px] tracking-widest uppercase mb-6 shadow-md animate-pulse">
+                    Stock Limitado
+                  </span>
+                  
+                  <h2 className="text-3xl sm:text-4xl font-black leading-tight mb-6">
+                    Chega de empurrar sozinho
+                  </h2>
+
+                  <p className="text-slate-300 text-sm leading-relaxed mb-8">
+                    Reserve agora a sua Base Móvel 360° por apenas <strong>15.000 Kz</strong> e resolva a limpeza e movimentação de aparelhos pesados ainda esta semana.
+                  </p>
+
+                  <div className="space-y-3 mb-8">
+                    {[
+                      "Sem pagamento antecipado (COD)",
+                      "Entrega rápida para Luanda",
+                      "Troca imediata garantida",
+                      "Atendimento dedicado no WhatsApp",
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-3 text-xs sm:text-sm font-bold bg-slate-950/50 p-3 rounded-xl border border-slate-800">
+                        <CheckCircle size={16} className="text-amber-400 shrink-0" />
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t border-slate-800 flex items-center gap-2 text-xs text-amber-400 font-bold">
+                  <CheckCircle size={16} className="shrink-0" />
+                  <span>Preencha o formulário ao lado para validar a sua reserva</span>
+                </div>
+              </div>
+
+              {/* Lado Direito: Formulário */}
+              <div className="md:w-[55%] p-8 sm:p-12 bg-slate-950">
+                <div className="mb-8">
+                  <span className="text-amber-400 font-bold uppercase tracking-widest text-xs block mb-1">Formulário de Reserva</span>
+                  <h3 className="text-2xl font-black text-white">Confirme os seus dados</h3>
+                </div>
+
+                <form onSubmit={handleFormSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest text-slate-400 font-bold mb-2">Nome Completo</label>
+                    <input
+                      required
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full bg-slate-900 border border-slate-800 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none px-4 py-3.5 rounded-xl text-white placeholder:text-slate-600 font-medium transition-all text-sm"
+                      placeholder="Ex: Maria Santos"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest text-slate-400 font-bold mb-2">WhatsApp para Contacto</label>
+                    <input
+                      required
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="w-full bg-slate-900 border border-slate-800 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none px-4 py-3.5 rounded-xl text-white placeholder:text-slate-600 font-medium transition-all text-sm"
+                      placeholder="Ex: 923 000 000"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest text-slate-400 font-bold mb-2">Província</label>
+                    <div className="relative">
+                      <select disabled className="w-full bg-slate-900 border border-slate-800 outline-none px-4 py-3.5 rounded-xl text-slate-400 appearance-none font-medium text-sm disabled:opacity-100">
+                        <option>Somente Luanda</option>
+                      </select>
+                      <Lock size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest text-slate-400 font-bold mb-2">Endereço (Bairro / Município / Ponto de Ref.)</label>
+                    <input
+                      required
+                      type="text"
+                      value={formData.area}
+                      onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                      className="w-full bg-slate-900 border border-slate-800 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none px-4 py-3.5 rounded-xl text-white placeholder:text-slate-600 font-medium transition-all text-sm"
+                      placeholder="Ex: Talatona, junto ao Kero"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest text-slate-400 font-bold mb-2">Observações (Opcional)</label>
+                    <textarea
+                      rows={2}
+                      value={formData.observacoes || ""}
+                      onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                      className="w-full bg-slate-900 border border-slate-800 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none px-4 py-3.5 rounded-xl text-white placeholder:text-slate-600 font-medium transition-all resize-none text-sm"
+                      placeholder="Informações para a entrega..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">
+                      Quantidade de Pares <span className="text-amber-400 font-normal lowercase">(1 Par = 2 bases inclusas)</span>
+                    </label>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4].map((q) => (
+                        <button
+                          key={q}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, quantity: q })}
+                          className={`flex-1 py-3 border ${
+                            q === formData.quantity
+                              ? "bg-amber-500 border-amber-400 text-slate-950 font-black shadow-md scale-[1.02]"
+                              : "bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700"
+                          } rounded-xl transition-all text-sm`}
+                        >
+                          {q} {q === 1 ? "Par" : "Pares"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-4">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className={`w-full py-4 rounded-xl font-black text-base flex flex-col items-center justify-center transition-all bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_0_25px_rgba(245,158,11,0.3)] ${
+                        isSubmitting ? "opacity-70 cursor-wait" : "hover:-translate-y-0.5 active:scale-[0.98]"
+                      }`}
+                    >
+                      {isSubmitting ? (
+                        <Loader2 className="animate-spin" size={24} />
+                      ) : (
+                        <>
+                          <span>EFECTUAR MINHA RESERVA AGORA</span>
+                          <span className="text-[10px] uppercase tracking-widest mt-1 opacity-80">(Pagamento na Entrega: {formData.quantity * 15000} Kz)</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+            </div>
+          </section>
+
+          {/* PERGUNTAS FREQUENTES (BLOCO 10) */}
+          <section className="px-4 py-16 max-w-3xl mx-auto">
+            <div className="text-center mb-12">
+              <span className="text-amber-400 font-bold uppercase tracking-widest text-xs">Esclareça Suas Dúvidas</span>
+              <h2 className="text-3xl font-black text-white mt-2">Perguntas Frequentes</h2>
+            </div>
+            <div className="space-y-4">
+              {FAQ_BASE_MOVEL.map((item, i) => (
+                <AccordionItem key={i} question={item.q} answer={item.a} isDarkTheme />
+              ))}
+            </div>
+          </section>
+
+          {/* MOBILE STICKY BOTTOM BAR */}
+          {!isCheckoutVisible && (
+            <div className="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-3 px-4 flex sm:hidden items-center justify-between shadow-2xl">
+              <div>
+                <span className="text-[10px] text-slate-400 line-through block leading-none">30.000 Kz</span>
+                <span className="text-lg font-black text-amber-400 leading-none">15.000 Kz</span>
+              </div>
+              <button
+                onClick={() => document.getElementById("comprar")?.scrollIntoView({ behavior: "smooth" })}
+                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-lg active:scale-95 transition-transform"
+              >
+                <span>RESERVAR (15.000 Kz)</span>
+              </button>
+            </div>
+          )}
+
+        </main>
+      )}
+
       {/* FOOTER */}
       {isSalesView && (
         <footer className="bg-slate-900 text-slate-400 py-12 px-4 text-center mt-auto pb-28 md:pb-12 shadow-[inset_0_10px_30px_rgba(0,0,0,0.5)]">
@@ -4849,6 +5480,57 @@ Final do dia (16h - 18h)`;
                 </div>
               </div>
             </div>
+
+            {/* Produto 4: Base Móvel 360° */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col hover:shadow-md transition">
+              <div className="aspect-video bg-slate-100 relative group overflow-hidden">
+                <img
+                  src={IMAGES_BASE_MOVEL[0]}
+                  alt="Base Móvel 360° — Deslizador para Máquina de Lavar e Geladeira"
+                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                />
+                <div className="absolute top-3 right-3 bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded shadow-sm uppercase">
+                  Ativa
+                </div>
+              </div>
+              <div className="p-5 flex-grow flex flex-col">
+                <h3 className="font-bold text-lg text-slate-900 mb-1 leading-tight">
+                  Base Móvel 360°
+                </h3>
+                <p className="text-sm text-slate-500 mb-6 flex-grow">
+                  Deslizador para fogões, geladeiras, máquinas de lavar e arcas. 15.000 Kz / Par.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setView("sales-base-movel")}
+                    className="flex-1 text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-bold transition flex justify-center items-center gap-1.5 shadow-sm"
+                  >
+                    <Eye size={14} /> Pré-visualizar
+                  </button>
+                  <button
+                    onClick={() => {
+                      setFilterProduct("Base Móvel 360°");
+                      setView("admin");
+                    }}
+                    className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold transition border border-slate-200 shadow-sm"
+                  >
+                    Leads
+                  </button>
+                  <button
+                    onClick={() => {
+                      const link =
+                        window.location.origin + "?product=base-movel-360";
+                      navigator.clipboard.writeText(link);
+                      alert("Link copiado: " + link);
+                    }}
+                    className="text-sm bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 px-3 py-2 rounded-xl font-bold transition flex items-center justify-center shrink-0 w-[42px] shadow-sm"
+                    title="Copiar Link da Página"
+                  >
+                    <Copy size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       )}
@@ -4983,7 +5665,9 @@ Final do dia (16h - 18h)`;
                         ? "Secador Expresso Portátil"
                         : view === "sales-roteador"
                           ? "ZTE 5G WiFi 6 CPE"
-                          : "Secador Inteligente UV"}
+                          : view === "sales-base-movel"
+                            ? "Base Móvel 360°"
+                            : "Secador Inteligente UV"}
                     </strong>{" "}
                     para entrega imediata terminou devido à altíssima procura
                     nas últimas horas.
@@ -4997,7 +5681,9 @@ Final do dia (16h - 18h)`;
                         ? "35.000 Kz"
                         : view === "sales-roteador"
                           ? "240.000 Kz"
-                          : "25.000 Kz"}
+                          : view === "sales-base-movel"
+                            ? "15.000 Kz"
+                            : "25.000 Kz"}
                     </b>
                     ?{" "}
                     <span className="text-indigo-600 font-bold block mt-2">
@@ -5039,12 +5725,14 @@ Final do dia (16h - 18h)`;
                 </div>
                 <div className="p-8 text-center pt-4">
                   <p className="text-slate-700 mb-6 font-bold text-lg">
-                    Sem o{" "}
+                    Sem a{" "}
                     {view === "sales-roupas"
                       ? "Secador Expresso Portátil"
                       : view === "sales-roteador"
                         ? "Roteador 5G Ultra"
-                        : "Secador UV"}
+                        : view === "sales-base-movel"
+                          ? "Base Móvel 360°"
+                          : "Secador UV"}
                     , vais continuar a:
                   </p>
                   {view === "sales-roteador" ? (
@@ -5066,6 +5754,33 @@ Final do dia (16h - 18h)`;
                         <span className="text-xl">💸</span>{" "}
                         <span className="font-medium">
                           Gastar num plano de internet caro e limitado
+                        </span>
+                      </li>
+                    </ul>
+                  ) : view === "sales-base-movel" ? (
+                    <ul className="text-left text-slate-600 mb-8 space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                      <li className="flex items-start gap-3">
+                        <span className="text-xl">🏋️</span>{" "}
+                        <span className="font-medium">
+                          Precisar de 2 ou 3 pessoas só para deslocar o fogão, geladeira ou máquina
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-xl">🪳</span>{" "}
+                        <span className="font-medium">
+                          Acumular poeira, mofo e insetos atrás dos eletrodomésticos sem conseguir limpar
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-xl">⚡</span>{" "}
+                        <span className="font-medium">
+                          Riscar e danificar o piso ao empurrar equipamentos pesados com dores nas costas
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-xl">💸</span>{" "}
+                        <span className="font-medium">
+                          Gastar dinheiro e tempo contratando alguém só para mover eletrodomésticos
                         </span>
                       </li>
                     </ul>
@@ -5134,7 +5849,9 @@ Final do dia (16h - 18h)`;
                         ? "50.000 Kz"
                         : view === "sales-roteador"
                           ? "310.000 Kz"
-                          : "45.000 Kz"}
+                          : view === "sales-base-movel"
+                            ? "30.000 Kz"
+                            : "45.000 Kz"}
                     </b>
                     . Vais mesmo deixar passar?
                   </p>
@@ -5186,7 +5903,9 @@ Final do dia (16h - 18h)`;
                         ? "A Maria de Talatona também hesitou. Hoje agradece todos os dias por ter reservado. Nunca pensei que ia fazer tanta diferença. A minha roupa íntima seca em 2 horas dentro do quarto. Sem vergonha, sem bafio."
                         : view === "sales-roteador"
                           ? "O Mário de Talatona também hesitou. Hoje agradece por ter mudado para este roteador 5G libertando-se de internet que caía toda a hora, agora desfruta de 3600Mbps mesmo no pico."
-                          : "O Paulo do Kilamba também hesitou. Hoje agradece todos os dias por ter reservado. O mau cheiro dos ténis de treino desapareceu completamente. Sinto os pés muito mais saudáveis e frescos."}
+                          : view === "sales-base-movel"
+                            ? "A Dona Rosa do Kilamba também hesitou. Hoje consegue arrastar a geladeira e a máquina de lavar sozinha só com uma mão para limpar. Sem pedir ajuda e sem riscar o chão."
+                            : "O Paulo do Kilamba também hesitou. Hoje agradece todos os dias por ter reservado. O mau cheiro dos ténis de treino desapareceu completamente. Sinto os pés muito mais saudáveis e frescos."}
                       "
                     </p>
                     <div className="flex items-center gap-1 text-amber-400">

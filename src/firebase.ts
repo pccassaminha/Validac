@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { 
-  initializeFirestore, 
+  getFirestore, 
   collection, 
   addDoc, 
   serverTimestamp, 
@@ -18,10 +18,7 @@ import firebaseConfig from "../firebase-applet-config.json";
 export { firebaseConfig };
 const app = initializeApp(firebaseConfig);
 
-// Using initializeFirestore instead of getFirestore to set experimentalForceLongPolling
-export const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true,
-}, firebaseConfig.firestoreDatabaseId);
+export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
 // Enable local offline persistence
 enableIndexedDbPersistence(db).catch((err) => {
