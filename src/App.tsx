@@ -1684,8 +1684,8 @@ Final do dia (16h - 18h)`;
         isDark ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-800"
       }`}
     >
-      {/* Navigation */}
-      {isAuthenticated && view !== "home" && (
+      {/* Navigation (Internal Admin / Management Views Only) */}
+      {isAuthenticated && view !== "home" && !isSalesView && (
         <nav className="bg-slate-900 text-white sticky top-0 z-40 shadow-xl border-b border-slate-800">
           <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 h-16 flex justify-between items-center">
             <div
@@ -6896,6 +6896,18 @@ Final do dia (16h - 18h)`;
 
       {/* WhatsApp Fixed Button for Mobile - REMOVED PER USER REQUEST */}
       {/* (view === 'sales' || view === 'sales-roupas') && ... */}
+
+      {/* Floating Admin Return Button (Only for Logged-in Admins on Sales pages) */}
+      {isAuthenticated && isSalesView && (
+        <button
+          onClick={() => setView("admin")}
+          className="fixed bottom-4 left-4 z-50 bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 px-3 py-1.5 rounded-full text-xs font-bold shadow-2xl backdrop-blur-md flex items-center gap-1.5 transition-all opacity-70 hover:opacity-100"
+          title="Voltar ao Painel Admin"
+        >
+          <Lock size={12} className="text-amber-400" />
+          <span>Painel Admin</span>
+        </button>
+      )}
     </div>
   );
 }
