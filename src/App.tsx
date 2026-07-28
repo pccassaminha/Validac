@@ -2902,7 +2902,7 @@ Final do dia (16h - 18h)`;
 
           {/* BLOCO 10 & 11: PREÇOS E CHECKOUT */}
           <div id="comprar" className="pt-8 scroll-mt-20 px-4 mb-20">
-            <section className="bg-white rounded-[3.5rem] shadow-2xl border border-slate-200 overflow-hidden max-w-6xl mx-auto flex flex-col lg:flex-row">
+            <section className="bg-white rounded-[3.5rem] shadow-2xl border border-slate-200 overflow-hidden max-w-6xl mx-auto flex flex-col-reverse lg:flex-row">
               {/* Esquerda: Info e Benefícios */}
               <div className="lg:w-[42%] bg-sky-600 p-10 text-white flex flex-col relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[100px] -mr-32 -mt-32" />
@@ -3409,7 +3409,7 @@ Final do dia (16h - 18h)`;
 
           {/* Preços e Checkout Form (The main conversion point) */}
           <section id="comprar" className="py-24 px-4 relative scroll-mt-0">
-            <div className="max-w-6xl mx-auto bg-slate-900 rounded-[3rem] border border-cyan-500/30 overflow-hidden shadow-[0_0_80px_rgba(6,182,212,0.15)] flex flex-col lg:flex-row relative">
+            <div className="max-w-6xl mx-auto bg-slate-900 rounded-[3rem] border border-cyan-500/30 overflow-hidden shadow-[0_0_80px_rgba(6,182,212,0.15)] flex flex-col-reverse lg:flex-row relative">
               
               {/* Esquerda: Info e Urgência */}
               <div className="lg:w-[45%] bg-gradient-to-b from-cyan-900 to-slate-900 p-10 sm:p-14 text-white relative">
@@ -4054,7 +4054,7 @@ Final do dia (16h - 18h)`;
 
           {/* FORMULÁRIO DE CHECKOUT (#comprar) & CTA FINAL */}
           <section id="comprar" className="py-20 px-4 relative scroll-mt-6">
-            <div className="max-w-5xl mx-auto bg-slate-900 rounded-3xl border border-amber-500/30 overflow-hidden shadow-2xl flex flex-col md:flex-row">
+            <div className="max-w-5xl mx-auto bg-slate-900 rounded-3xl border border-amber-500/30 overflow-hidden shadow-2xl flex flex-col-reverse md:flex-row">
               
               {/* Lado Esquerdo: Info Resumo */}
               <div className="md:w-[45%] bg-gradient-to-b from-amber-950/60 via-slate-900 to-slate-900 p-8 sm:p-12 text-white flex flex-col justify-between">
