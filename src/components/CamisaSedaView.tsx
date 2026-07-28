@@ -545,7 +545,7 @@ export default function CamisaSedaView({
 
       {/* ── PREÇOS E CHECKOUT FORM ── */}
       <section id="comprar" className="py-16 px-4 max-w-6xl mx-auto scroll-mt-24">
-        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl overflow-hidden flex flex-col lg:flex-row">
+        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl overflow-hidden flex flex-col-reverse lg:flex-row">
           
           {/* Lado Esquerdo: Resumo de Benefícios */}
           <div className="lg:w-[45%] bg-indigo-950 p-8 sm:p-12 text-white flex flex-col justify-between relative">
@@ -606,7 +606,7 @@ export default function CamisaSedaView({
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none px-4 py-3 rounded-xl text-slate-900 font-medium transition-all text-sm"
-                  placeholder="Ex: Pedro Cassaminha"
+                  placeholder="João Silva"
                   id="name-input-camisa"
                 />
               </div>
@@ -620,7 +620,7 @@ export default function CamisaSedaView({
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none px-4 py-3 rounded-xl text-slate-900 font-medium transition-all text-sm"
-                  placeholder="Ex: 923 000 000"
+                  placeholder="921 167 980"
                 />
               </div>
 
