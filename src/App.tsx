@@ -3543,7 +3543,7 @@ Final do dia (16h - 18h)`;
                 </h1>
 
                 <p className="text-base sm:text-lg text-slate-300 mb-6 font-normal leading-relaxed max-w-xl mx-auto lg:mx-0">
-                  A <strong>Base Móvel 360°</strong> coloca rodízios industriais debaixo do seu <strong>fogão, máquina de lavar, geladeira ou arca</strong>. Você desliza tudo com uma única mão — sem esforço, sem danificar nem riscar o piso e sem dor nas costas.
+                  A <strong>Base Móvel 360°</strong> coloca rodízios industriais debaixo do seu <strong>fogão, máquina de lavar, geladeira ou arca</strong>. Você desliza tudo com uma única mão — sem esforço, <strong>sem riscar o piso e sem o risco de partir os pés ou amolgar seus eletrodomésticos caros</strong>.
                 </p>
 
                 {/* Destaque para móveis pesados */}
@@ -3646,24 +3646,24 @@ Final do dia (16h - 18h)`;
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
                   {
-                    icon: <Users size={24} />,
-                    title: "Precisa de 2 ou 3 Pessoas",
-                    desc: "Sempre que precisa deslocar o aparelho alguns centímetros na cozinha ou lavandaria, tem de chamar vizinhos ou familiares.",
-                  },
-                  {
                     icon: <TriangleAlert size={24} />,
-                    title: "Sujeira e Mofo Acumulados",
-                    desc: "Poeira, gordura, mofo e até insetos acumulam-se atrás da geladeira e da máquina porque é impossível limpar por trás.",
+                    title: "Risco de Estragar o Eletrodoméstico",
+                    desc: "Arrastar o fogão, máquina ou geladeira à força entorta e parte os pés plásticos, amolga as laterais e pode estragar o equipamento de centenas de milhares de Kz.",
                   },
                   {
                     icon: <Zap size={24} />,
-                    title: "Dor nas Costas e Piso Riscado",
-                    desc: "Empurrar aparelhos pesados no chão duro provoca lesões na coluna e arranha os azulejos do seu apartamento.",
+                    title: "Piso e Azulejos Destruídos",
+                    desc: "Empurrar equipamentos pesados no chão sem rodízios faz riscos profundos na cerâmica e arranca o acabamento dos azulejos da cozinha.",
+                  },
+                  {
+                    icon: <Users size={24} />,
+                    title: "Força Bruta e Dores nas Costas",
+                    desc: "Sempre que precisa deslocar o fogão ou a arca para limpar, precisa de 2 ou 3 pessoas fazendo força bruta com risco de lesões na coluna.",
                   },
                   {
                     icon: <ShieldCheck size={24} />,
-                    title: "Gastos com Ajudantes",
-                    desc: "Contratar terceiros só para mover móveis pesados durante limpezas custa caro e exige esperar disponibilidade.",
+                    title: "Sujeira Acumulada no Fundo",
+                    desc: "Com medo de estragar o fogão ou o piso ao arrastar, a sujeira, gordura e insetos acumulam-se no fundo sem nunca conseguir limpar.",
                   },
                 ].map((item, i) => (
                   <div key={i} className="bg-slate-900 border border-slate-800 p-6 rounded-2xl hover:border-slate-700 transition-all flex flex-col">
@@ -3708,6 +3708,110 @@ Final do dia (16h - 18h)`;
             </div>
           </section>
 
+          {/* ALERTA DE PROTEÇÃO DE PATRIMÔNIO: EVITE ESTRAGAR SEUS ELETRODOMÉSTICOS */}
+          <section className="px-4 py-16 relative bg-gradient-to-br from-rose-950/40 via-slate-900 to-amber-950/30 border-y border-rose-500/20 overflow-hidden">
+            <div className="max-w-6xl mx-auto relative z-10">
+              <div className="text-center mb-12">
+                <div className="inline-flex items-center gap-2 bg-rose-500/10 border border-rose-500/30 text-rose-400 font-bold px-4 py-1.5 rounded-full text-xs uppercase tracking-widest mb-4">
+                  <TriangleAlert size={16} />
+                  <span>Cuidado Com Prejuízos Desnecessários</span>
+                </div>
+                <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white leading-tight">
+                  Dá Dó Ver Um Fogão ou Máquina de <span className="text-rose-400">200.000 Kz</span> Estragado Por Arrastar À Força!
+                </h2>
+                <p className="text-slate-300 max-w-3xl mx-auto text-sm sm:text-base mt-4 leading-relaxed">
+                  Quem tenta mover o fogão, máquina de lavar ou frigorífico sem rodízios adequados corre um risco enorme de <strong className="text-amber-400">partir os pés originais, entortar a chapa e rachar o piso de casa</strong>. Proteger o seu patrimônio custa apenas 15.000 Kz!
+                </p>
+              </div>
+
+              {/* Tabela Comparativa Visual */}
+              <div className="grid md:grid-cols-2 gap-8 items-stretch">
+                {/* Lado Errado / Com Risco */}
+                <div className="bg-slate-950/80 border border-rose-500/30 rounded-3xl p-6 sm:p-8 flex flex-col justify-between relative group hover:border-rose-500/60 transition-all">
+                  <div>
+                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-rose-500/20">
+                      <span className="text-xs font-black uppercase tracking-wider text-rose-400 bg-rose-500/10 px-3 py-1 rounded-full border border-rose-500/20">
+                        ❌ MOVER SEM BASE MÓVEL
+                      </span>
+                      <span className="text-xs text-rose-400 font-bold">Risco Alto de Danos</span>
+                    </div>
+
+                    <h3 className="text-xl font-black text-white mb-4">O Que Acontece ao Arrastar à Força:</h3>
+
+                    <ul className="space-y-4 text-xs sm:text-sm text-slate-300">
+                      <li className="flex items-start gap-3">
+                        <span className="text-rose-500 font-bold text-base shrink-0">✕</span>
+                        <span><strong>Pés e Patas de Apoio Partidos:</strong> A força lateral entorta ou quebra as roscas e suportes plásticos dos pés do fogão e da máquina.</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-rose-500 font-bold text-base shrink-0">✕</span>
+                        <span><strong>Piso e Azulejos Arruinados:</strong> O peso concentrado arranha a cerâmica, deixando sulcos e riscos profundos no chão da cozinha.</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-rose-500 font-bold text-base shrink-0">✕</span>
+                        <span><strong>Lataria e Conexões Amolgadas:</strong> Empurrar com o corpo amolga as chapas laterais e arrisca danificar tubos de gás, mangueiras ou fiação.</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-rose-500 font-bold text-base shrink-0">✕</span>
+                        <span><strong>Prejuízo Financeiro Alto:</strong> Substituir um pé partido ou reparar o piso custa muito mais caro do que a própria base.</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="mt-8 pt-4 border-t border-rose-500/20 text-center">
+                    <span className="text-xs font-bold text-rose-400 uppercase tracking-widest block">Resultado: Dor de cabeça e perda do bem</span>
+                  </div>
+                </div>
+
+                {/* Lado Certo / Com Proteção */}
+                <div className="bg-gradient-to-b from-amber-950/40 via-slate-900 to-slate-950 border border-emerald-500/40 rounded-3xl p-6 sm:p-8 flex flex-col justify-between relative shadow-[0_0_30px_rgba(16,185,129,0.1)] hover:border-emerald-500 transition-all">
+                  <div>
+                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-emerald-500/20">
+                      <span className="text-xs font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                        ✓ COM A BASE MÓVEL 360°
+                      </span>
+                      <span className="text-xs text-emerald-400 font-bold">100% Protegido</span>
+                    </div>
+
+                    <h3 className="text-xl font-black text-white mb-4">A Garantia de Não Danificar Nada:</h3>
+
+                    <ul className="space-y-4 text-xs sm:text-sm text-slate-200">
+                      <li className="flex items-start gap-3">
+                        <span className="text-emerald-400 font-bold text-base shrink-0">✓</span>
+                        <span><strong>Proteção Total dos Pés Originais:</strong> As hastes acolhem o aparelho pela estrutura, sem colocar pressão nas patas frágeis.</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-emerald-400 font-bold text-base shrink-0">✓</span>
+                        <span><strong>Piso Intacto e Sem Riscos:</strong> Rodízios industriais de borracha reforçada deslizam suavemente sobre qualquer azulejo ou tijoleira.</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-emerald-400 font-bold text-base shrink-0">✓</span>
+                        <span><strong>Mantenha Seu Fogão Novo por Anos:</strong> Aumenta a durabilidade dos seus eletrodomésticos evitando umidade e impacto do chão.</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-emerald-400 font-bold text-base shrink-0">✓</span>
+                        <span><strong>Investimento Seguro de 15.000 Kz:</strong> Protege um patrimônio de 200.000 Kz ou mais por um valor simbólico de 1 par.</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="mt-8 pt-4 border-t border-emerald-500/20 flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-bold text-emerald-400 block">✓ 1 Par Completo = 15.000 Kz</span>
+                      <span className="text-[11px] text-slate-400">Paga apenas na entrega em Luanda</span>
+                    </div>
+                    <button
+                      onClick={handleScrollToCheckout}
+                      className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-transform active:scale-95 shadow-md"
+                    >
+                      Reservar Agora
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* BENEFÍCIOS (BLOCO 4) */}
           <section className="px-4 py-20 relative max-w-7xl mx-auto">
             <div className="text-center mb-16">
@@ -3720,6 +3824,11 @@ Final do dia (16h - 18h)`;
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
                 {
+                  title: "Proteção Total Contra Danos",
+                  desc: "Evita que os pés do fogão ou máquina partam e protege o piso da sua cozinha contra riscos, trincas e marcas permanentes.",
+                  badge: "Zero Prejuízo",
+                },
+                {
                   title: "Metal Reforçado Industrial",
                   desc: "Construção ultra resistente fabricada para suportar o peso elevado de geladeiras de grande porte, arcas congeladoras e máquinas de lavar.",
                   badge: "Alta Durabilidade",
@@ -3731,13 +3840,8 @@ Final do dia (16h - 18h)`;
                 },
                 {
                   title: "Design Ajustável e Flexível",
-                  desc: "Hastes telescópicas extensíveis (de 72 x 4 x 5,2 cm) que se adaptam perfeitamente à largura do seu eletrodoméstico.",
+                  desc: "Hastes telescópicas extensíveis (de 72 x 4 x 5,2 cm) que se adaptam perfeitamente à largura de fogões, máquinas e frigoríficos.",
                   badge: "Universal",
-                },
-                {
-                  title: "Trava de Segurança Reforçada",
-                  desc: "Mecanismo de travamento nas rodas que fixa o aparelho no lugar quando não estiver em movimento, evitando vibrações.",
-                  badge: "100% Estável",
                 },
               ].map((b, i) => (
                 <div key={i} className="bg-slate-900 border border-slate-800 p-8 rounded-3xl relative flex flex-col justify-between hover:border-amber-500/40 transition-all group">
