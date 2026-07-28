@@ -80,6 +80,7 @@ import {
 import AuthView from "./AuthView";
 import UsersView from "./UsersView";
 import HomeView from "./HomeView";
+import CamisaSedaView from "./components/CamisaSedaView";
 
 // ==========================================
 // MÁQUINA DE GROWTH: Configuração de Pixels
@@ -463,6 +464,7 @@ export default function App() {
     if (product === "cabide-secador") return "sales-roupas";
     if (product === "roteador-5g") return "sales-roteador";
     if (product === "base-movel" || product === "base-movel-360") return "sales-base-movel";
+    if (product === "camisa-seda") return "sales-camisa-seda";
     const storedView = localStorage.getItem("validaC_current_view");
     if (storedView) return storedView;
     return "home";
@@ -472,7 +474,8 @@ export default function App() {
     view === "sales" ||
     view === "sales-roupas" ||
     view === "sales-roteador" ||
-    view === "sales-base-movel";
+    view === "sales-base-movel" ||
+    view === "sales-camisa-seda";
 
   const formatPhoneWithCensorship = (phone: string | undefined | null) => {
     if (!phone) return "";
@@ -526,6 +529,23 @@ export default function App() {
     observacoes: "",
     quantity: 1,
   });
+
+  useEffect(() => {
+    if (view === "sales-camisa-seda") {
+      setFormData((prev) => ({
+        ...prev,
+        quantity: 3,
+        observacoes: "",
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        quantity: 1,
+        observacoes: "",
+      }));
+    }
+  }, [view]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentLeadId, setCurrentLeadId] = useState<string | null>(null);
 
@@ -671,7 +691,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (view !== "sales" && view !== "sales-roupas") return;
+    if (!isSalesView) return;
 
     setTimeLeft(600); // 10 minutes
     const timer = setInterval(() => {
@@ -706,6 +726,9 @@ export default function App() {
     } else if (view === "sales-base-movel") {
       params.set("product", "base-movel-360");
       document.title = "Base Móvel 360° — Deslizador para Máquina e Geladeira";
+    } else if (view === "sales-camisa-seda") {
+      params.set("product", "camisa-seda");
+      document.title = "Camisa de Seda Gelada Premium — C Store Angola";
     } else if (
       view === "admin" ||
       view === "pages" ||
@@ -839,7 +862,8 @@ export default function App() {
       view === "sales" ||
       view === "sales-roupas" ||
       view === "sales-roteador" ||
-      view === "sales-base-movel"
+      view === "sales-base-movel" ||
+      view === "sales-camisa-seda"
     ) {
       const produtoName =
         view === "sales-roupas"
@@ -848,7 +872,9 @@ export default function App() {
             ? "Roteador 5G Ultra Desbloqueado"
             : view === "sales-base-movel"
               ? "Base Móvel 360°"
-              : "Secador Inteligente UV";
+              : view === "sales-camisa-seda"
+                ? "Camisa Seda Gelada Premium"
+                : "Secador Inteligente UV";
       initTracking(produtoName, appSettings);
 
       const imagesList =
@@ -860,10 +886,12 @@ export default function App() {
               ? IMAGES_BASE_MOVEL
               : IMAGES;
 
-      const timer = setInterval(() => {
-        setActiveImage((prev) => (prev + 1) % imagesList.length);
-      }, 4000);
-      return () => clearInterval(timer);
+      if (view !== "sales-camisa-seda") {
+        const timer = setInterval(() => {
+          setActiveImage((prev) => (prev + 1) % imagesList.length);
+        }, 4000);
+        return () => clearInterval(timer);
+      }
     }
   }, [view, appSettings]);
 
@@ -909,7 +937,11 @@ export default function App() {
   // ----------------------------------------------------
   // Sales Logic
   // ----------------------------------------------------
-  const handleFormSubmit = async (e: React.FormEvent) => {
+  const handleFormSubmit = async (
+    e: React.FormEvent,
+    selectedColor?: string,
+    selectedSize?: string
+  ) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -920,7 +952,9 @@ export default function App() {
           ? "Roteador 5G Ultra Desbloqueado"
           : view === "sales-base-movel"
             ? "Base Móvel 360°"
-            : "Secador Inteligente UV";
+            : view === "sales-camisa-seda"
+              ? "Camisa Seda Gelada Premium"
+              : "Secador Inteligente UV";
     const pricePerUnit =
       view === "sales-roupas"
         ? 35000
@@ -928,7 +962,16 @@ export default function App() {
           ? 240000
           : view === "sales-base-movel"
             ? 15000
-            : 25000;
+            : view === "sales-camisa-seda"
+              ? 35000
+              : 25000;
+
+    let computedTotal = formData.quantity * pricePerUnit;
+    if (view === "sales-camisa-seda") {
+      if (formData.quantity === 1) computedTotal = 35000;
+      else if (formData.quantity === 2) computedTotal = 60000; // 10.000 Kz discount
+      else if (formData.quantity === 3) computedTotal = 105000; // Compre 3 e Leve 1 Grátis
+    }
 
     const tempLead = {
       name: formData.name,
@@ -939,13 +982,17 @@ export default function App() {
           ? formData.customProvince
           : formData.province,
       area: formData.area || "", // Bairro/Zona
-      observacoes: formData.observacoes,
+      observacoes: selectedColor && selectedSize
+        ? `Cor: ${selectedColor} | Tamanho: ${selectedSize}${formData.observacoes ? ` | Obs: ${formData.observacoes}` : ""}`
+        : formData.observacoes,
       produto: produtoName,
-      totalPrice: formData.quantity * pricePerUnit,
+      totalPrice: computedTotal,
       quantity: formData.quantity,
       status: "Pendente",
       timestamp: new Date().toISOString(),
       createdAt: serverTimestamp(),
+      ...(selectedColor ? { cor: selectedColor } : {}),
+      ...(selectedSize ? { tamanho: selectedSize } : {}),
     };
 
     try {
@@ -982,7 +1029,9 @@ export default function App() {
           ? "Roteador 5G Ultra Desbloqueado"
           : view === "sales-base-movel"
             ? "Base Móvel 360°"
-            : "Secador Inteligente UV";
+            : view === "sales-camisa-seda"
+              ? "Camisa Seda Gelada Premium"
+              : "Secador Inteligente UV";
 
     if (isAccepted) {
       setTimeout(() => setModalState("success"), 300);
@@ -1281,14 +1330,21 @@ export default function App() {
     if (!lead) return 0;
     const q = lead.quantity || 1;
     const prod = (lead.produto || "").toLowerCase();
+    const isCamisaSeda = prod.includes("seda") || prod.includes("camisa");
     const unitPrice =
       prod.includes("35000") ||
       prod.includes("35 000") ||
-      prod.includes("expresso")
+      prod.includes("expresso") ||
+      isCamisaSeda
         ? 35000
-        : 25000;
+        : prod.includes("base") || prod.includes("móvel") || prod.includes("movel")
+          ? 15000
+          : 25000;
 
     if (typeof lead.totalPrice === "number" && lead.totalPrice > 0) {
+      if (isCamisaSeda) {
+        return lead.totalPrice;
+      }
       if (lead.totalPrice < q * unitPrice) {
         return q * unitPrice;
       }
@@ -1303,8 +1359,9 @@ export default function App() {
     const total = formatKz(getLeadPrice(lead));
     const mainProvince = lead.province || "Luanda";
     const mainArea = lead.area || lead.address || "N/A";
+    const obs = lead.observacoes ? `\nObservações: ${lead.observacoes}` : "";
 
-    return `Cliente: ${lead.name}\ntelefone: ${lead.phone}\nProdutos: ${q} - ${product}\nProvíncia: ${mainProvince}\nEndereço: ${mainArea}\nTotal: ${total}.`;
+    return `Cliente: ${lead.name}\ntelefone: ${lead.phone}\nProdutos: ${q} - ${product}\nProvíncia: ${mainProvince}\nEndereço: ${mainArea}\nTotal: ${total}${obs}.`;
   };
 
   const getWhatsAppMessageText = (lead: any) => {
@@ -1564,6 +1621,7 @@ Final do dia (16h - 18h)`;
       "Secador Expresso Pro 35 000 Kz",
       "Roteador 5G Ultra Desbloqueado",
       "Base Móvel 360°",
+      "Camisa Seda Gelada Premium",
       ...adminData.map((l) => l.produto).filter(Boolean),
     ]),
   );
@@ -4177,6 +4235,19 @@ Final do dia (16h - 18h)`;
         </main>
       )}
 
+      {/* SALES PAGE: CAMISA SEDA GELADA PREMIUM */}
+      {view === "sales-camisa-seda" && (
+        <CamisaSedaView
+          formData={formData}
+          setFormData={setFormData}
+          isSubmitting={isSubmitting}
+          onSubmit={handleFormSubmit}
+          isCheckoutVisible={isCheckoutVisible}
+          timeLeft={timeLeft}
+          formatTime={formatTime}
+        />
+      )}
+
       {/* FOOTER */}
       {isSalesView && (
         <footer className="bg-slate-900 text-slate-400 py-12 px-4 text-center mt-auto pb-28 md:pb-12 shadow-[inset_0_10px_30px_rgba(0,0,0,0.5)]">
@@ -5655,6 +5726,57 @@ Final do dia (16h - 18h)`;
                 </div>
               </div>
             </div>
+
+            {/* Produto 5: Camisa Seda Gelada */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col hover:shadow-md transition">
+              <div className="aspect-video bg-slate-100 relative group overflow-hidden">
+                <img
+                  src="https://i.postimg.cc/2yRkWypx/C2128-1-branco.jpg"
+                  alt="Camisa Seda Gelada Premium"
+                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                />
+                <div className="absolute top-3 right-3 bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded shadow-sm uppercase">
+                  Ativa
+                </div>
+              </div>
+              <div className="p-5 flex-grow flex flex-col">
+                <h3 className="font-bold text-lg text-slate-900 mb-1 leading-tight">
+                  Camisa Seda Gelada Premium
+                </h3>
+                <p className="text-sm text-slate-500 mb-6 flex-grow">
+                  Camisa social premium em seda gelada tecnológica com efeito antirrugas. 25.000 Kz / Unidade.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setView("sales-camisa-seda")}
+                    className="flex-1 text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-bold transition flex justify-center items-center gap-1.5 shadow-sm"
+                  >
+                    <Eye size={14} /> Pré-visualizar
+                  </button>
+                  <button
+                    onClick={() => {
+                      setFilterProduct("Camisa Seda Gelada Premium");
+                      setView("admin");
+                    }}
+                    className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold transition border border-slate-200 shadow-sm"
+                  >
+                    Leads
+                  </button>
+                  <button
+                    onClick={() => {
+                      const link =
+                        window.location.origin + "?product=camisa-seda";
+                      navigator.clipboard.writeText(link);
+                      alert("Link copiado: " + link);
+                    }}
+                    className="text-sm bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 px-3 py-2 rounded-xl font-bold transition flex items-center justify-center shrink-0 w-[42px] shadow-sm"
+                    title="Copiar Link da Página"
+                  >
+                    <Copy size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       )}
@@ -6734,6 +6856,16 @@ Final do dia (16h - 18h)`;
                           "N/A"}
                       </p>
                     </div>
+                    {selectedLeadForPreview.observacoes && (
+                      <div>
+                        <span className="block text-xs text-slate-400 font-bold uppercase tracking-wider">
+                          Observações / Cor & Tamanho
+                        </span>
+                        <p className="font-semibold text-slate-900 p-2.5 bg-indigo-50/40 border border-indigo-100/50 rounded-lg whitespace-pre-wrap text-xs leading-relaxed">
+                          {selectedLeadForPreview.observacoes}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
