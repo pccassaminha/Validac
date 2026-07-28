@@ -59,6 +59,8 @@ import {
   updateDoc,
   getDocs,
   getDoc,
+  getDocFromCache,
+  getDocFromServer,
   query,
   orderBy,
   serverTimestamp,
@@ -679,12 +681,38 @@ export default function App() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const settingsDoc = await getDoc(doc(db, "settings", "global"));
-        if (settingsDoc.exists()) {
-          setAppSettings(settingsDoc.data());
+        let settingsDoc;
+        try {
+          settingsDoc = await getDoc(doc(db, "settings", "global"));
+        } catch (offlineErr: any) {
+          console.warn("Firestore offline or unavailable, trying cache:", offlineErr.message);
+          try {
+            settingsDoc = await getDocFromCache(doc(db, "settings", "global"));
+          } catch (cacheErr) {
+            settingsDoc = null;
+          }
+        }
+        if (settingsDoc && settingsDoc.exists()) {
+          const data = settingsDoc.data();
+          setAppSettings(data);
+          localStorage.setItem("validaC_app_settings", JSON.stringify(data));
+        } else {
+          // If doc not found, try localStorage
+          const cached = localStorage.getItem("validaC_app_settings");
+          if (cached) {
+            setAppSettings(JSON.parse(cached));
+          }
         }
       } catch (err) {
         console.error("Error fetching settings:", err);
+        const cached = localStorage.getItem("validaC_app_settings");
+        if (cached) {
+          try {
+            setAppSettings(JSON.parse(cached));
+          } catch (e) {
+            console.error("Error parsing cached settings:", e);
+          }
+        }
       }
     };
     fetchSettings();
@@ -752,12 +780,25 @@ export default function App() {
         setIsAuthenticated(true);
         // Load user DB object to check status
         try {
-          const userDoc = await getDoc(doc(db, "users", user.uid));
+          let userDoc;
+          try {
+            userDoc = await getDoc(doc(db, "users", user.uid));
+          } catch (offlineErr: any) {
+            console.warn("Firestore offline, trying user document cache:", offlineErr.message);
+            try {
+              userDoc = await getDocFromCache(doc(db, "users", user.uid));
+            } catch (cacheErr) {
+              userDoc = null;
+            }
+          }
+
           if (!isMounted) return;
-          if (userDoc.exists()) {
+
+          if (userDoc && userDoc.exists()) {
             const data = userDoc.data();
             let finalStatus = data.status || "pending";
-            setUserName(data.name || user.displayName || "");
+            const finalName = data.name || user.displayName || "";
+            setUserName(finalName);
 
             if (
               user.email === "exportacoes.extras@gmail.com" ||
@@ -770,13 +811,46 @@ export default function App() {
             // Check expiration if pending
             if (finalStatus === "pending" && data.trialExpiresAt) {
               const now = new Date();
-              const exp = data.trialExpiresAt.toDate();
+              const exp = typeof data.trialExpiresAt.toDate === "function" ? data.trialExpiresAt.toDate() : new Date(data.trialExpiresAt);
               if (now > exp) finalStatus = "expired";
             }
 
             setUserStatus(finalStatus as any);
+            // Cache in localStorage
+            localStorage.setItem(`validaC_user_status_${user.uid}`, finalStatus);
+            localStorage.setItem(`validaC_user_name_${user.uid}`, finalName);
           } else {
-            // Admin fallback or old user
+            // Document doesn't exist or cache missed
+            // Let's check localStorage cache first
+            const cachedStatus = localStorage.getItem(`validaC_user_status_${user.uid}`);
+            const cachedName = localStorage.getItem(`validaC_user_name_${user.uid}`);
+            if (cachedStatus) {
+              setUserStatus(cachedStatus as any);
+              setUserName(cachedName || user.displayName || "");
+            } else {
+              setUserName(user.displayName || "");
+              let finalStatus = "pending";
+              if (
+                user.email === "exportacoes.extras@gmail.com" ||
+                user.email?.toLowerCase() === "grupocassaminha@gmail.com" ||
+                user.email?.toLowerCase() === "grupocasssaminha@gmail.com"
+              ) {
+                finalStatus = "approved";
+              }
+              setUserStatus(finalStatus as any);
+              localStorage.setItem(`validaC_user_status_${user.uid}`, finalStatus);
+              localStorage.setItem(`validaC_user_name_${user.uid}`, user.displayName || "");
+            }
+          }
+        } catch (e: any) {
+          if (!isMounted) return;
+          console.error("Error fetching user status:", e);
+          const cachedStatus = localStorage.getItem(`validaC_user_status_${user.uid}`);
+          const cachedName = localStorage.getItem(`validaC_user_name_${user.uid}`);
+          if (cachedStatus) {
+            setUserStatus(cachedStatus as any);
+            setUserName(cachedName || user.displayName || "");
+          } else {
             setUserName(user.displayName || "");
             if (
               user.email === "exportacoes.extras@gmail.com" ||
@@ -785,21 +859,8 @@ export default function App() {
             ) {
               setUserStatus("approved");
             } else {
-              setUserStatus("pending"); // assume new user without doc
+              setUserStatus("pending");
             }
-          }
-        } catch (e: any) {
-          if (!isMounted) return;
-          console.error("Error fetching user status:", e);
-          setUserName(user.displayName || "");
-          if (
-            user.email === "exportacoes.extras@gmail.com" ||
-            user.email?.toLowerCase() === "grupocassaminha@gmail.com" ||
-            user.email?.toLowerCase() === "grupocasssaminha@gmail.com"
-          ) {
-            setUserStatus("approved");
-          } else {
-            setUserStatus("pending");
           }
         }
       } else {

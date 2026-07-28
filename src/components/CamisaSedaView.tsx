@@ -32,8 +32,8 @@ interface CamisaSedaViewProps {
 
 // Provided images mapping color to link
 const COLOR_IMAGES = [
-  { color: "Branco", name: "Branco Imperial", url: "https://i.postimg.cc/2yRkWypx/C2128-1-branco.jpg", bg: "bg-white border-slate-300" },
   { color: "Verde Escuro", name: "Verde Esmeralda", url: "https://i.postimg.cc/4ykfcykk/C2128-13-verde-escuro.jpg", bg: "bg-emerald-800" },
+  { color: "Branco", name: "Branco Imperial", url: "https://i.postimg.cc/2yRkWypx/C2128-1-branco.jpg", bg: "bg-white border-slate-300" },
   { color: "Azul Claro", name: "Azul Glacial", url: "https://i.postimg.cc/50JKFW7r/C2128-2-azul-claro.png", bg: "bg-sky-200" },
   { color: "Preto", name: "Preto Absoluto", url: "https://i.postimg.cc/Gp6d0tpB/C2128-3-preto.jpg", bg: "bg-slate-900" },
   { color: "Azul Marinho", name: "Azul Marinho Elite", url: "https://i.postimg.cc/PJWtQHTd/C2128-5-azul-marinho.jpg", bg: "bg-blue-900" },
@@ -60,11 +60,11 @@ export default function CamisaSedaView({
   const [selectedColor, setSelectedColor] = useState(COLOR_IMAGES[0]);
   const [selectedSize, setSelectedSize] = useState("L - G");
   const [shirtConfigs, setShirtConfigs] = useState<Array<{ color: string; size: string }>>([
-    { color: COLOR_IMAGES[4].color, size: "L - G" }, // Azul Marinho
-    { color: COLOR_IMAGES[0].color, size: "L - G" }, // Branco
-    { color: COLOR_IMAGES[1].color, size: "L - G" }, // Verde Escuro
+    { color: COLOR_IMAGES[0].color, size: "L - G" }, // Verde Escuro
+    { color: COLOR_IMAGES[1].color, size: "L - G" }, // Branco
     { color: COLOR_IMAGES[2].color, size: "L - G" }, // Azul Claro
     { color: COLOR_IMAGES[3].color, size: "L - G" }, // Preto
+    { color: COLOR_IMAGES[4].color, size: "L - G" }, // Azul Marinho
   ]);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
@@ -211,23 +211,6 @@ export default function CamisaSedaView({
               O tecido de <strong>Seda Gelada Premium (Ice Silk)</strong> possui tecnologia antirrugas definitiva, caimento sob medida e toque frio que mantém o seu corpo fresco o dia inteiro.
             </p>
 
-            <div className="grid grid-cols-2 gap-4 max-w-md mx-auto lg:mx-0 mb-8 text-left">
-              {[
-                { title: "Tecnologia Antirrugas", desc: "Camisa impecável sem ferro" },
-                { title: "Toque Gelado", desc: "Ice Silk respirável" },
-                { title: "Elasticidade Total", desc: "Liberdade absoluta" },
-                { title: "Caimento Perfeito", desc: "Slim fit elegante" },
-              ].map((item, i) => (
-                <div key={i} className="flex gap-3 items-start bg-white p-3.5 rounded-2xl border border-slate-200/60 shadow-sm">
-                  <CheckCircle size={18} className="text-indigo-600 shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-bold text-sm text-slate-900 leading-tight">{item.title}</h4>
-                    <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
             {/* Price Box with detailed discount logic */}
             <div className="bg-indigo-950 text-white p-5.5 rounded-3xl mb-6 max-w-md mx-auto lg:mx-0 shadow-lg border border-indigo-800">
               <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300 bg-indigo-900/60 px-2.5 py-1 rounded mb-4 inline-block">
@@ -345,6 +328,23 @@ export default function CamisaSedaView({
                   </div>
                 </button>
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 max-w-md mx-auto lg:mx-0 mb-8 text-left">
+              {[
+                { title: "Tecnologia Antirrugas", desc: "Camisa impecável sem ferro" },
+                { title: "Toque Gelado", desc: "Ice Silk respirável" },
+                { title: "Elasticidade Total", desc: "Liberdade absoluta" },
+                { title: "Caimento Perfeito", desc: "Slim fit elegante" },
+              ].map((item, i) => (
+                <div key={i} className="flex gap-3 items-start bg-white p-3.5 rounded-2xl border border-slate-200/60 shadow-sm">
+                  <CheckCircle size={18} className="text-indigo-600 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-bold text-sm text-slate-900 leading-tight">{item.title}</h4>
+                    <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
 
 
