@@ -225,19 +225,62 @@ export default function CamisaSedaView({
               ))}
             </div>
 
-            {/* Price Box */}
-            <div className="bg-indigo-950 text-white p-5 rounded-3xl mb-6 flex items-center justify-between flex-wrap gap-4 max-w-md mx-auto lg:mx-0 shadow-lg border border-indigo-800">
-              <div>
-                <span className="text-xs text-slate-400 line-through block font-medium">Preço Original: 50.000 Kz</span>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-3xl sm:text-4xl font-black text-emerald-400">35.000 Kz</span>
-                  <span className="text-xs font-bold text-slate-200">/ Unidade</span>
+            {/* Price Box with detailed discount logic */}
+            <div className="bg-indigo-950 text-white p-5.5 rounded-3xl mb-6 max-w-md mx-auto lg:mx-0 shadow-lg border border-indigo-800">
+              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300 bg-indigo-900/60 px-2.5 py-1 rounded mb-4 inline-block">
+                Tabela Oficial de Descontos Progressivos
+              </span>
+              
+              <div className="space-y-4">
+                {/* 1 Camisa */}
+                <div className="flex justify-between items-center pb-3 border-b border-indigo-900/50">
+                  <div>
+                    <h5 className="font-extrabold text-sm text-slate-200">1 Camisa</h5>
+                    <p className="text-[11px] text-slate-400">Poupa 15.000 Kz no preço original</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs text-slate-500 line-through block">50.000 Kz</span>
+                    <span className="text-sm font-black text-slate-200">35.000 Kz</span>
+                  </div>
                 </div>
-              </div>
-              <div className="text-right text-xs">
-                <span className="text-emerald-400 font-bold block">✓ Poupa 15.000 Kz</span>
-                <span className="text-indigo-200 block">Pagamento na Entrega</span>
-                <span className="text-[10px] text-slate-300 italic">Compre 2 e ganhe 10.000 Kz de desconto!</span>
+
+                {/* 2 Camisas */}
+                <div className="flex justify-between items-center pb-3 border-b border-indigo-900/50">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h5 className="font-extrabold text-sm text-amber-400">Combo 2 Camisas</h5>
+                      <span className="text-[9px] font-black uppercase tracking-wider bg-amber-500 text-slate-950 px-1.5 py-0.2 rounded">
+                        +10.000 Kz OFF
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 leading-normal mt-0.5">
+                      A 2ª camisa sai com praticamente <strong className="text-amber-300">25.000 Kz</strong> de desconto oficial!
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs text-slate-500 line-through block">100.000 Kz</span>
+                    <span className="text-sm font-black text-amber-400">60.000 Kz</span>
+                  </div>
+                </div>
+
+                {/* Compre 3 Leve 4 */}
+                <div className="flex justify-between items-center pt-1">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h5 className="font-extrabold text-sm text-emerald-400">Compre 3 Leve 4</h5>
+                      <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500 text-white px-1.5 py-0.2 rounded animate-pulse">
+                        1 GRÁTIS
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 leading-normal mt-0.5">
+                      Super poupança de <strong className="text-emerald-400">95.000 Kz</strong>! Receba 4 camisas.
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs text-slate-500 line-through block">200.000 Kz</span>
+                    <span className="text-sm font-black text-emerald-400">105.000 Kz</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -693,21 +736,21 @@ export default function CamisaSedaView({
                       title: "1 Camisa Gelada Premium",
                       priceText: "35.000 Kz",
                       badge: null,
-                      desc: "Perfeito para experimentar a qualidade",
+                      desc: "Desconto de 15.000 Kz incluído!",
                     },
                     {
                       qty: 2,
-                      title: "2 Camisas Geladas (Leve 2, Poupe 10.000 Kz)",
+                      title: "2 Camisas Geladas (Combo Promocional)",
                       priceText: "60.000 Kz",
-                      badge: "Promoção mais popular",
-                      desc: "Desconto especial de 10.000 Kz!",
+                      badge: "Promoção Recomendada",
+                      desc: "Poupa 40.000 Kz! A 2ª camisa sai com 25.000 Kz de desconto",
                     },
                     {
                       qty: 3,
                       title: "Compre 3 e Leve 1 Grátis",
                       priceText: "105.000 Kz",
-                      badge: "Melhor Oferta • Super Poupança",
-                      desc: "Receba 4 camisas em sua morada!",
+                      badge: "Super Poupança • Leva 4",
+                      desc: "Poupa 95.000 Kz! Recebe 4 camisas (1 de oferta totalmente grátis)",
                     },
                   ].map((pkg) => (
                     <button
