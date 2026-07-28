@@ -231,56 +231,86 @@ export default function CamisaSedaView({
                 Tabela Oficial de Descontos Progressivos
               </span>
               
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {/* 1 Camisa */}
-                <div className="flex justify-between items-center pb-3 border-b border-indigo-900/50">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData((prev: any) => ({ ...prev, quantity: 1 }));
+                    scrollToCheckout();
+                  }}
+                  className={`w-full text-left flex justify-between items-center p-3.5 rounded-2xl border transition-all duration-200 active:scale-[0.98] cursor-pointer group ${
+                    formData.quantity === 1
+                      ? "bg-indigo-900/60 border-indigo-700 shadow-sm"
+                      : "border-transparent hover:border-indigo-900/30 hover:bg-indigo-900/20"
+                  }`}
+                >
                   <div>
-                    <h5 className="font-extrabold text-sm text-slate-200">1 Camisa</h5>
-                    <p className="text-[11px] text-slate-400">Poupa 15.000 Kz no preço original</p>
+                    <h5 className="font-extrabold text-sm text-slate-200 group-hover:text-white transition-colors">1 Camisa</h5>
+                    <p className="text-[11px] text-slate-400 group-hover:text-slate-300 transition-colors">Poupa 15.000 Kz no preço original</p>
                   </div>
                   <div className="text-right">
                     <span className="text-xs text-slate-500 line-through block">50.000 Kz</span>
-                    <span className="text-sm font-black text-slate-200">35.000 Kz</span>
+                    <span className="text-sm font-black text-slate-200 group-hover:text-white transition-colors">35.000 Kz</span>
                   </div>
-                </div>
+                </button>
 
                 {/* 2 Camisas */}
-                <div className="flex justify-between items-center pb-3 border-b border-indigo-900/50">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData((prev: any) => ({ ...prev, quantity: 2 }));
+                    scrollToCheckout();
+                  }}
+                  className={`w-full text-left flex justify-between items-center p-3.5 rounded-2xl border transition-all duration-200 active:scale-[0.98] cursor-pointer group ${
+                    formData.quantity === 2
+                      ? "bg-indigo-900/60 border-indigo-700 shadow-sm"
+                      : "border-transparent hover:border-indigo-900/30 hover:bg-indigo-900/20"
+                  }`}
+                >
                   <div>
                     <div className="flex items-center gap-2">
-                      <h5 className="font-extrabold text-sm text-amber-400">Combo 2 Camisas</h5>
-                      <span className="text-[9px] font-black uppercase tracking-wider bg-amber-500 text-slate-950 px-1.5 py-0.2 rounded">
-                        +10.000 Kz OFF
-                      </span>
+                      <h5 className="font-extrabold text-sm text-amber-400 group-hover:text-amber-300 transition-colors">Combo 2 Camisas</h5>
                     </div>
-                    <p className="text-[11px] text-slate-300 leading-normal mt-0.5">
-                      A 2ª camisa sai com praticamente <strong className="text-amber-300">25.000 Kz</strong> de desconto oficial!
+                    <p className="text-[11px] text-slate-300 leading-normal mt-0.5 group-hover:text-white transition-colors">
+                      A 2ª camisa sai com praticamente <strong className="text-amber-300 group-hover:text-amber-200">25.000 Kz</strong> de desconto oficial!
                     </p>
                   </div>
                   <div className="text-right">
                     <span className="text-xs text-slate-500 line-through block">100.000 Kz</span>
-                    <span className="text-sm font-black text-amber-400">60.000 Kz</span>
+                    <span className="text-sm font-black text-amber-400 group-hover:text-amber-300 transition-colors">60.000 Kz</span>
                   </div>
-                </div>
+                </button>
 
                 {/* Compre 3 Leve 4 */}
-                <div className="flex justify-between items-center pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData((prev: any) => ({ ...prev, quantity: 3 }));
+                    scrollToCheckout();
+                  }}
+                  className={`w-full text-left flex justify-between items-center p-3.5 rounded-2xl border transition-all duration-200 active:scale-[0.98] cursor-pointer group ${
+                    formData.quantity === 3
+                      ? "bg-indigo-900/60 border-indigo-700 shadow-sm"
+                      : "border-transparent hover:border-indigo-900/30 hover:bg-indigo-900/20"
+                  }`}
+                >
                   <div>
                     <div className="flex items-center gap-2">
-                      <h5 className="font-extrabold text-sm text-emerald-400">Compre 3 Leve 4</h5>
+                      <h5 className="font-extrabold text-sm text-emerald-400 group-hover:text-emerald-300 transition-colors">Compre 3 Leve 4</h5>
                       <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500 text-white px-1.5 py-0.2 rounded animate-pulse">
                         1 GRÁTIS
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-300 leading-normal mt-0.5">
-                      Super poupança de <strong className="text-emerald-400">95.000 Kz</strong>! Receba 4 camisas.
+                    <p className="text-[11px] text-slate-300 leading-normal mt-0.5 group-hover:text-white transition-colors">
+                      Super poupança de <strong className="text-emerald-400 group-hover:text-emerald-300">95.000 Kz</strong>! Receba 4 camisas.
                     </p>
                   </div>
                   <div className="text-right">
                     <span className="text-xs text-slate-500 line-through block">200.000 Kz</span>
-                    <span className="text-sm font-black text-emerald-400">105.000 Kz</span>
+                    <span className="text-sm font-black text-emerald-400 group-hover:text-emerald-300 transition-colors">105.000 Kz</span>
                   </div>
-                </div>
+                </button>
               </div>
             </div>
 
