@@ -833,7 +833,8 @@ export default function App() {
       view !== "sales" &&
       view !== "sales-roupas" &&
       view !== "sales-roteador" &&
-      view !== "sales-base-movel"
+      view !== "sales-base-movel" &&
+      view !== "sales-camisa-seda"
     )
       return;
 
@@ -5913,7 +5914,9 @@ Final do dia (16h - 18h)`;
                           ? "ZTE 5G WiFi 6 CPE"
                           : view === "sales-base-movel"
                             ? "Base Móvel 360°"
-                            : "Secador Inteligente UV"}
+                            : view === "sales-camisa-seda"
+                              ? "Camisa de Seda Gelada"
+                              : "Secador Inteligente UV"}
                     </strong>{" "}
                     para entrega imediata terminou devido à altíssima procura
                     nas últimas horas.
@@ -5929,7 +5932,9 @@ Final do dia (16h - 18h)`;
                           ? "240.000 Kz"
                           : view === "sales-base-movel"
                             ? "15.000 Kz"
-                            : "25.000 Kz"}
+                            : view === "sales-camisa-seda"
+                              ? (formData.quantity === 1 ? "35.000 Kz" : formData.quantity === 2 ? "60.000 Kz" : formData.quantity === 3 ? "105.000 Kz" : formData.quantity === 5 ? "130.000 Kz" : "35.000 Kz")
+                              : "25.000 Kz"}
                     </b>
                     ?{" "}
                     <span className="text-indigo-600 font-bold block mt-2">
@@ -5956,167 +5961,198 @@ Final do dia (16h - 18h)`;
 
             {/* Step 2: Last Chance */}
             {modalState === "last-chance" && (
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                className="bg-white max-w-md w-full rounded-3xl shadow-2xl overflow-hidden my-8 border-4 border-red-50"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="bg-red-50 text-center pt-8 pb-4">
-                  <TriangleAlert className="w-16 h-16 mx-auto mb-2 text-red-500" />
-                  <h3 className="text-2xl font-black text-slate-900">
-                    Tens a certeza,{" "}
-                    {formData.name ? formData.name.split(" ")[0] : "amigo"}?
-                  </h3>
-                </div>
-                <div className="p-8 text-center pt-4">
-                  <p className="text-slate-700 mb-6 font-bold text-lg">
-                    Sem a{" "}
-                    {view === "sales-roupas"
-                      ? "Secador Expresso Portátil"
-                      : view === "sales-roteador"
-                        ? "Roteador 5G Ultra"
-                        : view === "sales-base-movel"
-                          ? "Base Móvel 360°"
-                          : "Secador UV"}
-                    , vais continuar a:
-                  </p>
-                  {view === "sales-roteador" ? (
-                    <ul className="text-left text-slate-600 mb-8 space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                      <li className="flex items-start gap-3">
-                        <span className="text-xl">🛜</span>{" "}
-                        <span className="font-medium">
-                          Depender de provedores com sinal fraco
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-xl">🐢</span>{" "}
-                        <span className="font-medium">
-                          Ficar com internet super lenta quando muita gente
-                          conecta
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-xl">💸</span>{" "}
-                        <span className="font-medium">
-                          Gastar num plano de internet caro e limitado
-                        </span>
-                      </li>
-                    </ul>
-                  ) : view === "sales-base-movel" ? (
-                    <ul className="text-left text-slate-600 mb-8 space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                      <li className="flex items-start gap-3">
-                        <span className="text-xl">🏋️</span>{" "}
-                        <span className="font-medium">
-                          Precisar de 2 ou 3 pessoas só para deslocar o fogão, geladeira ou máquina
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-xl">🪳</span>{" "}
-                        <span className="font-medium">
-                          Acumular poeira, mofo e insetos atrás dos eletrodomésticos sem conseguir limpar
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-xl">⚡</span>{" "}
-                        <span className="font-medium">
-                          Riscar e danificar o piso ao empurrar equipamentos pesados com dores nas costas
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-xl">💸</span>{" "}
-                        <span className="font-medium">
-                          Gastar dinheiro e tempo contratando alguém só para mover eletrodomésticos
-                        </span>
-                      </li>
-                    </ul>
-                  ) : view === "sales-roupas" ? (
-                    <ul className="text-left text-slate-600 mb-8 space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                      <li className="flex items-start gap-3">
-                        <span className="text-xl">🩲</span>{" "}
-                        <span className="font-medium">
-                          Ter vergonha de deixar roupa íntima no estendal comum
-                          dos vizinhos
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-xl">🤢</span>{" "}
-                        <span className="font-medium">
-                          Suportar o cheiro a bafio e fungos nas roupas
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-xl">😤</span>{" "}
-                        <span className="font-medium">
-                          Ver camisas, calças e uniformes escolares húmidos de
-                          manhã
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-xl">🏠</span>{" "}
-                        <span className="font-medium">
-                          Ter a casa cheia de roupa espalhada por dias
-                        </span>
-                      </li>
-                    </ul>
-                  ) : (
-                    <ul className="text-left text-slate-600 mb-8 space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                      <li className="flex items-start gap-3">
-                        <span className="text-xl">👟</span>{" "}
-                        <span className="font-medium">
-                          Ter vergonha de tirar os sapatos em público pelo mau
-                          cheiro
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-xl">🤢</span>{" "}
-                        <span className="font-medium">
-                          Acumular fungos e bactérias dentro do calçado favorito
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-xl">😤</span>{" "}
-                        <span className="font-medium">
-                          Usar ténis e sapatos húmidos que magoam os pés
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-xl">💸</span>{" "}
-                        <span className="font-medium">
-                          Ver o calçado estragar-se mais depressa pela humidade
-                        </span>
-                      </li>
-                    </ul>
-                  )}
-                  <p className="text-sm text-slate-900 font-bold mb-8 p-4 bg-red-50 rounded-xl border border-red-100 text-center">
-                    O próximo lote custará{" "}
-                    <b>
-                      {view === "sales-roupas"
-                        ? "50.000 Kz"
-                        : view === "sales-roteador"
-                          ? "310.000 Kz"
-                          : view === "sales-base-movel"
-                            ? "30.000 Kz"
-                            : "45.000 Kz"}
-                    </b>
-                    . Vais mesmo deixar passar?
-                  </p>
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => processReservation(true)}
-                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 px-4 rounded-xl shadow-lg transition-transform active:scale-[0.98]"
-                    >
-                      ✅ MUDEI DE IDEIAS! QUERO RESERVAR
-                    </button>
-                    <button
-                      onClick={() => setModalState("testimonial-rebound")}
-                      className="w-full bg-transparent text-slate-400 hover:text-slate-600 underline font-medium py-2 transition"
-                    >
-                      Sim, assumo o risco e perco a promoção
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
+               <motion.div
+                 initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                 animate={{ scale: 1, opacity: 1, y: 0 }}
+                 className="bg-white max-w-md w-full rounded-3xl shadow-2xl overflow-hidden my-8 border-4 border-red-50"
+                 onClick={(e) => e.stopPropagation()}
+               >
+                 <div className="bg-red-50 text-center pt-8 pb-4">
+                   <TriangleAlert className="w-16 h-16 mx-auto mb-2 text-red-500" />
+                   <h3 className="text-2xl font-black text-slate-900">
+                     Tens a certeza,{" "}
+                     {formData.name ? formData.name.split(" ")[0] : "amigo"}?
+                   </h3>
+                 </div>
+                 <div className="p-8 text-center pt-4">
+                   <p className="text-slate-700 mb-6 font-bold text-lg">
+                     Sem a{" "}
+                     {view === "sales-roupas"
+                       ? "Secador Expresso Portátil"
+                       : view === "sales-roteador"
+                         ? "Roteador 5G Ultra"
+                         : view === "sales-base-movel"
+                           ? "Base Móvel 360°"
+                           : view === "sales-camisa-seda"
+                             ? "Camisa de Seda Gelada"
+                             : "Secador UV"}
+                     , vais continuar a:
+                   </p>
+                   {view === "sales-roteador" ? (
+                     <ul className="text-left text-slate-600 mb-8 space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">🛜</span>{" "}
+                         <span className="font-medium">
+                           Depender de provedores com sinal fraco
+                         </span>
+                       </li>
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">🐢</span>{" "}
+                         <span className="font-medium">
+                           Ficar com internet super lenta quando muita gente
+                           conecta
+                         </span>
+                       </li>
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">💸</span>{" "}
+                         <span className="font-medium">
+                           Gastar num plano de internet caro e limitado
+                         </span>
+                       </li>
+                     </ul>
+                   ) : view === "sales-base-movel" ? (
+                     <ul className="text-left text-slate-600 mb-8 space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">🏋️</span>{" "}
+                         <span className="font-medium">
+                           Precisar de 2 ou 3 pessoas só para deslocar o fogão, geladeira ou máquina
+                         </span>
+                       </li>
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">🪳</span>{" "}
+                         <span className="font-medium">
+                           Acumular poeira, mofo e insetos atrás dos eletrodomésticos sem conseguir limpar
+                         </span>
+                       </li>
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">⚡</span>{" "}
+                         <span className="font-medium">
+                           Riscar e danificar o piso ao empurrar equipamentos pesados com dores nas costas
+                         </span>
+                       </li>
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">💸</span>{" "}
+                         <span className="font-medium">
+                           Gastar dinheiro e tempo contratando alguém só para mover eletrodomésticos
+                         </span>
+                       </li>
+                     </ul>
+                   ) : view === "sales-roupas" ? (
+                     <ul className="text-left text-slate-600 mb-8 space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">🩲</span>{" "}
+                         <span className="font-medium">
+                           Ter vergonha de deixar roupa íntima no estendal comum
+                           dos vizinhos
+                         </span>
+                       </li>
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">🤢</span>{" "}
+                         <span className="font-medium">
+                           Suportar o cheiro a bafio e fungos nas roupas
+                         </span>
+                       </li>
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">😤</span>{" "}
+                         <span className="font-medium">
+                           Ver camisas, calças e uniformes escolares húmidos de
+                           manhã
+                         </span>
+                       </li>
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">🏠</span>{" "}
+                         <span className="font-medium">
+                           Ter a casa cheia de roupa espalhada por dias
+                         </span>
+                       </li>
+                     </ul>
+                   ) : view === "sales-camisa-seda" ? (
+                     <ul className="text-left text-slate-600 mb-8 space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">🥵</span>{" "}
+                         <span className="font-medium">
+                           Sofrer com o calor sufocante e camisas que colam ao corpo com suor
+                         </span>
+                       </li>
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">👕</span>{" "}
+                         <span className="font-medium">
+                           Andar com camisas amarrotadas ou com caimento desajustado
+                         </span>
+                       </li>
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">🌬️</span>{" "}
+                         <span className="font-medium">
+                           Ficar sem a sensação térmica de frescura extrema que o tecido Seda Gelada Premium proporciona
+                         </span>
+                       </li>
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">💸</span>{" "}
+                         <span className="font-medium">
+                           Gastar em camisas normais que encolhem e desbotam após poucas lavagens
+                         </span>
+                       </li>
+                     </ul>
+                   ) : (
+                     <ul className="text-left text-slate-600 mb-8 space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">👟</span>{" "}
+                         <span className="font-medium">
+                           Ter vergonha de tirar os sapatos em público pelo mau
+                           cheiro
+                         </span>
+                       </li>
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">🤢</span>{" "}
+                         <span className="font-medium">
+                           Acumular fungos e bactérias dentro do calçado favorito
+                         </span>
+                       </li>
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">😤</span>{" "}
+                         <span className="font-medium">
+                           Usar ténis e sapatos húmidos que magoam os pés
+                         </span>
+                       </li>
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">💸</span>{" "}
+                         <span className="font-medium">
+                           Ver o calçado estragar-se mais depressa pela humidade
+                         </span>
+                       </li>
+                     </ul>
+                   )}
+                   <p className="text-sm text-slate-900 font-bold mb-8 p-4 bg-red-50 rounded-xl border border-red-100 text-center">
+                     O próximo lote custará{" "}
+                     <b>
+                       {view === "sales-roupas"
+                         ? "50.000 Kz"
+                         : view === "sales-roteador"
+                           ? "310.000 Kz"
+                           : view === "sales-base-movel"
+                             ? "30.000 Kz"
+                             : view === "sales-camisa-seda"
+                               ? (formData.quantity === 1 ? "50.000 Kz" : formData.quantity === 2 ? "100.000 Kz" : formData.quantity === 3 ? "200.000 Kz" : formData.quantity === 5 ? "250.000 Kz" : "50.000 Kz")
+                               : "45.000 Kz"}
+                     </b>
+                     . Vais mesmo deixar passar?
+                   </p>
+                   <div className="space-y-3">
+                     <button
+                       onClick={() => processReservation(true)}
+                       className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 px-4 rounded-xl shadow-lg transition-transform active:scale-[0.98]"
+                     >
+                       ✅ MUDEI DE IDEIAS! QUERO RESERVAR
+                     </button>
+                     <button
+                       onClick={() => setModalState("testimonial-rebound")}
+                       className="w-full bg-transparent text-slate-400 hover:text-slate-600 underline font-medium py-2 transition"
+                     >
+                       Sim, assumo o risco e perco a promoção
+                     </button>
+                   </div>
+                 </div>
+               </motion.div>
             )}
 
             {/* Step 3: Testimonial Rebound */}
@@ -6151,7 +6187,9 @@ Final do dia (16h - 18h)`;
                           ? "O Mário de Talatona também hesitou. Hoje agradece por ter mudado para este roteador 5G libertando-se de internet que caía toda a hora, agora desfruta de 3600Mbps mesmo no pico."
                           : view === "sales-base-movel"
                             ? "A Dona Rosa do Kilamba também hesitou. Hoje consegue arrastar a geladeira e a máquina de lavar sozinha só com uma mão para limpar. Sem pedir ajuda e sem riscar o chão."
-                            : "O Paulo do Kilamba também hesitou. Hoje agradece todos os dias por ter reservado. O mau cheiro dos ténis de treino desapareceu completamente. Sinto os pés muito mais saudáveis e frescos."}
+                            : view === "sales-camisa-seda"
+                              ? "O Ricardo de Luanda também hesitou. Hoje agradece todos os dias por ter reservado. O tecido de Seda Gelada é super fresco e não precisa de passar a ferro. Sinto-me super elegante e muito confortável o dia inteiro."
+                              : "O Paulo do Kilamba também hesitou. Hoje agradece todos os dias por ter reservado. O mau cheiro dos ténis de treino desapareceu completamente. Sinto os pés muito mais saudáveis e frescos."}
                       "
                     </p>
                     <div className="flex items-center gap-1 text-amber-400">
@@ -6202,11 +6240,11 @@ Final do dia (16h - 18h)`;
                 </div>
                 <div className="p-8 text-center text-slate-700">
                   <p className="text-xl font-bold mb-4">
-                    Parabéns,{" "}
-                    <span className="text-indigo-600">
-                      {formData.name ? formData.name.split(" ")[0] : "Cliente"}
-                    </span>
-                    !
+                     Parabéns,{" "}
+                     <span className="text-indigo-600">
+                       {formData.name ? formData.name.split(" ")[0] : "Cliente"}
+                     </span>
+                     !
                   </p>
                   <p className="text-slate-600 mb-6 leading-relaxed">
                     A tua unidade de{" "}
@@ -6215,7 +6253,11 @@ Final do dia (16h - 18h)`;
                         ? "Secador Expresso Portátil"
                         : view === "sales-roteador"
                           ? "ZTE 5G Ultra"
-                          : "Secador UV"}
+                          : view === "sales-base-movel"
+                            ? "Base Móvel 360°"
+                            : view === "sales-camisa-seda"
+                              ? `Combo ${formData.quantity === 3 ? 4 : formData.quantity}x Camisa de Seda Gelada`
+                              : "Secador UV"}
                     </strong>{" "}
                     está reservada ao preço de{" "}
                     <strong>
@@ -6223,7 +6265,11 @@ Final do dia (16h - 18h)`;
                         ? "35.000 Kz"
                         : view === "sales-roteador"
                           ? "240.000 Kz"
-                          : "25.000 Kz"}
+                          : view === "sales-base-movel"
+                            ? "15.000 Kz"
+                            : view === "sales-camisa-seda"
+                              ? (formData.quantity === 1 ? "35.000 Kz" : formData.quantity === 2 ? "60.000 Kz" : formData.quantity === 3 ? "105.000 Kz" : formData.quantity === 5 ? "130.000 Kz" : "35.000 Kz")
+                              : "25.000 Kz"}
                     </strong>
                     .
                   </p>
@@ -6237,7 +6283,11 @@ Final do dia (16h - 18h)`;
                       Enquanto esperas, partilha com um amigo 👇
                     </p>
                     <a
-                      href={`https://wa.me/?text=Olha%20este%20secador%20que%20acabei%20de%20reservar!%20%0A%0A${window.location.href}`}
+                      href={
+                        view === "sales-camisa-seda"
+                          ? `https://wa.me/?text=Olha%20esta%20camisa%20de%20seda%20gelada%20que%20acabei%20de%20reservar!%20%0A%0A${window.location.href}`
+                          : `https://wa.me/?text=Olha%20este%20secador%20que%20acabei%20de%20reservar!%20%0A%0A${window.location.href}`
+                      }
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full flex justify-center items-center gap-3 bg-[#25D366] hover:bg-[#128C7E] text-white font-black py-4 px-4 rounded-xl transition-transform active:scale-[0.98] shadow-lg shadow-emerald-500/20 mb-3"
@@ -6903,7 +6953,7 @@ Final do dia (16h - 18h)`;
       </AnimatePresence>
 
       {/* Sticky Mobile CTA (Only visible on mobile when scrolling) */}
-      {isSalesView && modalState === "none" && !isCheckoutVisible && (
+      {isSalesView && view !== "sales-camisa-seda" && modalState === "none" && !isCheckoutVisible && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 md:hidden z-30">
           <button
             onClick={() => {

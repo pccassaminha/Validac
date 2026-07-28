@@ -64,6 +64,7 @@ export default function CamisaSedaView({
     { color: COLOR_IMAGES[0].color, size: "L - G" }, // Branco
     { color: COLOR_IMAGES[1].color, size: "L - G" }, // Verde Escuro
     { color: COLOR_IMAGES[2].color, size: "L - G" }, // Azul Claro
+    { color: COLOR_IMAGES[3].color, size: "L - G" }, // Preto
   ]);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
@@ -106,15 +107,17 @@ export default function CamisaSedaView({
 
   const getCalculatedPrice = (qty: number) => {
     if (qty === 1) return 35000;
-    if (qty === 2) return 60000; // Poupa 10.000 Kz
-    if (qty === 3) return 105000; // Compre 3 e Leve 1 Grátis
+    if (qty === 2) return 60000; // Poupa 40.000 Kz
+    if (qty === 3) return 105000; // Compre 3 e Leve 1 Grátis (Recebe 4)
+    if (qty === 5) return 130000; // Coleção Completa (5 Camisas)
     return qty * 35000;
   };
 
   const getOldPrice = (qty: number) => {
     if (qty === 1) return 50000;
     if (qty === 2) return 100000;
-    if (qty === 3) return 200000; // Normal price for 4 shirts if bought individually at 50k
+    if (qty === 3) return 200000; // 4 camisas
+    if (qty === 5) return 250000; // 5 camisas
     return qty * 50000;
   };
 
@@ -311,39 +314,40 @@ export default function CamisaSedaView({
                     <span className="text-sm font-black text-emerald-400 group-hover:text-emerald-300 transition-colors">105.000 Kz</span>
                   </div>
                 </button>
+
+                {/* Coleção Completa (5 Camisas) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData((prev: any) => ({ ...prev, quantity: 5 }));
+                    scrollToCheckout();
+                  }}
+                  className={`w-full text-left flex justify-between items-center p-3.5 rounded-2xl border transition-all duration-200 active:scale-[0.98] cursor-pointer group ${
+                    formData.quantity === 5
+                      ? "bg-indigo-900/60 border-indigo-700 shadow-sm"
+                      : "border-transparent hover:border-indigo-900/30 hover:bg-indigo-900/20"
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h5 className="font-extrabold text-sm text-yellow-400 group-hover:text-yellow-300 transition-colors">Coleção Completa (5 Camisas)</h5>
+                      <span className="text-[9px] font-black uppercase tracking-wider bg-yellow-550 text-white px-1.5 py-0.2 rounded animate-pulse">
+                        OFERTA MÁXIMA
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 leading-normal mt-0.5 group-hover:text-white transition-colors">
+                      Receba <strong className="text-yellow-400">todas as 5 cores</strong> por apenas 26.000 Kz cada! Poupa 120.000 Kz!
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs text-slate-500 line-through block">250.000 Kz</span>
+                    <span className="text-sm font-black text-yellow-400 group-hover:text-yellow-300 transition-colors">130.000 Kz</span>
+                  </div>
+                </button>
               </div>
             </div>
 
-            {/* Bloco de Desconto de Compre 3 Leve 1 Grátis em vez do botão primário comum */}
-            <div className="max-w-md mx-auto lg:mx-0">
-              <button
-                onClick={() => {
-                  setFormData((prev: any) => ({ ...prev, quantity: 3 }));
-                  scrollToCheckout();
-                }}
-                className="w-full text-left bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white p-5 rounded-3xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] border border-emerald-550 flex items-center justify-between gap-4 cursor-pointer group"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center text-white shrink-0 group-hover:scale-110 transition-transform">
-                    <Zap size={22} className="text-amber-300 fill-amber-300 animate-pulse" />
-                  </div>
-                  <div>
-                    <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500 text-white px-2 py-0.5 rounded">
-                      MELHOR OFERTA • CLIQUE AQUI
-                    </span>
-                    <h3 className="font-black text-base text-white mt-1 leading-tight">
-                      Compre 3 e Leve 1 Grátis!
-                    </h3>
-                    <p className="text-xs text-emerald-100 mt-1 font-medium">
-                      Escolha as cores e tamanhos de todas as 4 camisas abaixo
-                    </p>
-                  </div>
-                </div>
-                <div className="shrink-0 flex items-center justify-center bg-white/10 w-9 h-9 rounded-full group-hover:translate-x-1 transition-transform">
-                  <span className="text-lg font-black text-emerald-100">➔</span>
-                </div>
-              </button>
-            </div>
+
           </div>
         </div>
       </section>
@@ -781,6 +785,13 @@ export default function CamisaSedaView({
                       priceText: "105.000 Kz",
                       badge: "Super Poupança • Leva 4",
                       desc: "Poupa 95.000 Kz! Recebe 4 camisas (1 de oferta totalmente grátis)",
+                    },
+                    {
+                      qty: 5,
+                      title: "Coleção Completa (Todas as 5 Cores)",
+                      priceText: "130.000 Kz",
+                      badge: "Oferta Máxima • Leva 5",
+                      desc: "Poupa 120.000 Kz! Leve todas as 5 cores luxuosas de Seda Gelada em sua morada",
                     },
                   ].map((pkg) => (
                     <button
