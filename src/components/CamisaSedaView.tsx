@@ -86,13 +86,13 @@ export default function CamisaSedaView({
 
   const handleSubmitForm = (e: React.FormEvent) => {
     e.preventDefault();
-    const shirtCount = formData.quantity === 3 ? 4 : formData.quantity;
+    const shirtCount = formData.quantity;
     
     if (shirtCount === 1) {
       onSubmit(e, shirtConfigs[0].color, shirtConfigs[0].size);
     } else {
       const selectedShirtsBreakdown = shirtConfigs.slice(0, shirtCount).map((config, index) => {
-        const giftTag = (index === 3 && formData.quantity === 3) ? " (OFERTA GRÁTIS)" : "";
+        const giftTag = (index === 4 && formData.quantity === 5) ? " (OFERTA GRÁTIS)" : "";
         return `Camisa ${index + 1}${giftTag}: ${config.color} (${config.size})`;
       });
       
@@ -107,17 +107,17 @@ export default function CamisaSedaView({
 
   const getCalculatedPrice = (qty: number) => {
     if (qty === 1) return 35000;
-    if (qty === 2) return 60000; // Poupa 40.000 Kz
-    if (qty === 3) return 105000; // Compre 3 e Leve 1 Grátis (Recebe 4)
-    if (qty === 5) return 130000; // Coleção Completa (5 Camisas)
+    if (qty === 2) return 60000;
+    if (qty === 3) return 90000;
+    if (qty === 5) return 135000;
     return qty * 35000;
   };
 
   const getOldPrice = (qty: number) => {
     if (qty === 1) return 50000;
     if (qty === 2) return 100000;
-    if (qty === 3) return 200000; // 4 camisas
-    if (qty === 5) return 250000; // 5 camisas
+    if (qty === 3) return 105000;
+    if (qty === 5) return 175000;
     return qty * 50000;
   };
 
@@ -268,7 +268,7 @@ export default function CamisaSedaView({
                   </div>
                 </button>
 
-                {/* Compre 3 Leve 4 */}
+                {/* KIT 3 CAMISAS */}
                 <button
                   type="button"
                   onClick={() => {
@@ -283,48 +283,48 @@ export default function CamisaSedaView({
                 >
                   <div>
                     <div className="flex items-center gap-2">
-                      <h5 className="font-extrabold text-sm text-emerald-400 group-hover:text-emerald-300 transition-colors">Compre 3 Leve 4</h5>
-                      <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500 text-white px-1.5 py-0.2 rounded animate-pulse">
-                        1 GRÁTIS
+                      <h5 className="font-extrabold text-sm text-emerald-400 group-hover:text-emerald-300 transition-colors">Kit 3 Camisas</h5>
+                      <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500 text-white px-1.5 py-0.2 rounded">
+                        POUPA 15.000 KZ
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-300 leading-normal mt-0.5 group-hover:text-white transition-colors">
-                      Super poupança de <strong className="text-emerald-400 group-hover:text-emerald-300">95.000 Kz</strong>! Receba 4 camisas.
+                      Economize <strong className="text-emerald-400">15.000 Kz</strong>! Receba 3 camisas (30.000 Kz / unidade).
                     </p>
                   </div>
                   <div className="text-right">
-                    <span className="text-xs text-slate-500 line-through block">200.000 Kz</span>
-                    <span className="text-sm font-black text-emerald-400 group-hover:text-emerald-300 transition-colors">105.000 Kz</span>
+                    <span className="text-xs text-slate-500 line-through block">105.000 Kz</span>
+                    <span className="text-sm font-black text-emerald-400 group-hover:text-emerald-300 transition-colors">90.000 Kz</span>
                   </div>
                 </button>
 
-                {/* Coleção Completa (5 Camisas) */}
+                {/* Combo Semanal (Compre 4 Leve 5) */}
                 <button
                   type="button"
                   onClick={() => {
                     setFormData((prev: any) => ({ ...prev, quantity: 5 }));
                     scrollToCheckout();
                   }}
-                  className={`w-full text-left flex justify-between items-center p-3.5 rounded-2xl border transition-all duration-200 active:scale-[0.98] cursor-pointer group ${
+                  className={`w-full text-left flex justify-between items-center p-4 rounded-2xl border-2 transition-all duration-300 active:scale-[0.98] cursor-pointer group relative ${
                     formData.quantity === 5
-                      ? "bg-indigo-900/60 border-indigo-700 shadow-sm"
-                      : "border-transparent hover:border-indigo-900/30 hover:bg-indigo-900/20"
+                      ? "bg-gradient-to-r from-indigo-900 to-indigo-950 border-yellow-500 shadow-[0_0_25px_rgba(234,179,8,0.3)] ring-2 ring-yellow-500/20 scale-[1.02]"
+                      : "bg-indigo-950/40 border-yellow-500/40 hover:border-yellow-500/70 hover:bg-indigo-900/30 shadow-[0_0_15px_rgba(234,179,8,0.1)]"
                   }`}
                 >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h5 className="font-extrabold text-sm text-yellow-400 group-hover:text-yellow-300 transition-colors">Coleção Completa (5 Camisas)</h5>
-                      <span className="text-[9px] font-black uppercase tracking-wider bg-yellow-550 text-white px-1.5 py-0.2 rounded animate-pulse">
-                        OFERTA MÁXIMA
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h5 className="font-black text-sm text-yellow-400 group-hover:text-yellow-300 transition-colors uppercase tracking-wide">🏆 Combo Semanal (Leve 5)</h5>
+                      <span className="text-[9px] font-black uppercase tracking-wider bg-yellow-500 text-indigo-950 px-2 py-0.5 rounded shadow-sm animate-bounce">
+                        A MELHOR OFERTA / MAIS VENDIDO
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-300 leading-normal mt-0.5 group-hover:text-white transition-colors">
-                      Receba <strong className="text-yellow-400">todas as 5 cores</strong> por apenas 26.000 Kz cada! Poupa 120.000 Kz!
+                    <p className="text-[11px] text-yellow-100/90 leading-normal mt-1.5 group-hover:text-white transition-colors">
+                      Compre 4 e <strong className="text-yellow-400">Leve 1 Grátis</strong>! Receba 5 camisas luxuosas.
                     </p>
                   </div>
-                  <div className="text-right">
-                    <span className="text-xs text-slate-500 line-through block">250.000 Kz</span>
-                    <span className="text-sm font-black text-yellow-400 group-hover:text-yellow-300 transition-colors">130.000 Kz</span>
+                  <div className="text-right shrink-0 ml-2">
+                    <span className="text-xs text-slate-400 line-through block">175.000 Kz</span>
+                    <span className="text-base font-black text-yellow-400 group-hover:text-yellow-300 transition-all scale-110 inline-block">135.000 Kz</span>
                   </div>
                 </button>
               </div>
@@ -660,9 +660,9 @@ export default function CamisaSedaView({
                 </div>
 
                 <div className="space-y-4">
-                  {Array.from({ length: formData.quantity === 3 ? 4 : formData.quantity }).map((_, index) => {
+                  {Array.from({ length: formData.quantity }).map((_, index) => {
                     const currentConf = shirtConfigs[index] || { color: COLOR_IMAGES[0].color, size: "L - G" };
-                    const isGift = index === 3 && formData.quantity === 3;
+                    const isGift = index === 4 && formData.quantity === 5;
                     return (
                       <div 
                         key={index} 
@@ -781,17 +781,17 @@ export default function CamisaSedaView({
                     },
                     {
                       qty: 3,
-                      title: "Compre 3 e Leve 1 Grátis",
-                      priceText: "105.000 Kz",
-                      badge: "Super Poupança • Leva 4",
-                      desc: "Poupa 95.000 Kz! Recebe 4 camisas (1 de oferta totalmente grátis)",
+                      title: "KIT 3 CAMISAS (ECONOMIZE 15.000 KZ)",
+                      priceText: "90.000 Kz",
+                      badge: "Economia Extra",
+                      desc: "Apenas 30.000 Kz por unidade! De 105.000 Kz por apenas 90.000 Kz",
                     },
                     {
                       qty: 5,
-                      title: "Coleção Completa (Todas as 5 Cores)",
-                      priceText: "130.000 Kz",
-                      badge: "Oferta Máxima • Leva 5",
-                      desc: "Poupa 120.000 Kz! Leve todas as 5 cores luxuosas de Seda Gelada em sua morada",
+                      title: "🏆 COMBO SEMANAL: COMPRE 4 LEVE 5",
+                      priceText: "135.000 Kz",
+                      badge: "A MELHOR OFERTA / MAIS VENDIDO",
+                      desc: "De 175.000 Kz por apenas 135.000 Kz! (Recebe 5 Camisas)",
                     },
                   ].map((pkg) => (
                     <button
@@ -800,19 +800,31 @@ export default function CamisaSedaView({
                       onClick={() => setFormData({ ...formData, quantity: pkg.qty })}
                       className={`w-full p-4 border-2 rounded-2xl text-left transition-all flex items-center justify-between gap-4 cursor-pointer relative ${
                         formData.quantity === pkg.qty
-                          ? "bg-indigo-50/70 border-indigo-500 ring-1 ring-indigo-500 text-indigo-950 shadow-md scale-[1.01]"
-                          : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-600"
+                          ? pkg.qty === 5
+                            ? "bg-gradient-to-r from-amber-50 to-orange-50/60 border-amber-500 ring-4 ring-amber-500/20 text-slate-900 shadow-lg scale-[1.03]"
+                            : "bg-indigo-50/70 border-indigo-500 ring-1 ring-indigo-500 text-indigo-950 shadow-md scale-[1.01]"
+                          : pkg.qty === 5
+                            ? "bg-gradient-to-r from-amber-50/30 to-transparent border-amber-500/40 hover:border-amber-500 hover:from-amber-50/50 hover:bg-amber-50/30 text-slate-700 shadow-md"
+                            : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-600"
                       }`}
                     >
                       {pkg.badge && (
-                        <span className="absolute -top-2.5 right-4 bg-emerald-500 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded shadow-sm">
+                        <span className={`absolute -top-2.5 right-4 text-[9.5px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded shadow-sm ${
+                          pkg.qty === 5 
+                            ? "bg-gradient-to-r from-yellow-500 to-amber-600 text-slate-950 ring-2 ring-yellow-400 animate-pulse" 
+                            : pkg.qty === 2
+                              ? "bg-slate-200 text-slate-700 border border-slate-300"
+                              : "bg-indigo-100 text-indigo-700 border border-indigo-200"
+                        }`}>
                           {pkg.badge}
                         </span>
                       )}
                       <div className="flex items-center gap-3">
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
                           formData.quantity === pkg.qty
-                            ? "border-indigo-600 bg-indigo-600 text-white"
+                            ? pkg.qty === 5
+                              ? "border-amber-600 bg-amber-600 text-white"
+                              : "border-indigo-600 bg-indigo-600 text-white"
                             : "border-slate-300 bg-white"
                         }`}>
                           {formData.quantity === pkg.qty && (
@@ -820,16 +832,40 @@ export default function CamisaSedaView({
                           )}
                         </div>
                         <div>
-                          <p className={`font-black text-sm ${formData.quantity === pkg.qty ? "text-indigo-950" : "text-slate-800"}`}>
+                          <p className={`font-black ${
+                            pkg.qty === 5 
+                              ? formData.quantity === 5 
+                                ? "text-amber-950 text-base" 
+                                : "text-amber-900 text-sm" 
+                              : formData.quantity === pkg.qty 
+                                ? "text-indigo-950 text-sm" 
+                                : "text-slate-800 text-sm"
+                          }`}>
                             {pkg.title}
                           </p>
-                          <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                          <p className={`text-[11px] font-medium mt-0.5 ${
+                            pkg.qty === 5 
+                              ? formData.quantity === 5 
+                                ? "text-amber-800 font-semibold" 
+                                : "text-amber-700/80" 
+                              : formData.quantity === pkg.qty 
+                                ? "text-indigo-600/80" 
+                                : "text-slate-500"
+                          }`}>
                             {pkg.desc}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className={`text-sm sm:text-base font-black ${formData.quantity === pkg.qty ? "text-indigo-600" : "text-slate-800"}`}>
+                        <p className={`text-sm sm:text-base font-black ${
+                          pkg.qty === 5 
+                            ? formData.quantity === 5 
+                              ? "text-amber-700 sm:text-lg" 
+                              : "text-amber-600" 
+                            : formData.quantity === pkg.qty 
+                              ? "text-indigo-600" 
+                              : "text-slate-800"
+                        }`}>
                           {pkg.priceText}
                         </p>
                       </div>
@@ -855,8 +891,8 @@ export default function CamisaSedaView({
                 <div className="flex justify-between font-bold text-slate-600 text-xs uppercase tracking-wider">
                   <span>Oferta Escolhida:</span>
                   <span className="text-indigo-600 text-right">
-                    {formData.quantity === 3
-                      ? `Leve 4 Camisas (Compre 3 + 1 Grátis) (${Array.from(new Set(shirtConfigs.slice(0, 4).map(c => c.color))).join(", ")} / ${Array.from(new Set(shirtConfigs.slice(0, 4).map(c => c.size))).join(", ")})`
+                    {formData.quantity === 5
+                      ? `Combo Semanal Leve 5 (Compre 4 + 1 Grátis) (${Array.from(new Set(shirtConfigs.slice(0, 5).map(c => c.color))).join(", ")} / ${Array.from(new Set(shirtConfigs.slice(0, 5).map(c => c.size))).join(", ")})`
                       : `${formData.quantity}x Camisa Seda (${Array.from(new Set(shirtConfigs.slice(0, formData.quantity).map(c => c.color))).join(", ")} / ${Array.from(new Set(shirtConfigs.slice(0, formData.quantity).map(c => c.size))).join(", ")})`}
                   </span>
                 </div>

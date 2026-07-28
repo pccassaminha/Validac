@@ -1031,8 +1031,9 @@ export default function App() {
     let computedTotal = formData.quantity * pricePerUnit;
     if (view === "sales-camisa-seda") {
       if (formData.quantity === 1) computedTotal = 35000;
-      else if (formData.quantity === 2) computedTotal = 60000; // 10.000 Kz discount
-      else if (formData.quantity === 3) computedTotal = 105000; // Compre 3 e Leve 1 Grátis
+      else if (formData.quantity === 2) computedTotal = 60000;
+      else if (formData.quantity === 3) computedTotal = 90000;
+      else if (formData.quantity === 5) computedTotal = 135000;
     }
 
     const tempLead = {
@@ -5994,7 +5995,7 @@ Final do dia (16h - 18h)`;
                           : view === "sales-base-movel"
                             ? "15.000 Kz"
                             : view === "sales-camisa-seda"
-                              ? (formData.quantity === 1 ? "35.000 Kz" : formData.quantity === 2 ? "60.000 Kz" : formData.quantity === 3 ? "105.000 Kz" : formData.quantity === 5 ? "130.000 Kz" : "35.000 Kz")
+                              ? (formData.quantity === 1 ? "35.000 Kz" : formData.quantity === 2 ? "60.000 Kz" : formData.quantity === 3 ? "90.000 Kz" : formData.quantity === 5 ? "135.000 Kz" : "35.000 Kz")
                               : "25.000 Kz"}
                     </b>
                     ?{" "}
@@ -6193,7 +6194,7 @@ Final do dia (16h - 18h)`;
                            : view === "sales-base-movel"
                              ? "30.000 Kz"
                              : view === "sales-camisa-seda"
-                               ? (formData.quantity === 1 ? "50.000 Kz" : formData.quantity === 2 ? "100.000 Kz" : formData.quantity === 3 ? "200.000 Kz" : formData.quantity === 5 ? "250.000 Kz" : "50.000 Kz")
+                               ? (formData.quantity === 1 ? "50.000 Kz" : formData.quantity === 2 ? "100.000 Kz" : formData.quantity === 3 ? "105.000 Kz" : formData.quantity === 5 ? "175.000 Kz" : "50.000 Kz")
                                : "45.000 Kz"}
                      </b>
                      . Vais mesmo deixar passar?
@@ -6317,7 +6318,7 @@ Final do dia (16h - 18h)`;
                           : view === "sales-base-movel"
                             ? "Base Móvel 360°"
                             : view === "sales-camisa-seda"
-                              ? `Combo ${formData.quantity === 3 ? 4 : formData.quantity}x Camisa de Seda Gelada`
+                              ? `Combo ${formData.quantity}x Camisa de Seda Gelada`
                               : "Secador UV"}
                     </strong>{" "}
                     está reservada ao preço de{" "}
@@ -6329,7 +6330,7 @@ Final do dia (16h - 18h)`;
                           : view === "sales-base-movel"
                             ? "15.000 Kz"
                             : view === "sales-camisa-seda"
-                              ? (formData.quantity === 1 ? "35.000 Kz" : formData.quantity === 2 ? "60.000 Kz" : formData.quantity === 3 ? "105.000 Kz" : formData.quantity === 5 ? "130.000 Kz" : "35.000 Kz")
+                              ? (formData.quantity === 1 ? "35.000 Kz" : formData.quantity === 2 ? "60.000 Kz" : formData.quantity === 3 ? "90.000 Kz" : formData.quantity === 5 ? "135.000 Kz" : "35.000 Kz")
                               : "25.000 Kz"}
                     </strong>
                     .
