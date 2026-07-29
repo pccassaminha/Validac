@@ -8,6 +8,7 @@ import {
   TriangleAlert,
   Crown,
   XCircle,
+  X,
   ArrowLeft,
   Lock,
   Loader2,
@@ -572,7 +573,7 @@ export default function App() {
   });
   const [editingGoalProductId, setEditingGoalProductId] = useState<string | null>(null);
   const [tempGoalInput, setTempGoalInput] = useState<number>(50);
-  const [pagesFilter, setPagesFilter] = useState<"all" | "active" | "inactive" | "validated" | "in_validation" | "testing">("all");
+  const [pagesFilter, setPagesFilter] = useState<"all" | "active" | "inactive" | "validated" | "testing">("all");
 
   // Active / Inactive Pages State
   const [activePagesStatus, setActivePagesStatus] = useState<Record<string, boolean>>(() => {
@@ -776,9 +777,16 @@ export default function App() {
     const confirmedReservas = stats.confirmedReservas;
     const percent = Math.round((reservasCount / goal) * 100);
     const isValidated = reservasCount >= goal;
-    let statusKey: "validated" | "in_validation" | "testing" = "testing";
-    if (isValidated) statusKey = "validated";
-    else if (reservasCount > 0 || leadCount > 0) statusKey = "in_validation";
+    const isInactive = activePagesStatus[productId] === false;
+
+    let statusKey: "validated" | "testing" | "inactive" = "testing";
+    if (isInactive) {
+      statusKey = "inactive";
+    } else if (isValidated) {
+      statusKey = "validated";
+    } else {
+      statusKey = "testing";
+    }
 
     return {
       leadCount,
@@ -787,13 +795,18 @@ export default function App() {
       goal,
       percent,
       isValidated,
+      isInactive,
       statusKey,
-      badgeText: isValidated
+      badgeText: isInactive
+        ? "🔴 DESATIVADA"
+        : isValidated
         ? "🟢 VALIDADO"
         : reservasCount > 0
-        ? `⚡ EM VALIDAÇÃO (${percent}%)`
-        : "🔴 EM TESTE",
-      badgeClass: isValidated
+        ? `🧪 EM TESTE (${percent}%)`
+        : "🧪 EM TESTE",
+      badgeClass: isInactive
+        ? "bg-rose-600 text-white font-black"
+        : isValidated
         ? "bg-emerald-500 text-white font-black"
         : reservasCount > 0
         ? "bg-amber-500 text-slate-950 font-black"
@@ -927,6 +940,7 @@ export default function App() {
     googleTag?: string;
   }>({});
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -5785,91 +5799,144 @@ Final do dia (16h - 18h)`;
                 rapidamente.
               </p>
             </div>
-          </div>
 
-          {/* Global Settings Section */}
-          <div className="mb-12 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                  <Sparkles size={20} className="text-indigo-600" />{" "}
-                  Configurações de Tracking
-                </h2>
-                <p className="text-sm text-slate-500 mt-1">
-                  Configure o Pixel da Meta e Google Tags para todas as suas
-                  páginas.
-                </p>
-              </div>
+            {/* Tracking Button Trigger */}
+            <div className="flex items-center gap-3">
               <button
-                onClick={async () => {
-                  setIsSavingSettings(true);
-                  try {
-                    await setDoc(doc(db, "settings", "global"), appSettings);
-                    alert("Configurações salvas com sucesso!");
-                  } catch (err) {
-                    alert("Erro ao salvar configurações.");
-                  } finally {
-                    setIsSavingSettings(false);
-                  }
-                }}
-                disabled={isSavingSettings}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl font-bold text-sm transition shadow-sm flex items-center gap-2 disabled:opacity-50"
+                type="button"
+                onClick={() => setIsTrackingModalOpen(true)}
+                className="flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 shadow-sm hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
               >
-                {isSavingSettings ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <CheckCircle size={16} />
+                <Sparkles size={18} className="text-indigo-600" />
+                <span>Configurações de Tracking</span>
+                {(appSettings.fbPixel || appSettings.googleTag) && (
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" title="Pixel / Tag configurado" />
                 )}
-                Salvar Alterações
               </button>
             </div>
-            <div className="p-6 grid md:grid-cols-2 gap-6 bg-slate-50/50">
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">
-                  Meta Pixel ID
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={appSettings.fbPixel || ""}
-                    onChange={(e) =>
-                      setAppSettings((prev) => ({
-                        ...prev,
-                        fbPixel: e.target.value,
-                      }))
-                    }
-                    placeholder="Ex: 4192962437607469"
-                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                  />
-                  <div className="mt-2 text-[10px] text-slate-400 flex items-center gap-1">
-                    <Info size={12} /> Cole apenas o número do ID do pixel aqui.
-                  </div>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">
-                  Google Tag ID (G-XXXXX)
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={appSettings.googleTag || ""}
-                    onChange={(e) =>
-                      setAppSettings((prev) => ({
-                        ...prev,
-                        googleTag: e.target.value,
-                      }))
-                    }
-                    placeholder="Ex: AW-123456789"
-                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                  />
-                  <div className="mt-2 text-[10px] text-slate-400 flex items-center gap-1">
-                    <Info size={12} /> Utilizado para Google Ads e Analytics.
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
+
+          {/* Tracking Settings Modal */}
+          <AnimatePresence>
+            {isTrackingModalOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+                onClick={() => setIsTrackingModalOpen(false)}
+              >
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                  transition={{ type: "spring", duration: 0.3 }}
+                  className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+                        <Sparkles size={18} />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-900">
+                          Configurações de Tracking
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          Configure o Meta Pixel e Google Tag para todas as suas páginas
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setIsTrackingModalOpen(false)}
+                      className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-xl transition cursor-pointer"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  <div className="p-6 space-y-5">
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                        Meta Pixel ID (Facebook)
+                      </label>
+                      <input
+                        type="text"
+                        value={appSettings.fbPixel || ""}
+                        onChange={(e) =>
+                          setAppSettings((prev) => ({
+                            ...prev,
+                            fbPixel: e.target.value,
+                          }))
+                        }
+                        placeholder="Ex: 4192962437607469"
+                        className="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                      />
+                      <p className="mt-1.5 text-[11px] text-slate-400 flex items-center gap-1">
+                        <Info size={13} /> Cole apenas o número do ID do Pixel (ex: 4192962437607469).
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                        Google Tag ID (Ads / Analytics)
+                      </label>
+                      <input
+                        type="text"
+                        value={appSettings.googleTag || ""}
+                        onChange={(e) =>
+                          setAppSettings((prev) => ({
+                            ...prev,
+                            googleTag: e.target.value,
+                          }))
+                        }
+                        placeholder="Ex: AW-123456789 ou G-XXXXX"
+                        className="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                      />
+                      <p className="mt-1.5 text-[11px] text-slate-400 flex items-center gap-1">
+                        <Info size={13} /> Cole o ID de conversão do Google Ads ou Google Analytics.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsTrackingModalOpen(false)}
+                      className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200/70 transition cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setIsSavingSettings(true);
+                        try {
+                          await setDoc(doc(db, "settings", "global"), appSettings);
+                          setIsTrackingModalOpen(false);
+                          alert("Configurações de tracking salvas com sucesso!");
+                        } catch (err) {
+                          alert("Erro ao salvar configurações.");
+                        } finally {
+                          setIsSavingSettings(false);
+                        }
+                      }}
+                      disabled={isSavingSettings}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition shadow-md flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                    >
+                      {isSavingSettings ? (
+                        <Loader2 size={15} className="animate-spin" />
+                      ) : (
+                        <CheckCircle size={15} />
+                      )}
+                      Salvar Configurações
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* PRODUCT VALIDATION ANALYTICS METRICS BAR */}
           <div className="mb-8">
@@ -5924,16 +5991,6 @@ Final do dia (16h - 18h)`;
                   🏆 Validados ({PRODUCTS_LIST.filter((p) => getProductValidationInfo(p.id).isValidated).length})
                 </button>
                 <button
-                  onClick={() => setPagesFilter("in_validation")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
-                    pagesFilter === "in_validation"
-                      ? "bg-amber-600 text-white shadow-sm"
-                      : "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
-                  }`}
-                >
-                  ⚡ Em Validação ({PRODUCTS_LIST.filter((p) => getProductValidationInfo(p.id).statusKey === "in_validation").length})
-                </button>
-                <button
                   onClick={() => setPagesFilter("testing")}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
                     pagesFilter === "testing"
@@ -5976,12 +6033,12 @@ Final do dia (16h - 18h)`;
 
               <div className="bg-white p-4.5 rounded-2xl border border-amber-200 shadow-sm flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-                  <Zap size={22} />
+                  <Timer size={22} />
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Em Validação</span>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Em Teste</span>
                   <p className="text-2xl font-black text-amber-600">
-                    {PRODUCTS_LIST.filter((p) => getProductValidationInfo(p.id).statusKey === "in_validation").length}
+                    {PRODUCTS_LIST.filter((p) => getProductValidationInfo(p.id).statusKey === "testing").length}
                   </p>
                 </div>
               </div>
@@ -6011,7 +6068,6 @@ Final do dia (16h - 18h)`;
               if (pagesFilter === "active") return isActive;
               if (pagesFilter === "inactive") return !isActive;
               if (pagesFilter === "validated") return info.isValidated;
-              if (pagesFilter === "in_validation") return info.statusKey === "in_validation";
               if (pagesFilter === "testing") return info.statusKey === "testing";
               return true;
             }).map((prod) => {
@@ -6037,7 +6093,9 @@ Final do dia (16h - 18h)`;
                     {/* Validation Overlay Badge */}
                     <div
                       className={`absolute top-3 left-3 text-[10px] uppercase font-black px-2.5 py-1 rounded-full shadow-md backdrop-blur-md border ${
-                        info.isValidated
+                        info.isInactive
+                          ? "bg-rose-600/90 text-white border-rose-400"
+                          : info.isValidated
                           ? "bg-emerald-600/90 text-white border-emerald-400"
                           : info.reservasCount > 0
                           ? "bg-amber-500/90 text-slate-950 border-amber-300 font-extrabold"
