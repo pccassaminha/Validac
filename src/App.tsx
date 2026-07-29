@@ -686,39 +686,15 @@ export default function App() {
 
   const PRODUCTS_LIST = [
     {
-      id: "secador-uv",
-      title: "Secador Inteligente UV",
-      subtitle: "Oferta CPA padrão com formulário integrado. Conversão direta.",
-      image: IMAGES[0],
-      viewName: "sales",
-      paramName: "secador-uv",
+      id: "camisa-seda",
+      title: "Camisa Seda Gelada Premium",
+      subtitle: "Camisa social premium em seda gelada tecnológica com efeito antirrugas. 25.000 Kz / Unidade.",
+      image: "https://i.postimg.cc/2yRkWypx/C2128-1-branco.jpg",
+      viewName: "sales-camisa-seda",
+      paramName: "camisa-seda",
       matchesLead: (l: any) => {
         const p = normalizeProductName(l.produto || l.product || l.produtoName || l.rawProduto);
-        return p === "Secador Inteligente UV";
-      },
-    },
-    {
-      id: "cabide-secador",
-      title: "Secador Expresso Pro 35 000 Kz",
-      subtitle: "Novo produto voltado a roupas húmidas e dias de chuva.",
-      image: IMAGES_ROUPAS[0],
-      viewName: "sales-roupas",
-      paramName: "cabide-secador",
-      matchesLead: (l: any) => {
-        const p = normalizeProductName(l.produto || l.product || l.produtoName || l.rawProduto);
-        return p === "Secador Expresso Pro 35 000 Kz";
-      },
-    },
-    {
-      id: "roteador-5g",
-      title: "Roteador 5G Ultra Desbloqueado",
-      subtitle: "Nova landing page focada em internet de alto desempenho.",
-      image: IMAGES_ROTEADOR[0],
-      viewName: "sales-roteador",
-      paramName: "roteador-5g",
-      matchesLead: (l: any) => {
-        const p = normalizeProductName(l.produto || l.product || l.produtoName || l.rawProduto);
-        return p === "Roteador 5G Ultra Desbloqueado";
+        return p === "Camisa Seda Gelada Premium";
       },
     },
     {
@@ -734,15 +710,39 @@ export default function App() {
       },
     },
     {
-      id: "camisa-seda",
-      title: "Camisa Seda Gelada Premium",
-      subtitle: "Camisa social premium em seda gelada tecnológica com efeito antirrugas. 25.000 Kz / Unidade.",
-      image: "https://i.postimg.cc/2yRkWypx/C2128-1-branco.jpg",
-      viewName: "sales-camisa-seda",
-      paramName: "camisa-seda",
+      id: "roteador-5g",
+      title: "Roteador 5G Ultra Desbloqueado",
+      subtitle: "Nova landing page focada em internet de alto desempenho.",
+      image: IMAGES_ROTEADOR[0],
+      viewName: "sales-roteador",
+      paramName: "roteador-5g",
       matchesLead: (l: any) => {
         const p = normalizeProductName(l.produto || l.product || l.produtoName || l.rawProduto);
-        return p === "Camisa Seda Gelada Premium";
+        return p === "Roteador 5G Ultra Desbloqueado";
+      },
+    },
+    {
+      id: "cabide-secador",
+      title: "Secador Expresso Pro 35 000 Kz",
+      subtitle: "Novo produto voltado a roupas húmidas e dias de chuva.",
+      image: IMAGES_ROUPAS[0],
+      viewName: "sales-roupas",
+      paramName: "cabide-secador",
+      matchesLead: (l: any) => {
+        const p = normalizeProductName(l.produto || l.product || l.produtoName || l.rawProduto);
+        return p === "Secador Expresso Pro 35 000 Kz";
+      },
+    },
+    {
+      id: "secador-uv",
+      title: "Secador Inteligente UV",
+      subtitle: "Oferta CPA padrão com formulário integrado. Conversão direta.",
+      image: IMAGES[0],
+      viewName: "sales",
+      paramName: "secador-uv",
+      matchesLead: (l: any) => {
+        const p = normalizeProductName(l.produto || l.product || l.produtoName || l.rawProduto);
+        return p === "Secador Inteligente UV";
       },
     },
   ];
