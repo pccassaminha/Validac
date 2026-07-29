@@ -49,6 +49,11 @@ import {
   Sun,
   Moon,
   MoreVertical,
+  Target,
+  Award,
+  Power,
+  ToggleLeft,
+  ToggleRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { db, auth, handleFirestoreError, OperationType } from "./firebase";
@@ -68,6 +73,7 @@ import {
   deleteDoc,
   where,
   setDoc,
+  onSnapshot,
 } from "firebase/firestore";
 import {
   signInWithEmailAndPassword,
@@ -551,6 +557,229 @@ export default function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentLeadId, setCurrentLeadId] = useState<string | null>(null);
 
+  // Product Validation Goals State
+  const [productGoals, setProductGoals] = useState<Record<string, number>>(() => {
+    const saved = localStorage.getItem("validaC_product_goals");
+    return saved
+      ? JSON.parse(saved)
+      : {
+          "secador-uv": 50,
+          "cabide-secador": 50,
+          "roteador-5g": 50,
+          "base-movel-360": 50,
+          "camisa-seda": 50,
+        };
+  });
+  const [editingGoalProductId, setEditingGoalProductId] = useState<string | null>(null);
+  const [tempGoalInput, setTempGoalInput] = useState<number>(50);
+  const [pagesFilter, setPagesFilter] = useState<"all" | "active" | "inactive" | "validated" | "in_validation" | "testing">("all");
+
+  // Active / Inactive Pages State
+  const [activePagesStatus, setActivePagesStatus] = useState<Record<string, boolean>>(() => {
+    const saved = localStorage.getItem("validaC_active_pages");
+    return saved
+      ? JSON.parse(saved)
+      : {
+          "secador-uv": true,
+          "cabide-secador": true,
+          "roteador-5g": true,
+          "base-movel-360": true,
+          "camisa-seda": true,
+        };
+  });
+
+  useEffect(() => {
+    const loadGoalsAndPagesFromFirestore = async () => {
+      try {
+        const snap = await getDoc(doc(db, "settings", "product_goals"));
+        if (snap.exists()) {
+          setProductGoals((prev) => ({ ...prev, ...snap.data() }));
+        }
+      } catch (err) {
+        console.log("Using cached product goals");
+      }
+      try {
+        const snap = await getDoc(doc(db, "settings", "active_pages"));
+        if (snap.exists()) {
+          setActivePagesStatus((prev) => ({ ...prev, ...snap.data() }));
+        }
+      } catch (err) {
+        console.log("Using cached active pages status");
+      }
+    };
+    loadGoalsAndPagesFromFirestore();
+  }, []);
+
+  const togglePageStatus = async (productId: string) => {
+    const currentStatus = activePagesStatus[productId] !== false; // default true
+    const updated = { ...activePagesStatus, [productId]: !currentStatus };
+    setActivePagesStatus(updated);
+    localStorage.setItem("validaC_active_pages", JSON.stringify(updated));
+    try {
+      await setDoc(doc(db, "settings", "active_pages"), updated, { merge: true });
+    } catch (err) {
+      console.log("Active page status saved locally");
+    }
+  };
+
+  const updateProductGoal = async (productId: string, newGoal: number) => {
+    const goalVal = Math.max(1, newGoal);
+    const updated = { ...productGoals, [productId]: goalVal };
+    setProductGoals(updated);
+    localStorage.setItem("validaC_product_goals", JSON.stringify(updated));
+    setEditingGoalProductId(null);
+    try {
+      await setDoc(doc(db, "settings", "product_goals"), updated, { merge: true });
+    } catch (err) {
+      console.log("Goal saved locally");
+    }
+  };
+
+  const normalizeProductName = (raw?: string): string => {
+    if (!raw) return "Secador Inteligente UV";
+    const lower = raw.toLowerCase().trim();
+
+    if (lower.includes("seda") || lower.includes("camisa")) {
+      return "Camisa Seda Gelada Premium";
+    }
+    if (
+      lower.includes("base") ||
+      lower.includes("móvel") ||
+      lower.includes("movel") ||
+      lower.includes("deslizador") ||
+      lower.includes("360")
+    ) {
+      return "Base Móvel 360°";
+    }
+    if (
+      lower.includes("roteador") ||
+      lower.includes("5g") ||
+      lower.includes("zte")
+    ) {
+      return "Roteador 5G Ultra Desbloqueado";
+    }
+    if (
+      lower.includes("roupa") ||
+      lower.includes("expresso") ||
+      lower.includes("cabide") ||
+      lower.includes("secador_roupa") ||
+      lower.includes("35000") ||
+      lower.includes("35 000") ||
+      lower.includes("34900") ||
+      lower.includes("34 900")
+    ) {
+      return "Secador Expresso Pro 35 000 Kz";
+    }
+    if (
+      lower.includes("inteligente") ||
+      lower.includes("secador uv") ||
+      lower.includes("secador de sapatos") ||
+      lower.includes("uv") ||
+      lower.includes("secador")
+    ) {
+      return "Secador Inteligente UV";
+    }
+
+    return raw;
+  };
+
+  const PRODUCTS_LIST = [
+    {
+      id: "secador-uv",
+      title: "Secador Inteligente UV",
+      subtitle: "Oferta CPA padrão com formulário integrado. Conversão direta.",
+      image: IMAGES[0],
+      viewName: "sales",
+      paramName: "secador-uv",
+      matchesLead: (l: any) => {
+        const p = normalizeProductName(l.produto || l.product || l.produtoName || l.rawProduto);
+        return p === "Secador Inteligente UV";
+      },
+    },
+    {
+      id: "cabide-secador",
+      title: "Secador Expresso Pro 35 000 Kz",
+      subtitle: "Novo produto voltado a roupas húmidas e dias de chuva.",
+      image: IMAGES_ROUPAS[0],
+      viewName: "sales-roupas",
+      paramName: "cabide-secador",
+      matchesLead: (l: any) => {
+        const p = normalizeProductName(l.produto || l.product || l.produtoName || l.rawProduto);
+        return p === "Secador Expresso Pro 35 000 Kz";
+      },
+    },
+    {
+      id: "roteador-5g",
+      title: "Roteador 5G Ultra Desbloqueado",
+      subtitle: "Nova landing page focada em internet de alto desempenho.",
+      image: IMAGES_ROTEADOR[0],
+      viewName: "sales-roteador",
+      paramName: "roteador-5g",
+      matchesLead: (l: any) => {
+        const p = normalizeProductName(l.produto || l.product || l.produtoName || l.rawProduto);
+        return p === "Roteador 5G Ultra Desbloqueado";
+      },
+    },
+    {
+      id: "base-movel-360",
+      title: "Base Móvel 360°",
+      subtitle: "Deslizador para fogões, geladeiras, máquinas de lavar e arcas. 15.000 Kz / Par.",
+      image: IMAGES_BASE_MOVEL[0],
+      viewName: "sales-base-movel",
+      paramName: "base-movel-360",
+      matchesLead: (l: any) => {
+        const p = normalizeProductName(l.produto || l.product || l.produtoName || l.rawProduto);
+        return p === "Base Móvel 360°";
+      },
+    },
+    {
+      id: "camisa-seda",
+      title: "Camisa Seda Gelada Premium",
+      subtitle: "Camisa social premium em seda gelada tecnológica com efeito antirrugas. 25.000 Kz / Unidade.",
+      image: "https://i.postimg.cc/2yRkWypx/C2128-1-branco.jpg",
+      viewName: "sales-camisa-seda",
+      paramName: "camisa-seda",
+      matchesLead: (l: any) => {
+        const p = normalizeProductName(l.produto || l.product || l.produtoName || l.rawProduto);
+        return p === "Camisa Seda Gelada Premium";
+      },
+    },
+  ];
+
+  const getProductLeadCount = (productId: string) => {
+    const prod = PRODUCTS_LIST.find((p) => p.id === productId);
+    if (!prod) return 0;
+    return adminData.filter((l) => prod.matchesLead(l)).length;
+  };
+
+  const getProductValidationInfo = (productId: string) => {
+    const leadCount = getProductLeadCount(productId);
+    const goal = productGoals[productId] || 50;
+    const percent = Math.round((leadCount / goal) * 100);
+    const isValidated = leadCount >= goal;
+    let statusKey: "validated" | "in_validation" | "testing" = "testing";
+    if (isValidated) statusKey = "validated";
+    else if (leadCount > 0) statusKey = "in_validation";
+
+    return {
+      leadCount,
+      goal,
+      percent,
+      isValidated,
+      statusKey,
+      badgeText: isValidated
+        ? "🟢 VALIDADO"
+        : leadCount > 0
+        ? `⚡ EM VALIDAÇÃO (${percent}%)`
+        : "🔴 EM TESTE",
+      badgeClass: isValidated
+        ? "bg-emerald-500 text-white font-black"
+        : leadCount > 0
+        ? "bg-amber-500 text-slate-950 font-black"
+        : "bg-slate-500 text-white font-bold",
+    };
+  };
+
   // Admin State
   const [adminData, setAdminData] = useState<any[]>([]);
   const [isAdminLoading, setIsAdminLoading] = useState(false);
@@ -886,6 +1115,56 @@ export default function App() {
         view === "users")
     ) {
       loadAdminData();
+      try {
+        const q = query(collection(db, "leads"));
+        const unsubscribe = onSnapshot(
+          q,
+          (snapshot) => {
+            const leads = snapshot.docs.map((doc) => {
+              let ts = doc.data().timestamp || null;
+              try {
+                if (
+                  doc.data().createdAt?.toDate &&
+                  typeof doc.data().createdAt.toDate === "function"
+                ) {
+                  ts = doc.data().createdAt.toDate().toISOString();
+                } else if (typeof doc.data().createdAt === "string") {
+                  ts = doc.data().createdAt;
+                }
+              } catch (e) {
+                console.error("Erro na data", e);
+              }
+
+              const rawProduto = doc.data().produto || doc.data().product || doc.data().produtoName || "";
+              const normalizedProduto = normalizeProductName(rawProduto);
+
+              return {
+                id: doc.id,
+                ...doc.data(),
+                produto: normalizedProduto,
+                rawProduto: rawProduto,
+                timestamp: ts,
+              };
+            });
+
+            leads.sort((a, b) => {
+              if (!a.timestamp) return 1;
+              if (!b.timestamp) return -1;
+              return (
+                new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+              );
+            });
+            setAdminData(leads);
+            setIsAdminLoading(false);
+          },
+          (err) => {
+            console.error("Snapshot error:", err);
+          }
+        );
+        return () => unsubscribe();
+      } catch (err) {
+        console.error("Error setting up leads listener:", err);
+      }
     }
   }, [view, isAuthenticated]);
 
@@ -1327,30 +1606,14 @@ export default function App() {
           console.error("Erro na data", e);
         }
 
-        const rawProduto = doc.data().produto || "";
-        let normalizedProduto = "Secador Inteligente UV";
-        if (rawProduto) {
-          const lowerProd = rawProduto.toLowerCase();
-          if (
-            lowerProd.includes("roupa") ||
-            lowerProd.includes("expresso") ||
-            lowerProd.includes("cabide") ||
-            lowerProd.includes("secador_roupa") ||
-            lowerProd.includes("35000") ||
-            lowerProd.includes("35 000") ||
-            lowerProd.includes("34900") ||
-            lowerProd.includes("34 900")
-          ) {
-            normalizedProduto = "Secador Expresso Pro 35 000 Kz";
-          } else {
-            normalizedProduto = "Secador Inteligente UV";
-          }
-        }
+        const rawProduto = doc.data().produto || doc.data().product || doc.data().produtoName || "";
+        const normalizedProduto = normalizeProductName(rawProduto);
 
         return {
           id: doc.id,
           ...doc.data(),
           produto: normalizedProduto,
+          rawProduto: rawProduto,
           timestamp: ts,
         };
       });
@@ -4308,6 +4571,8 @@ Final do dia (16h - 18h)`;
           isCheckoutVisible={isCheckoutVisible}
           timeLeft={timeLeft}
           formatTime={formatTime}
+          leadCount={getProductLeadCount("camisa-seda")}
+          leadGoal={productGoals["camisa-seda"] || 50}
         />
       )}
 
@@ -5585,261 +5850,317 @@ Final do dia (16h - 18h)`;
             </div>
           </div>
 
+          {/* PRODUCT VALIDATION ANALYTICS METRICS BAR */}
+          <div className="mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                  <Target size={22} className="text-indigo-600" /> Validation & Lead Goals Hub
+                </h2>
+                <p className="text-sm text-slate-500">
+                  Acompanhe quais produtos atingiram a meta de reservas (validados) e edite os objetivos por página.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => setPagesFilter("all")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                    pagesFilter === "all"
+                      ? "bg-slate-900 text-white shadow-sm"
+                      : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                  }`}
+                >
+                  Todos ({PRODUCTS_LIST.length})
+                </button>
+                <button
+                  onClick={() => setPagesFilter("active")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
+                    pagesFilter === "active"
+                      ? "bg-emerald-600 text-white shadow-sm"
+                      : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
+                  }`}
+                >
+                  🟢 Ativas ({PRODUCTS_LIST.filter((p) => activePagesStatus[p.id] !== false).length})
+                </button>
+                <button
+                  onClick={() => setPagesFilter("inactive")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
+                    pagesFilter === "inactive"
+                      ? "bg-rose-600 text-white shadow-sm"
+                      : "bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200"
+                  }`}
+                >
+                  🔴 Desativadas ({PRODUCTS_LIST.filter((p) => activePagesStatus[p.id] === false).length})
+                </button>
+                <button
+                  onClick={() => setPagesFilter("validated")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
+                    pagesFilter === "validated"
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
+                  }`}
+                >
+                  🏆 Validados ({PRODUCTS_LIST.filter((p) => getProductValidationInfo(p.id).isValidated).length})
+                </button>
+                <button
+                  onClick={() => setPagesFilter("in_validation")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
+                    pagesFilter === "in_validation"
+                      ? "bg-amber-600 text-white shadow-sm"
+                      : "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
+                  }`}
+                >
+                  ⚡ Em Validação ({PRODUCTS_LIST.filter((p) => getProductValidationInfo(p.id).statusKey === "in_validation").length})
+                </button>
+                <button
+                  onClick={() => setPagesFilter("testing")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
+                    pagesFilter === "testing"
+                      ? "bg-slate-700 text-white shadow-sm"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
+                  }`}
+                >
+                  🧪 Em Teste ({PRODUCTS_LIST.filter((p) => getProductValidationInfo(p.id).statusKey === "testing").length})
+                </button>
+              </div>
+            </div>
+
+            {/* Metric Summary Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                  <Store size={22} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Páginas Ativas</span>
+                  <p className="text-2xl font-black text-slate-900">
+                    {PRODUCTS_LIST.filter((p) => activePagesStatus[p.id] !== false).length}
+                    <span className="text-xs font-normal text-slate-400 ml-1">/ {PRODUCTS_LIST.length}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white p-4.5 rounded-2xl border border-emerald-200 shadow-sm flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                  <Award size={22} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Validados</span>
+                  <p className="text-2xl font-black text-emerald-600">
+                    {PRODUCTS_LIST.filter((p) => getProductValidationInfo(p.id).isValidated).length}
+                    <span className="text-xs font-normal text-slate-400 ml-1">/ {PRODUCTS_LIST.length}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white p-4.5 rounded-2xl border border-amber-200 shadow-sm flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                  <Zap size={22} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Em Validação</span>
+                  <p className="text-2xl font-black text-amber-600">
+                    {PRODUCTS_LIST.filter((p) => getProductValidationInfo(p.id).statusKey === "in_validation").length}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                  <Users size={22} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total de Leads</span>
+                  <p className="text-2xl font-black text-slate-900">
+                    {PRODUCTS_LIST.reduce((sum, p) => sum + getProductLeadCount(p.id), 0)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* PRODUCT CARDS GRID */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {/* Produto 1: Secador UV */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col hover:shadow-md transition">
-              <div className="aspect-video bg-slate-100 relative group overflow-hidden">
-                <img
-                  src={IMAGES[0]}
-                  alt="Secador Inteligente UV"
-                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                />
-                <div className="absolute top-3 right-3 bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded shadow-sm uppercase">
-                  Ativa
-                </div>
-              </div>
-              <div className="p-5 flex-grow flex flex-col">
-                <h3 className="font-bold text-lg text-slate-900 mb-1 leading-tight">
-                  Secador Inteligente UV
-                </h3>
-                <p className="text-sm text-slate-500 mb-6 flex-grow">
-                  Oferta CPA padrão com formulário integrado. Conversão direta.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setView("sales")}
-                    className="flex-1 text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-bold transition flex justify-center items-center gap-1.5 shadow-sm"
-                  >
-                    <Eye size={14} /> Pré-visualizar
-                  </button>
-                  <button
-                    onClick={() => {
-                      setFilterProduct("Secador Inteligente UV");
-                      setView("admin");
-                    }}
-                    className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold transition border border-slate-200 shadow-sm"
-                  >
-                    Leads
-                  </button>
-                  <button
-                    onClick={() => {
-                      const link =
-                        window.location.origin + "?product=secador-uv";
-                      navigator.clipboard.writeText(link);
-                      alert("Link copiado: " + link);
-                    }}
-                    className="text-sm bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 px-3 py-2 rounded-xl font-bold transition flex items-center justify-center shrink-0 w-[42px] shadow-sm"
-                    title="Copiar Link da Página"
-                  >
-                    <Copy size={16} />
-                  </button>
-                </div>
-              </div>
-            </div>
+            {PRODUCTS_LIST.filter((prod) => {
+              const info = getProductValidationInfo(prod.id);
+              const isActive = activePagesStatus[prod.id] !== false;
+              if (pagesFilter === "active") return isActive;
+              if (pagesFilter === "inactive") return !isActive;
+              if (pagesFilter === "validated") return info.isValidated;
+              if (pagesFilter === "in_validation") return info.statusKey === "in_validation";
+              if (pagesFilter === "testing") return info.statusKey === "testing";
+              return true;
+            }).map((prod) => {
+              const info = getProductValidationInfo(prod.id);
+              const isEditing = editingGoalProductId === prod.id;
+              const isActive = activePagesStatus[prod.id] !== false;
 
-            {/* Produto 2: Secador Expresso */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col hover:shadow-md transition">
-              <div className="aspect-video bg-slate-100 relative group overflow-hidden">
-                <img
-                  src={IMAGES_ROUPAS[0]}
-                  alt="Secador Expresso Portátil (Edition Pro)"
-                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                />
-                <div className="absolute top-3 right-3 bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded shadow-sm uppercase">
-                  Ativa
-                </div>
-              </div>
-              <div className="p-5 flex-grow flex flex-col">
-                <h3 className="font-bold text-lg text-slate-900 mb-1 leading-tight">
-                  Secador Expresso Pro 35 000 Kz
-                </h3>
-                <p className="text-sm text-slate-500 mb-6 flex-grow">
-                  Novo produto voltado a roupas húmidas e dias de chuva.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setView("sales-roupas")}
-                    className="flex-1 text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-bold transition flex justify-center items-center gap-1.5 shadow-sm"
-                  >
-                    <Eye size={14} /> Pré-visualizar
-                  </button>
-                  <button
-                    onClick={() => {
-                      setFilterProduct("Secador Expresso Pro 35 000 Kz");
-                      setView("admin");
-                    }}
-                    className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold transition border border-slate-200 shadow-sm"
-                  >
-                    Leads
-                  </button>
-                  <button
-                    onClick={() => {
-                      const link =
-                        window.location.origin + "?product=cabide-secador";
-                      navigator.clipboard.writeText(link);
-                      alert("Link copiado: " + link);
-                    }}
-                    className="text-sm bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 px-3 py-2 rounded-xl font-bold transition flex items-center justify-center shrink-0 w-[42px] shadow-sm"
-                    title="Copiar Link da Página"
-                  >
-                    <Copy size={16} />
-                  </button>
-                </div>
-              </div>
-            </div>
+              return (
+                <div
+                  key={prod.id}
+                  className={`bg-white rounded-2xl shadow-sm border overflow-hidden flex flex-col hover:shadow-md transition ${
+                    isActive ? "border-slate-200" : "border-rose-200/80 bg-slate-50/50 opacity-90"
+                  }`}
+                >
+                  <div className="aspect-video bg-slate-100 relative group overflow-hidden">
+                    <img
+                      src={prod.image}
+                      alt={prod.title}
+                      className={`w-full h-full object-cover transition-transform group-hover:scale-105 ${
+                        isActive ? "" : "grayscale-[40%]"
+                      }`}
+                    />
+                    {/* Validation Overlay Badge */}
+                    <div
+                      className={`absolute top-3 left-3 text-[10px] uppercase font-black px-2.5 py-1 rounded-full shadow-md backdrop-blur-md border ${
+                        info.isValidated
+                          ? "bg-emerald-600/90 text-white border-emerald-400"
+                          : info.leadCount > 0
+                          ? "bg-amber-500/90 text-slate-950 border-amber-300 font-extrabold"
+                          : "bg-slate-700/90 text-white border-slate-500"
+                      }`}
+                    >
+                      {info.badgeText}
+                    </div>
 
-            {/* Produto 3: Roteador ZTE */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col hover:shadow-md transition">
-              <div className="aspect-video bg-slate-100 relative group overflow-hidden">
-                <img
-                  src={IMAGES_ROTEADOR[0]}
-                  alt="Roteador 5G Ultra Desbloqueado"
-                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                />
-                <div className="absolute top-3 right-3 bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded shadow-sm uppercase">
-                  Ativa
-                </div>
-              </div>
-              <div className="p-5 flex-grow flex flex-col">
-                <h3 className="font-bold text-lg text-slate-900 mb-1 leading-tight">
-                  Roteador 5G Ultra Desbloqueado
-                </h3>
-                <p className="text-sm text-slate-500 mb-6 flex-grow">
-                  Nova landing page focada em internet de alto desempenho.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setView("sales-roteador")}
-                    className="flex-1 text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-bold transition flex justify-center items-center gap-1.5 shadow-sm"
-                  >
-                    <Eye size={14} /> Pré-visualizar
-                  </button>
-                  <button
-                    onClick={() => {
-                      setFilterProduct("Roteador 5G Ultra Desbloqueado");
-                      setView("admin");
-                    }}
-                    className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold transition border border-slate-200 shadow-sm"
-                  >
-                    Leads
-                  </button>
-                  <button
-                    onClick={() => {
-                      const link =
-                        window.location.origin + "?product=roteador-5g";
-                      navigator.clipboard.writeText(link);
-                      alert("Link copiado: " + link);
-                    }}
-                    className="text-sm bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 px-3 py-2 rounded-xl font-bold transition flex items-center justify-center shrink-0 w-[42px] shadow-sm"
-                    title="Copiar Link da Página"
-                  >
-                    <Copy size={16} />
-                  </button>
-                </div>
-              </div>
-            </div>
+                    {/* Interactive Activate/Deactivate Toggle Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        togglePageStatus(prod.id);
+                      }}
+                      className={`absolute top-3 right-3 text-[10px] font-black px-2.5 py-1 rounded-full shadow-md uppercase transition-all duration-200 flex items-center gap-1.5 border backdrop-blur-md cursor-pointer ${
+                        isActive
+                          ? "bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-400 shadow-emerald-500/30 hover:scale-105 active:scale-95"
+                          : "bg-rose-500 hover:bg-rose-600 text-white border-rose-400 shadow-rose-500/30 hover:scale-105 active:scale-95"
+                      }`}
+                      title={isActive ? "Clique para desativar esta página" : "Clique para ativar esta página"}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-white animate-pulse" : "bg-white/80"}`} />
+                      {isActive ? "Ativa" : "Desativada"}
+                    </button>
+                  </div>
 
-            {/* Produto 4: Base Móvel 360° */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col hover:shadow-md transition">
-              <div className="aspect-video bg-slate-100 relative group overflow-hidden">
-                <img
-                  src={IMAGES_BASE_MOVEL[0]}
-                  alt="Base Móvel 360° — Deslizador para Máquina de Lavar e Geladeira"
-                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                />
-                <div className="absolute top-3 right-3 bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded shadow-sm uppercase">
-                  Ativa
-                </div>
-              </div>
-              <div className="p-5 flex-grow flex flex-col">
-                <h3 className="font-bold text-lg text-slate-900 mb-1 leading-tight">
-                  Base Móvel 360°
-                </h3>
-                <p className="text-sm text-slate-500 mb-6 flex-grow">
-                  Deslizador para fogões, geladeiras, máquinas de lavar e arcas. 15.000 Kz / Par.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setView("sales-base-movel")}
-                    className="flex-1 text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-bold transition flex justify-center items-center gap-1.5 shadow-sm"
-                  >
-                    <Eye size={14} /> Pré-visualizar
-                  </button>
-                  <button
-                    onClick={() => {
-                      setFilterProduct("Base Móvel 360°");
-                      setView("admin");
-                    }}
-                    className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold transition border border-slate-200 shadow-sm"
-                  >
-                    Leads
-                  </button>
-                  <button
-                    onClick={() => {
-                      const link =
-                        window.location.origin + "?product=base-movel-360";
-                      navigator.clipboard.writeText(link);
-                      alert("Link copiado: " + link);
-                    }}
-                    className="text-sm bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 px-3 py-2 rounded-xl font-bold transition flex items-center justify-center shrink-0 w-[42px] shadow-sm"
-                    title="Copiar Link da Página"
-                  >
-                    <Copy size={16} />
-                  </button>
-                </div>
-              </div>
-            </div>
+                  <div className="p-5 flex-grow flex flex-col justify-between">
+                    <div>
+                      <h3 className="font-bold text-lg text-slate-900 mb-1 leading-tight">
+                        {prod.title}
+                      </h3>
+                      <p className="text-xs text-slate-500 mb-4 line-clamp-2">
+                        {prod.subtitle}
+                      </p>
 
-            {/* Produto 5: Camisa Seda Gelada */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col hover:shadow-md transition">
-              <div className="aspect-video bg-slate-100 relative group overflow-hidden">
-                <img
-                  src="https://i.postimg.cc/2yRkWypx/C2128-1-branco.jpg"
-                  alt="Camisa Seda Gelada Premium"
-                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                />
-                <div className="absolute top-3 right-3 bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded shadow-sm uppercase">
-                  Ativa
+                      {/* VALIDATION PROGRESS SECTION */}
+                      <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl mb-5">
+                        <div className="flex items-center justify-between text-xs mb-1.5">
+                          <span className="font-bold text-slate-700 flex items-center gap-1">
+                            <Target size={13} className="text-indigo-600" /> Progresso:
+                          </span>
+                          <span className="font-black text-slate-900">
+                            {info.leadCount} / {info.goal} ({Math.min(100, info.percent)}%)
+                          </span>
+                        </div>
+
+                        {/* Animated Progress Bar */}
+                        <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden mb-2.5">
+                          <div
+                            className={`h-full transition-all duration-500 rounded-full ${
+                              info.isValidated
+                                ? "bg-emerald-500"
+                                : info.leadCount > 0
+                                ? "bg-gradient-to-r from-amber-500 to-yellow-400"
+                                : "bg-slate-300"
+                            }`}
+                            style={{ width: `${Math.min(100, info.percent)}%` }}
+                          />
+                        </div>
+
+                        {/* Goal Edit Controls */}
+                        {isEditing ? (
+                          <div className="flex items-center gap-1.5 pt-1 border-t border-slate-200 mt-2">
+                            <input
+                              type="number"
+                              min="1"
+                              value={tempGoalInput}
+                              onChange={(e) => setTempGoalInput(parseInt(e.target.value) || 1)}
+                              className="w-16 bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                            <button
+                              onClick={() => updateProductGoal(prod.id, tempGoalInput)}
+                              className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] px-2.5 py-1 rounded-lg font-bold transition"
+                            >
+                              Salvar
+                            </button>
+                            <button
+                              onClick={() => setEditingGoalProductId(null)}
+                              className="bg-slate-200 text-slate-600 text-[11px] px-2 py-1 rounded-lg font-bold"
+                            >
+                              X
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-200/60">
+                            <span>Meta: <strong className="text-slate-800">{info.goal} leads</strong></span>
+                            <button
+                              onClick={() => {
+                                setEditingGoalProductId(prod.id);
+                                setTempGoalInput(info.goal);
+                              }}
+                              className="text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1 transition"
+                            >
+                              <Edit size={11} /> Alterar Meta
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
+                      <button
+                        onClick={() => setView(prod.viewName)}
+                        className="flex-1 text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-bold transition flex justify-center items-center gap-1.5 shadow-sm"
+                      >
+                        <Eye size={14} /> Pré-visualizar
+                      </button>
+                      <button
+                        onClick={() => {
+                          setFilterProduct(prod.title);
+                          setView("admin");
+                        }}
+                        className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl font-bold transition border border-slate-200 shadow-sm"
+                      >
+                        Leads ({info.leadCount})
+                      </button>
+                      <button
+                        onClick={() => togglePageStatus(prod.id)}
+                        className={`text-xs px-3 py-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 shrink-0 border shadow-sm ${
+                          isActive
+                            ? "bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200"
+                            : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200"
+                        }`}
+                        title={isActive ? "Clique para desativar esta página" : "Clique para ativar esta página"}
+                      >
+                        <Power size={13} />
+                        {isActive ? "Desativar" : "Ativar"}
+                      </button>
+                      <button
+                        onClick={() => {
+                          const link =
+                            window.location.origin + "?product=" + prod.paramName;
+                          navigator.clipboard.writeText(link);
+                          alert("Link copiado: " + link);
+                        }}
+                        className="text-sm bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 px-3 py-2 rounded-xl font-bold transition flex items-center justify-center shrink-0 w-[42px] shadow-sm"
+                        title="Copiar Link da Página"
+                      >
+                        <Copy size={16} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="p-5 flex-grow flex flex-col">
-                <h3 className="font-bold text-lg text-slate-900 mb-1 leading-tight">
-                  Camisa Seda Gelada Premium
-                </h3>
-                <p className="text-sm text-slate-500 mb-6 flex-grow">
-                  Camisa social premium em seda gelada tecnológica com efeito antirrugas. 25.000 Kz / Unidade.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setView("sales-camisa-seda")}
-                    className="flex-1 text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-bold transition flex justify-center items-center gap-1.5 shadow-sm"
-                  >
-                    <Eye size={14} /> Pré-visualizar
-                  </button>
-                  <button
-                    onClick={() => {
-                      setFilterProduct("Camisa Seda Gelada Premium");
-                      setView("admin");
-                    }}
-                    className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold transition border border-slate-200 shadow-sm"
-                  >
-                    Leads
-                  </button>
-                  <button
-                    onClick={() => {
-                      const link =
-                        window.location.origin + "?product=camisa-seda";
-                      navigator.clipboard.writeText(link);
-                      alert("Link copiado: " + link);
-                    }}
-                    className="text-sm bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 px-3 py-2 rounded-xl font-bold transition flex items-center justify-center shrink-0 w-[42px] shadow-sm"
-                    title="Copiar Link da Página"
-                  >
-                    <Copy size={16} />
-                  </button>
-                </div>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </main>
       )}
