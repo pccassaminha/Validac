@@ -109,15 +109,15 @@ export default function CamisaSedaView({
     if (qty === 1) return 35000;
     if (qty === 2) return 60000;
     if (qty === 3) return 90000;
-    if (qty === 5) return 135000;
+    if (qty === 5) return 140000;
     return qty * 35000;
   };
 
   const getOldPrice = (qty: number) => {
     if (qty === 1) return 50000;
     if (qty === 2) return 100000;
-    if (qty === 3) return 105000;
-    if (qty === 5) return 175000;
+    if (qty === 3) return 150000;
+    if (qty === 5) return 250000;
     return qty * 50000;
   };
 
@@ -257,9 +257,12 @@ export default function CamisaSedaView({
                   <div>
                     <div className="flex items-center gap-2">
                       <h5 className="font-extrabold text-sm text-amber-400 group-hover:text-amber-300 transition-colors">Combo 2 Camisas</h5>
+                      <span className="text-[9px] font-black uppercase tracking-wider bg-amber-500 text-slate-950 px-1.5 py-0.2 rounded">
+                        POUPA 40.000 KZ
+                      </span>
                     </div>
                     <p className="text-[11px] text-slate-300 leading-normal mt-0.5 group-hover:text-white transition-colors">
-                      A 2ª camisa sai com praticamente <strong className="text-amber-300 group-hover:text-amber-200">25.000 Kz</strong> de desconto oficial!
+                      Receba 2 camisas (apenas 30.000 Kz / unidade).
                     </p>
                   </div>
                   <div className="text-right">
@@ -285,20 +288,20 @@ export default function CamisaSedaView({
                     <div className="flex items-center gap-2">
                       <h5 className="font-extrabold text-sm text-emerald-400 group-hover:text-emerald-300 transition-colors">Kit 3 Camisas</h5>
                       <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500 text-white px-1.5 py-0.2 rounded">
-                        POUPA 15.000 KZ
+                        POUPA 60.000 KZ
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-300 leading-normal mt-0.5 group-hover:text-white transition-colors">
-                      Economize <strong className="text-emerald-400">15.000 Kz</strong>! Receba 3 camisas (30.000 Kz / unidade).
+                      Receba 3 camisas (apenas 30.000 Kz / unidade).
                     </p>
                   </div>
                   <div className="text-right">
-                    <span className="text-xs text-slate-500 line-through block">105.000 Kz</span>
+                    <span className="text-xs text-slate-500 line-through block">150.000 Kz</span>
                     <span className="text-sm font-black text-emerald-400 group-hover:text-emerald-300 transition-colors">90.000 Kz</span>
                   </div>
                 </button>
 
-                {/* Combo Semanal (Compre 4 Leve 5) */}
+                {/* Compre 4 Leve 1 Grátis (5 Camisas) */}
                 <button
                   type="button"
                   onClick={() => {
@@ -313,18 +316,18 @@ export default function CamisaSedaView({
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h5 className="font-black text-sm text-yellow-400 group-hover:text-yellow-300 transition-colors uppercase tracking-wide">🏆 Combo Semanal (Leve 5)</h5>
+                      <h5 className="font-black text-sm text-yellow-400 group-hover:text-yellow-300 transition-colors uppercase tracking-wide">🏆 COMPRE 4 LEVE 1 GRÁTIS</h5>
                       <span className="text-[9px] font-black uppercase tracking-wider bg-yellow-500 text-indigo-950 px-2 py-0.5 rounded shadow-sm animate-bounce">
                         A MELHOR OFERTA / MAIS VENDIDO
                       </span>
                     </div>
                     <p className="text-[11px] text-yellow-100/90 leading-normal mt-1.5 group-hover:text-white transition-colors">
-                      Compre 4 e <strong className="text-yellow-400">Leve 1 Grátis</strong>! Receba 5 camisas luxuosas.
+                      Receba 5 Camisas Luxuosas ( Combo Semanal )
                     </p>
                   </div>
                   <div className="text-right shrink-0 ml-2">
-                    <span className="text-xs text-slate-400 line-through block">175.000 Kz</span>
-                    <span className="text-base font-black text-yellow-400 group-hover:text-yellow-300 transition-all scale-110 inline-block">135.000 Kz</span>
+                    <span className="text-xs text-slate-400 line-through block">250.000 Kz</span>
+                    <span className="text-base font-black text-yellow-400 group-hover:text-yellow-300 transition-all scale-110 inline-block">140.000 Kz</span>
                   </div>
                 </button>
               </div>
@@ -777,21 +780,21 @@ export default function CamisaSedaView({
                       title: "2 Camisas Geladas (Combo Promocional)",
                       priceText: "60.000 Kz",
                       badge: "Promoção Recomendada",
-                      desc: "Poupa 40.000 Kz! A 2ª camisa sai com 25.000 Kz de desconto",
+                      desc: "Poupa 40.000 Kz! Apenas 30.000 Kz por unidade (De 100.000 Kz por 60.000 Kz)",
                     },
                     {
                       qty: 3,
-                      title: "KIT 3 CAMISAS (ECONOMIZE 15.000 KZ)",
+                      title: "KIT 3 CAMISAS (POUPA 60.000 KZ)",
                       priceText: "90.000 Kz",
                       badge: "Economia Extra",
-                      desc: "Apenas 30.000 Kz por unidade! De 105.000 Kz por apenas 90.000 Kz",
+                      desc: "Apenas 30.000 Kz por unidade! De 150.000 Kz por apenas 90.000 Kz",
                     },
                     {
                       qty: 5,
-                      title: "🏆 COMBO SEMANAL: COMPRE 4 LEVE 5",
-                      priceText: "135.000 Kz",
+                      title: "🏆 COMPRE 4 LEVE 1 GRÁTIS",
+                      priceText: "140.000 Kz",
                       badge: "A MELHOR OFERTA / MAIS VENDIDO",
-                      desc: "De 175.000 Kz por apenas 135.000 Kz! (Recebe 5 Camisas)",
+                      desc: "De 250.000 Kz por apenas 140.000 Kz! (Receba 5 camisas luxuosas)",
                     },
                   ].map((pkg) => (
                     <button
@@ -892,7 +895,7 @@ export default function CamisaSedaView({
                   <span>Oferta Escolhida:</span>
                   <span className="text-indigo-600 text-right">
                     {formData.quantity === 5
-                      ? `Combo Semanal Leve 5 (Compre 4 + 1 Grátis) (${Array.from(new Set(shirtConfigs.slice(0, 5).map(c => c.color))).join(", ")} / ${Array.from(new Set(shirtConfigs.slice(0, 5).map(c => c.size))).join(", ")})`
+                      ? `Compre 4 Leve 1 Grátis (5 Camisas) (${Array.from(new Set(shirtConfigs.slice(0, 5).map(c => c.color))).join(", ")} / ${Array.from(new Set(shirtConfigs.slice(0, 5).map(c => c.size))).join(", ")})`
                       : `${formData.quantity}x Camisa Seda (${Array.from(new Set(shirtConfigs.slice(0, formData.quantity).map(c => c.color))).join(", ")} / ${Array.from(new Set(shirtConfigs.slice(0, formData.quantity).map(c => c.size))).join(", ")})`}
                   </span>
                 </div>
