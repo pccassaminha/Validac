@@ -215,44 +215,6 @@ export default function CamisaSedaView({
               O tecido de <strong>Seda Gelada Premium (Ice Silk)</strong> possui tecnologia antirrugas definitiva, caimento sob medida e toque frio que mantém o seu corpo fresco o dia inteiro.
             </p>
 
-            {/* PRODUCT VALIDATION CARD / BANNER */}
-            <div className={`p-4 rounded-2xl border transition-all mb-6 max-w-md mx-auto lg:mx-0 shadow-sm ${
-              leadCount >= leadGoal
-                ? "bg-emerald-50 border-emerald-200 text-emerald-950"
-                : "bg-amber-50/90 border-amber-200 text-amber-950"
-            }`}>
-              <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${
-                    leadCount >= leadGoal
-                      ? "bg-emerald-600 text-white"
-                      : "bg-amber-500 text-slate-950 font-extrabold"
-                  }`}>
-                    {leadCount >= leadGoal ? "🏆 PRODUTO VALIDADO" : "⚡ VALIDAÇÃO DE LOTE DE ESTOQUE"}
-                  </span>
-                </div>
-                <span className="text-xs font-black text-slate-800">
-                  {leadCount} / {leadGoal} Reservas ({Math.min(100, Math.round((leadCount / leadGoal) * 100))}%)
-                </span>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden mb-2">
-                <div
-                  className={`h-full transition-all duration-700 rounded-full ${
-                    leadCount >= leadGoal ? "bg-emerald-500" : "bg-gradient-to-r from-amber-500 to-yellow-400"
-                  }`}
-                  style={{ width: `${Math.min(100, Math.round((leadCount / leadGoal) * 100))}%` }}
-                />
-              </div>
-
-              <p className="text-[11px] font-medium text-slate-700 leading-tight">
-                {leadCount >= leadGoal
-                  ? "✅ Este produto atingiu a meta de reservas e foi VALIDADO com sucesso! Lote aprovado com envio prioritário."
-                  : `🔥 Faltam apenas ${Math.max(0, leadGoal - leadCount)} reservas para este produto ser oficialmente validado no lote promocional!`
-                }
-              </p>
-            </div>
 
             {/* Price Box with detailed discount logic */}
             <div className="bg-indigo-950 text-white p-5.5 rounded-3xl mb-6 max-w-md mx-auto lg:mx-0 shadow-lg border border-indigo-800">

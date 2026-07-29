@@ -746,35 +746,56 @@ export default function App() {
     },
   ];
 
-  const getProductLeadCount = (productId: string) => {
+  const getProductLeadStats = (productId: string) => {
     const prod = PRODUCTS_LIST.find((p) => p.id === productId);
-    if (!prod) return 0;
-    return adminData.filter((l) => prod.matchesLead(l)).length;
+    if (!prod) return { totalLeads: 0, totalReservas: 0, confirmedReservas: 0, reservasCount: 0 };
+    const matching = adminData.filter((l) => prod.matchesLead(l));
+    const confirmed = matching.filter(
+      (l) => l.status && (l.status.includes("Reservado") || l.status === "Entregue" || l.status === "Pago")
+    ).length;
+    const nonRejected = matching.filter((l) => l.status !== "Rejeitado" && l.status !== "Cancelado").length;
+    // Use confirmed reservations if available; otherwise use all active non-rejected leads
+    const reservasCount = confirmed > 0 ? confirmed : nonRejected;
+
+    return {
+      totalLeads: matching.length,
+      confirmedReservas: confirmed,
+      reservasCount,
+    };
+  };
+
+  const getProductLeadCount = (productId: string) => {
+    return getProductLeadStats(productId).reservasCount;
   };
 
   const getProductValidationInfo = (productId: string) => {
-    const leadCount = getProductLeadCount(productId);
+    const stats = getProductLeadStats(productId);
     const goal = productGoals[productId] || 50;
-    const percent = Math.round((leadCount / goal) * 100);
-    const isValidated = leadCount >= goal;
+    const leadCount = stats.totalLeads;
+    const reservasCount = stats.reservasCount;
+    const confirmedReservas = stats.confirmedReservas;
+    const percent = Math.round((reservasCount / goal) * 100);
+    const isValidated = reservasCount >= goal;
     let statusKey: "validated" | "in_validation" | "testing" = "testing";
     if (isValidated) statusKey = "validated";
-    else if (leadCount > 0) statusKey = "in_validation";
+    else if (reservasCount > 0 || leadCount > 0) statusKey = "in_validation";
 
     return {
       leadCount,
+      reservasCount,
+      confirmedReservas,
       goal,
       percent,
       isValidated,
       statusKey,
       badgeText: isValidated
         ? "🟢 VALIDADO"
-        : leadCount > 0
+        : reservasCount > 0
         ? `⚡ EM VALIDAÇÃO (${percent}%)`
         : "🔴 EM TESTE",
       badgeClass: isValidated
         ? "bg-emerald-500 text-white font-black"
-        : leadCount > 0
+        : reservasCount > 0
         ? "bg-amber-500 text-slate-950 font-black"
         : "bg-slate-500 text-white font-bold",
     };
@@ -5970,10 +5991,13 @@ Final do dia (16h - 18h)`;
                   <Users size={22} />
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total de Leads</span>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total de Reservas</span>
                   <p className="text-2xl font-black text-slate-900">
-                    {PRODUCTS_LIST.reduce((sum, p) => sum + getProductLeadCount(p.id), 0)}
+                    {PRODUCTS_LIST.reduce((sum, p) => sum + getProductValidationInfo(p.id).reservasCount, 0)}
                   </p>
+                  <span className="text-[10px] text-slate-400 font-normal">
+                    {PRODUCTS_LIST.reduce((sum, p) => sum + getProductValidationInfo(p.id).leadCount, 0)} leads no total
+                  </span>
                 </div>
               </div>
             </div>
@@ -6015,7 +6039,7 @@ Final do dia (16h - 18h)`;
                       className={`absolute top-3 left-3 text-[10px] uppercase font-black px-2.5 py-1 rounded-full shadow-md backdrop-blur-md border ${
                         info.isValidated
                           ? "bg-emerald-600/90 text-white border-emerald-400"
-                          : info.leadCount > 0
+                          : info.reservasCount > 0
                           ? "bg-amber-500/90 text-slate-950 border-amber-300 font-extrabold"
                           : "bg-slate-700/90 text-white border-slate-500"
                       }`}
@@ -6055,10 +6079,10 @@ Final do dia (16h - 18h)`;
                       <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl mb-5">
                         <div className="flex items-center justify-between text-xs mb-1.5">
                           <span className="font-bold text-slate-700 flex items-center gap-1">
-                            <Target size={13} className="text-indigo-600" /> Progresso:
+                            <Target size={13} className="text-indigo-600" /> Reservas:
                           </span>
                           <span className="font-black text-slate-900">
-                            {info.leadCount} / {info.goal} ({Math.min(100, info.percent)}%)
+                            {info.reservasCount} / {info.goal} ({Math.min(100, info.percent)}%)
                           </span>
                         </div>
 
@@ -6068,7 +6092,7 @@ Final do dia (16h - 18h)`;
                             className={`h-full transition-all duration-500 rounded-full ${
                               info.isValidated
                                 ? "bg-emerald-500"
-                                : info.leadCount > 0
+                                : info.reservasCount > 0
                                 ? "bg-gradient-to-r from-amber-500 to-yellow-400"
                                 : "bg-slate-300"
                             }`}
@@ -6101,7 +6125,7 @@ Final do dia (16h - 18h)`;
                           </div>
                         ) : (
                           <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-200/60">
-                            <span>Meta: <strong className="text-slate-800">{info.goal} leads</strong></span>
+                            <span>Meta: <strong className="text-slate-800">{info.goal} Reservas</strong></span>
                             <button
                               onClick={() => {
                                 setEditingGoalProductId(prod.id);
@@ -6129,8 +6153,9 @@ Final do dia (16h - 18h)`;
                           setView("admin");
                         }}
                         className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl font-bold transition border border-slate-200 shadow-sm"
+                        title={`${info.leadCount} leads recebidos no total`}
                       >
-                        Leads ({info.leadCount})
+                        Ver Leads ({info.leadCount})
                       </button>
                       <button
                         onClick={() => togglePageStatus(prod.id)}
