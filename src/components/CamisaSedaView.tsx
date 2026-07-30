@@ -112,7 +112,7 @@ export default function CamisaSedaView({
   const getCalculatedPrice = (qty: number) => {
     if (qty === 1) return 35000;
     if (qty === 2) return 60000;
-    if (qty === 3) return 90000;
+    if (qty === 3) return 86000;
     if (qty === 5) return 140000;
     return qty * 35000;
   };
@@ -293,16 +293,16 @@ export default function CamisaSedaView({
                     <div className="flex items-center gap-2">
                       <h5 className="font-extrabold text-sm text-emerald-400 group-hover:text-emerald-300 transition-colors">Kit 3 Camisas</h5>
                       <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500 text-white px-1.5 py-0.2 rounded">
-                        POUPA 60.000 KZ
+                        POUPA 64.000 KZ
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-300 leading-normal mt-0.5 group-hover:text-white transition-colors">
-                      Receba 3 camisas (apenas 30.000 Kz / unidade).
+                      Receba 3 camisas (apenas 28.667 Kz / unidade).
                     </p>
                   </div>
                   <div className="text-right">
                     <span className="text-xs text-slate-500 line-through block">150.000 Kz</span>
-                    <span className="text-sm font-black text-emerald-400 group-hover:text-emerald-300 transition-colors">90.000 Kz</span>
+                    <span className="text-sm font-black text-emerald-400 group-hover:text-emerald-300 transition-colors">86.000 Kz</span>
                   </div>
                 </button>
 
@@ -789,10 +789,10 @@ export default function CamisaSedaView({
                     },
                     {
                       qty: 3,
-                      title: "KIT 3 CAMISAS (POUPA 60.000 KZ)",
-                      priceText: "90.000 Kz",
+                      title: "KIT 3 CAMISAS (POUPA 64.000 KZ)",
+                      priceText: "86.000 Kz",
                       badge: "Economia Extra",
-                      desc: "Apenas 30.000 Kz por unidade! De 150.000 Kz por apenas 90.000 Kz",
+                      desc: "Apenas 28.667 Kz por unidade! De 150.000 Kz por apenas 86.000 Kz",
                     },
                     {
                       qty: 5,

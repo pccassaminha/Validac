@@ -1346,7 +1346,7 @@ export default function App() {
     if (view === "sales-camisa-seda") {
       if (formData.quantity === 1) computedTotal = 35000;
       else if (formData.quantity === 2) computedTotal = 60000;
-      else if (formData.quantity === 3) computedTotal = 90000;
+      else if (formData.quantity === 3) computedTotal = 86000;
       else if (formData.quantity === 5) computedTotal = 140000;
     }
 
@@ -6399,7 +6399,7 @@ Final do dia (16h - 18h)`;
                           : view === "sales-base-movel"
                             ? "15.000 Kz"
                             : view === "sales-camisa-seda"
-                              ? (formData.quantity === 1 ? "35.000 Kz" : formData.quantity === 2 ? "60.000 Kz" : formData.quantity === 3 ? "90.000 Kz" : formData.quantity === 5 ? "140.000 Kz" : "35.000 Kz")
+                              ? (formData.quantity === 1 ? "35.000 Kz" : formData.quantity === 2 ? "60.000 Kz" : formData.quantity === 3 ? "86.000 Kz" : formData.quantity === 5 ? "140.000 Kz" : "35.000 Kz")
                               : "25.000 Kz"}
                     </b>
                     ?{" "}
@@ -6734,7 +6734,7 @@ Final do dia (16h - 18h)`;
                           : view === "sales-base-movel"
                             ? "15.000 Kz"
                             : view === "sales-camisa-seda"
-                              ? (formData.quantity === 1 ? "35.000 Kz" : formData.quantity === 2 ? "60.000 Kz" : formData.quantity === 3 ? "90.000 Kz" : formData.quantity === 5 ? "140.000 Kz" : "35.000 Kz")
+                              ? (formData.quantity === 1 ? "35.000 Kz" : formData.quantity === 2 ? "60.000 Kz" : formData.quantity === 3 ? "86.000 Kz" : formData.quantity === 5 ? "140.000 Kz" : "35.000 Kz")
                               : "25.000 Kz"}
                     </strong>
                     .
