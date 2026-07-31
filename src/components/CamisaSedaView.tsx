@@ -670,7 +670,7 @@ export default function CamisaSedaView({
                 <div className="bg-amber-50 border border-amber-200/90 rounded-xl p-3 text-xs text-amber-900 flex items-start gap-2 shadow-xs">
                   <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
                   <p className="leading-snug font-medium">
-                    <strong>⚠️ Atenção ao Tamanho:</strong> Certifique-se de escolher o tamanho correto para a sua camisa. O novo lote é entregue dentro de 14 dias após a sua reserva.
+                    <strong>📦 Lote chegará dentro de 14 dias após a sua reserva.</strong>
                   </p>
                 </div>
 

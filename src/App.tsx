@@ -5,6 +5,9 @@ import {
   Activity,
   CheckCircle,
   PackageOpen,
+  ClipboardCheck,
+  Pencil,
+  ShoppingBag,
   TriangleAlert,
   Crown,
   XCircle,
@@ -527,6 +530,12 @@ export default function App() {
 
   // Sales State
   const [modalState, setModalState] = useState<ModalState>("none");
+  const [lastSubmittedLead, setLastSubmittedLead] = useState<{
+    color?: string;
+    size?: string;
+    totalPrice: number;
+    productName: string;
+  } | null>(null);
   const [leadToDelete, setLeadToDelete] = useState<any>(null);
   const [selectedLeadForPreview, setSelectedLeadForPreview] =
     useState<any>(null);
@@ -1432,28 +1441,32 @@ export default function App() {
       ...(selectedSize ? { tamanho: selectedSize } : {}),
     };
 
-    try {
-      const docRef = await addDoc(collection(db, "leads"), tempLead);
-      setCurrentLeadId(docRef.id);
+    setLastSubmittedLead({
+      color: selectedColor,
+      size: selectedSize,
+      totalPrice: computedTotal,
+      productName: produtoName,
+    });
 
-      // Disparar Evento Lead (Pendente)
-      trackEvent(produtoName, "generate_lead", "Lead", appSettings);
+    // Abrir o pop-up de confirmação IMEDIATAMENTE (processamento instantâneo)
+    setIsSubmitting(false);
+    setModalState("step1");
 
-      setIsSubmitting(false);
-      setModalState("step1");
-    } catch (err: any) {
-      if (
-        err instanceof Error &&
-        err.message.includes("missing or insufficient permissions")
-      ) {
-        handleFirestoreError(err, OperationType.CREATE, "leads");
-      }
-      console.error("Erro ao criar lead:", err);
-      alert(
-        "Ocorreu um erro ao salvar o seu pedido. Por favor, tente novamente.",
-      );
-      setIsSubmitting(false);
-    }
+    // Salvar no Firestore em segundo plano
+    addDoc(collection(db, "leads"), tempLead)
+      .then((docRef) => {
+        setCurrentLeadId(docRef.id);
+        trackEvent(produtoName, "generate_lead", "Lead", appSettings);
+      })
+      .catch((err: any) => {
+        if (
+          err instanceof Error &&
+          err.message.includes("missing or insufficient permissions")
+        ) {
+          handleFirestoreError(err, OperationType.CREATE, "leads");
+        }
+        console.error("Erro ao salvar lead em segundo plano:", err);
+      });
   };
 
   const processReservation = async (isAccepted: boolean) => {
@@ -6432,119 +6445,160 @@ Final do dia (16h - 18h)`;
             className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex justify-center items-center p-4 overflow-y-auto"
             onClick={() => setModalState("none")}
           >
-            {/* Step 1: Sold Out */}
+            {/* Step 1: Confirmation & Sold-Out Reservation Registered Modal */}
             {modalState === "step1" && (
               <motion.div
                 initial={{ scale: 0.9, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white max-w-md w-full rounded-3xl shadow-2xl overflow-hidden my-8"
+                className="bg-white max-w-md w-full rounded-3xl shadow-2xl overflow-hidden my-8 border border-slate-100"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="bg-red-600 p-8 text-center text-white relative">
-                  <PackageOpen className="w-16 h-16 mx-auto mb-4" />
-                  <h3 className="text-3xl font-black tracking-tight">
-                    🔴 Lote Esgotado!
+                {/* Header */}
+                <div className="bg-gradient-to-r from-red-600 to-rose-700 p-6 text-center text-white relative">
+                  <button
+                    onClick={() => closeModal()}
+                    className="absolute top-4 right-4 text-rose-200 hover:text-white p-1 rounded-full hover:bg-white/10 transition"
+                  >
+                    <XCircle size={24} />
+                  </button>
+                  <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-3 backdrop-blur-sm border border-white/20 shadow-inner">
+                    <CheckCircle className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-black tracking-tight">
+                    🎉 Reserva Registada!
                   </h3>
+                  <p className="text-xs text-rose-100 mt-1 font-semibold">
+                    🔴 Lote para entrega imediata esgotado em Luanda
+                  </p>
                 </div>
-                <div className="p-8 text-center text-slate-700">
-                  <p className="mb-4 text-lg font-medium leading-relaxed">
-                    O stock do{" "}
-                    <strong>
-                      {view === "sales-cinta-colombiana"
-                        ? "Cinta Modeladora Colombiana"
-                        : view === "sales-roupas"
-                          ? "Secador Expresso Portátil"
-                          : view === "sales-roteador"
-                            ? "ZTE 5G WiFi 6 CPE"
-                            : view === "sales-base-movel"
-                              ? "Base Móvel 360°"
-                              : view === "sales-camisa-seda"
-                                ? "Camisa de Seda Gelada"
-                                : "Secador Inteligente UV"}
-                    </strong>{" "}
-                    para entrega imediata terminou devido à altíssima procura
-                    nas últimas horas.
-                  </p>
 
-                  {view === "sales-cinta-colombiana" ? (
-                    <div className="bg-rose-50 border border-rose-200 text-rose-900 p-4 rounded-2xl text-xs sm:text-sm mb-6 text-left flex items-start gap-3 shadow-sm">
-                      <Timer size={22} className="text-rose-600 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-bold text-rose-950 text-sm mb-1">
-                          📦 Lote de Lançamento & Entrega em Luanda:
-                        </p>
-                        <p className="text-xs text-rose-900 leading-relaxed font-medium">
-                          O lote de pré-venda será reposto e entregue dentro de <strong>14 dias</strong> após a confirmação.
-                        </p>
-                        <p className="text-xs text-amber-900 bg-amber-50 p-2 rounded-lg font-semibold mt-2 border border-amber-200">
-                          ⚠️ <strong>Atenção:</strong> Certifique-se de que escolheu o tamanho correto (do XS ao 6XL) para a sua cinta.
-                        </p>
-                      </div>
+                <div className="p-6 space-y-5 text-slate-700 text-sm">
+                  {/* Mensagem Principal */}
+                  <div className="bg-rose-50 border border-rose-200/90 rounded-2xl p-4 text-xs sm:text-sm text-rose-950 space-y-2">
+                    <div className="flex items-center gap-2 font-black text-rose-900 text-sm">
+                      <Timer size={18} className="text-rose-600 shrink-0" />
+                      <span>Prazo do Lote de Pré-Venda:</span>
                     </div>
-                  ) : view === "sales-camisa-seda" ? (
-                    <div className="bg-amber-50 border border-amber-200 text-amber-900 p-4 rounded-2xl text-xs sm:text-sm mb-6 text-left flex items-start gap-3 shadow-sm">
-                      <Timer size={22} className="text-amber-600 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-bold text-amber-950 text-sm mb-1">
-                          📦 Reposição de Estoque & Entrega:
-                        </p>
-                        <p className="text-xs text-amber-900 leading-relaxed font-medium">
-                          O estoque será reposto dentro de <strong>14 dias</strong>. Após confirmar a encomenda, vai receber a sua entrega dentro de <strong>14 dias</strong>!
-                        </p>
-                        <p className="text-xs text-amber-800 font-semibold mt-2 pt-2 border-t border-amber-200/80">
-                          ⚠️ <strong>Atenção:</strong> Certifique-se de que escolheu o tamanho e cor corretos antes de confirmar.
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-amber-50 border border-amber-200 text-amber-900 p-4 rounded-2xl text-xs sm:text-sm mb-6 text-left flex items-start gap-3 shadow-sm">
-                      <Timer size={22} className="text-amber-600 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-bold text-amber-950 text-sm mb-1">
-                          📦 Reposição de Estoque:
-                        </p>
-                        <p className="text-xs text-amber-900 leading-relaxed font-medium">
-                          O estoque será reposto em breve. A entrega é efetuada rapidamente em poucos dias úteis após o envio.
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                    <p className="leading-relaxed text-slate-700">
+                      A sua reserva foi registada com sucesso! O lote de pré-venda será reposto e entregue no seu endereço dentro de <strong>14 dias</strong> após a sua reserva.
+                    </p>
+                    <p className="text-xs font-semibold text-emerald-700 bg-emerald-50 p-2 rounded-xl border border-emerald-200">
+                      💡 <strong>Pagamento 100% Seguro:</strong> Pagas somente em mãos no ato da entrega!
+                    </p>
+                  </div>
 
-                  <p className="text-slate-500 mb-8 max-w-sm mx-auto leading-relaxed">
-                    Mas <b>não te preocupes!</b> O novo lote chega em breve.
-                    Queres garantir a tua reserva e manter o preço promocional
-                    de{" "}
-                    <b>
-                      {view === "sales-cinta-colombiana"
-                        ? (formData.quantity === 1 ? "50.000 Kz" : formData.quantity === 2 ? "90.000 Kz" : formData.quantity === 3 ? "125.000 Kz" : "50.000 Kz")
-                        : view === "sales-roupas"
-                          ? "35.000 Kz"
-                          : view === "sales-roteador"
-                            ? "240.000 Kz"
-                            : view === "sales-base-movel"
-                              ? "15.000 Kz"
-                              : view === "sales-camisa-seda"
-                                ? (formData.quantity === 1 ? "35.000 Kz" : formData.quantity === 2 ? "60.000 Kz" : formData.quantity === 3 ? "86.000 Kz" : formData.quantity === 5 ? "140.000 Kz" : "35.000 Kz")
-                                : "25.000 Kz"}
-                    </b>
-                    ?{" "}
-                    <span className="text-indigo-600 font-bold block mt-2">
-                      (Não pagas nada hoje!)
-                    </span>
-                  </p>
-                  <div className="space-y-3">
+                  {/* Dados do Cliente */}
+                  <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2">
+                    <div className="flex items-center gap-2 font-bold text-slate-900 border-b border-slate-200/80 pb-2 text-xs uppercase tracking-wider text-indigo-600">
+                      <User size={15} />
+                      <span>Seus Dados Registados</span>
+                    </div>
+                    <div className="grid grid-cols-1 gap-1.5 text-xs sm:text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500 font-medium">Nome:</span>
+                        <span className="font-bold text-slate-800">{formData.name || "Não informado"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500 font-medium">WhatsApp / Telefone:</span>
+                        <span className="font-bold text-slate-800">{formData.phone || "Não informado"}</span>
+                      </div>
+                      <div className="flex justify-between items-start gap-2">
+                        <span className="text-slate-500 font-medium shrink-0">Endereço de Entrega:</span>
+                        <span className="font-bold text-slate-800 text-right">
+                          {formData.area ? `${formData.area}, ` : ""}{formData.province === "Outra" ? formData.customProvince : formData.province}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Resumo do Pedido */}
+                  <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2">
+                    <div className="flex items-center gap-2 font-bold text-slate-900 border-b border-slate-200/80 pb-2 text-xs uppercase tracking-wider text-indigo-600">
+                      <ShoppingBag size={15} />
+                      <span>Detalhes da Reserva</span>
+                    </div>
+                    <div className="space-y-1.5 text-xs sm:text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500 font-medium">Produto:</span>
+                        <span className="font-bold text-slate-900">
+                          {view === "sales-cinta-colombiana"
+                            ? "Cinta Modeladora Colombiana"
+                            : view === "sales-roupas"
+                              ? "Secador Expresso Portátil"
+                              : view === "sales-roteador"
+                                ? "ZTE 5G Ultra WiFi"
+                                : view === "sales-base-movel"
+                                  ? "Base Móvel 360°"
+                                  : view === "sales-camisa-seda"
+                                    ? "Camisa de Seda Gelada Premium"
+                                    : "Secador UV"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500 font-medium">Quantidade:</span>
+                        <span className="font-bold text-slate-800">{formData.quantity}x Unidade(s)</span>
+                      </div>
+                      {(lastSubmittedLead?.color || lastSubmittedLead?.size) && (
+                        <>
+                          {lastSubmittedLead?.color && (
+                            <div className="flex justify-between">
+                              <span className="text-slate-500 font-medium">Cor(es):</span>
+                              <span className="font-bold text-slate-800">{lastSubmittedLead.color}</span>
+                            </div>
+                          )}
+                          {lastSubmittedLead?.size && (
+                            <div className="flex justify-between">
+                              <span className="text-slate-500 font-medium">Tamanho(s):</span>
+                              <span className="font-bold text-slate-800">{lastSubmittedLead.size}</span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                      <div className="flex justify-between items-center pt-2 border-t border-slate-200/80 mt-2">
+                        <span className="text-slate-700 font-bold">Total a pagar na entrega:</span>
+                        <span className="font-black text-emerald-600 text-base sm:text-lg">
+                          {new Intl.NumberFormat("pt-AO").format(
+                            lastSubmittedLead?.totalPrice || (
+                              view === "sales-camisa-seda"
+                                ? (formData.quantity === 1 ? 35000 : formData.quantity === 2 ? 60000 : formData.quantity === 3 ? 86000 : formData.quantity === 5 ? 140000 : 35000)
+                                : view === "sales-cinta-colombiana"
+                                  ? (formData.quantity === 1 ? 50000 : formData.quantity === 2 ? 90000 : formData.quantity === 3 ? 125000 : 50000)
+                                  : 35000
+                            )
+                          )} Kz
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Lembrete de verificação */}
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 flex items-start gap-2">
+                    <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                    <p className="leading-snug font-medium">
+                      Certifique-se de ter escolhido o <strong>tamanho e cor corretos</strong>. Se precisar alterar algo, clique em Editar Detalhes abaixo.
+                    </p>
+                  </div>
+
+                  {/* Botões */}
+                  <div className="space-y-2 pt-1">
                     <button
-                      onClick={() => processReservation(true)}
-                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 px-4 rounded-xl shadow-lg transition-transform active:scale-[0.98]"
+                      onClick={() => closeModal()}
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 px-4 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98] text-base flex justify-center items-center gap-2"
                     >
-                      ✅ SIM, QUERO RESERVAR O MEU!
+                      <CheckCircle size={20} />
+                      ENTENDIDO, CONCLUIR
                     </button>
                     <button
-                      onClick={() => setModalState("last-chance")}
-                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-400 font-bold py-3.5 px-4 rounded-xl transition"
+                      onClick={() => {
+                        setModalState("none");
+                        const formElem = document.getElementById("comprar");
+                        if (formElem) formElem.scrollIntoView({ behavior: "smooth" });
+                      }}
+                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 px-4 rounded-2xl transition-all active:scale-[0.98] flex justify-center items-center gap-2 text-xs border border-slate-200"
                     >
-                      Não, prefiro perder a promoção
+                      <Pencil size={16} />
+                      EDITAR DETALHES DA RESERVA
                     </button>
                   </div>
                 </div>
