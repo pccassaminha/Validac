@@ -6371,7 +6371,7 @@ Final do dia (16h - 18h)`;
                   </h3>
                 </div>
                 <div className="p-8 text-center text-slate-700">
-                  <p className="mb-6 text-lg font-medium leading-relaxed">
+                  <p className="mb-4 text-lg font-medium leading-relaxed">
                     O stock do{" "}
                     <strong>
                       {view === "sales-roupas"
@@ -6387,6 +6387,36 @@ Final do dia (16h - 18h)`;
                     para entrega imediata terminou devido à altíssima procura
                     nas últimas horas.
                   </p>
+
+                  {view === "sales-camisa-seda" ? (
+                    <div className="bg-amber-50 border border-amber-200 text-amber-900 p-4 rounded-2xl text-xs sm:text-sm mb-6 text-left flex items-start gap-3 shadow-sm">
+                      <Timer size={22} className="text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold text-amber-950 text-sm mb-1">
+                          📦 Reposição de Estoque & Entrega:
+                        </p>
+                        <p className="text-xs text-amber-900 leading-relaxed font-medium">
+                          O estoque será reposto dentro de <strong>14 dias</strong>. Após confirmar a encomenda, vai receber a sua entrega dentro de <strong>14 dias</strong>!
+                        </p>
+                        <p className="text-xs text-amber-800 font-semibold mt-2 pt-2 border-t border-amber-200/80">
+                          ⚠️ <strong>Atenção:</strong> Certifique-se de que escolheu o tamanho e cor corretos antes de confirmar.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-amber-50 border border-amber-200 text-amber-900 p-4 rounded-2xl text-xs sm:text-sm mb-6 text-left flex items-start gap-3 shadow-sm">
+                      <Timer size={22} className="text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold text-amber-950 text-sm mb-1">
+                          📦 Reposição de Estoque:
+                        </p>
+                        <p className="text-xs text-amber-900 leading-relaxed font-medium">
+                          O estoque será reposto em breve. A entrega é efetuada rapidamente em poucos dias úteis após o envio.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   <p className="text-slate-500 mb-8 max-w-sm mx-auto leading-relaxed">
                     Mas <b>não te preocupes!</b> O novo lote chega em breve.
                     Queres garantir a tua reserva e manter o preço promocional
@@ -6739,10 +6769,36 @@ Final do dia (16h - 18h)`;
                     </strong>
                     .
                   </p>
-                  <div className="bg-emerald-50 text-emerald-800 p-5 rounded-2xl text-sm mb-8 border border-emerald-100 font-bold leading-relaxed">
-                    Receberás uma mensagem no WhatsApp quando o lote chegar —
-                    pagas só no momento da entrega.
-                  </div>
+                  {view === "sales-camisa-seda" ? (
+                    <div className="bg-emerald-50 text-emerald-900 p-5 rounded-2xl text-sm mb-8 border border-emerald-200 text-left space-y-2.5 shadow-sm">
+                      <div className="flex items-center gap-2 font-black text-emerald-950 text-base">
+                        <Timer size={20} className="text-emerald-600 shrink-0" />
+                        <span>Prazo de Reposição & Entrega (Camisa de Seda)</span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-emerald-900 leading-relaxed font-medium">
+                        O estoque será reposto dentro de <strong>14 dias</strong>. Após confirmar a encomenda, vai receber o seu pedido dentro de <strong>14 dias</strong>!
+                      </p>
+                      <p className="text-xs text-amber-900 bg-amber-50/90 border border-amber-200/80 p-2.5 rounded-xl font-medium">
+                        ⚠️ <strong>Observação:</strong> Certifique-se de ter escolhido o tamanho e a cor corretos para a sua camisa.
+                      </p>
+                      <p className="text-xs text-emerald-700 font-semibold pt-2 border-t border-emerald-200/80">
+                        Receberás uma mensagem no WhatsApp quando o lote chegar — pagas só no momento da entrega.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="bg-emerald-50 text-emerald-900 p-5 rounded-2xl text-sm mb-8 border border-emerald-200 text-left space-y-2.5 shadow-sm">
+                      <div className="flex items-center gap-2 font-black text-emerald-950 text-base">
+                        <Timer size={20} className="text-emerald-600 shrink-0" />
+                        <span>Prazo de Reposição & Entrega</span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-emerald-900 leading-relaxed font-medium">
+                        A sua reserva foi registrada com sucesso! A entrega será realizada em poucos dias úteis após o envio do lote.
+                      </p>
+                      <p className="text-xs text-emerald-700 font-semibold pt-2 border-t border-emerald-200/80">
+                        Receberás uma mensagem no WhatsApp quando o lote chegar — pagas só no momento da entrega.
+                      </p>
+                    </div>
+                  )}
 
                   <div className="pt-4 border-t border-slate-100">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">

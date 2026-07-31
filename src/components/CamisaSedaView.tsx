@@ -667,6 +667,13 @@ export default function CamisaSedaView({
                   <p className="text-[11px] text-slate-500 mt-0.5">Selecione a cor e o tamanho ideal para cada uma das camisas do seu pacote:</p>
                 </div>
 
+                <div className="bg-amber-50 border border-amber-200/90 rounded-xl p-3 text-xs text-amber-900 flex items-start gap-2 shadow-xs">
+                  <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                  <p className="leading-snug font-medium">
+                    <strong>Atenção ao Tamanho:</strong> Certifique-se de escolher o tamanho correto para a sua camisa.
+                  </p>
+                </div>
+
                 <div className="space-y-4">
                   {Array.from({ length: formData.quantity }).map((_, index) => {
                     const currentConf = shirtConfigs[index] || { color: COLOR_IMAGES[0].color, size: "L - G" };
@@ -921,6 +928,17 @@ export default function CamisaSedaView({
                 </div>
               </div>
 
+              {/* Observação sobre a escolha do tamanho */}
+              <div className="bg-amber-50 border border-amber-200/90 rounded-xl p-3.5 text-xs text-amber-900 flex items-start gap-2.5 shadow-xs">
+                <Info size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                <div className="leading-normal">
+                  <span className="font-bold block text-amber-950">Observação sobre o tamanho:</span>
+                  <p className="text-[11px] text-amber-900 mt-0.5">
+                    Por favor, <strong>certifique-se de que escolheu o tamanho e a cor corretos</strong> para a sua camisa antes de confirmar a reserva!
+                  </p>
+                </div>
+              </div>
+
               {/* Botão de Envio */}
               <div className="pt-3">
                 <button
@@ -968,7 +986,7 @@ export default function CamisaSedaView({
             },
             {
               q: "Como funciona a entrega e o pagamento em Luanda?",
-              a: "A entrega é efetuada rapidamente pelo nosso estafeta próprio em poucos dias úteis após confirmarmos a reserva. O pagamento é feito 100% de forma segura apenas no momento em que recebe a camisa em mãos (dinheiro ou transferência de imediato)."
+              a: "O estoque é reposto e a entrega é efetuada diretamente ao seu endereço dentro de 14 dias após confirmar a encomenda. O pagamento é feito 100% de forma segura apenas no momento em que recebe a camisa em mãos (dinheiro ou transferência de imediato)."
             }
           ].map((item, i) => (
             <div key={i} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden transition-all text-left">
