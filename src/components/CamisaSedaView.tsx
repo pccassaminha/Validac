@@ -133,7 +133,7 @@ export default function CamisaSedaView({
     <main className="bg-slate-50 text-slate-800 min-h-screen pb-24 font-sans select-none overflow-x-hidden">
       
       {/* ── STICKY COUNTER TOP BAR ── */}
-      <div className="bg-[#0b1329] text-white py-2.5 px-4 text-center text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 sticky top-16 z-30 border-b border-slate-800">
+      <div className="bg-[#0b1329] text-white py-2.5 px-4 text-center text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 sticky top-0 z-40 border-b border-slate-800">
         <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
         <span>O lote promocional termina em</span>
         <span className="bg-red-500 text-white font-mono px-2 py-0.5 rounded text-xs font-bold tracking-wider">

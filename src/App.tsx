@@ -90,6 +90,7 @@ import AuthView from "./AuthView";
 import UsersView from "./UsersView";
 import HomeView from "./HomeView";
 import CamisaSedaView from "./components/CamisaSedaView";
+import { CintaColombianaView } from "./components/CintaColombianaView";
 
 // ==========================================
 // MÁQUINA DE GROWTH: Configuração de Pixels
@@ -264,6 +265,17 @@ const RECENT_BUYERS = [
   { name: "Cláudio", city: "Maianga (Luanda)", time: "Há 3 min" },
   { name: "Ana", city: "Benfica (Luanda)", time: "Há 8 min" },
   { name: "João", city: "Talatona (Luanda)", time: "Há 4 min" },
+];
+
+const RECENT_BUYERS_CINTA = [
+  { name: "Vanessa M.", city: "Talatona (Luanda)", time: "Há 2 min" },
+  { name: "Jandira K.", city: "Kilamba (Luanda)", time: "Há 5 min" },
+  { name: "Carmen P.", city: "Maianga (Luanda)", time: "Há 1 min" },
+  { name: "Nair B.", city: "Viana (Luanda)", time: "Agora" },
+  { name: "Sandra A.", city: "Nova Vida (Luanda)", time: "Há 8 min" },
+  { name: "Vânia S.", city: "Benfica (Luanda)", time: "Há 3 min" },
+  { name: "Helena G.", city: "Alvalade (Luanda)", time: "Há 4 min" },
+  { name: "Edna F.", city: "Miramar (Luanda)", time: "Há 6 min" },
 ];
 
 const IMAGES = [
@@ -469,6 +481,7 @@ export default function App() {
   const [view, setView] = useState<string>(() => {
     const params = new URLSearchParams(window.location.search);
     const product = params.get("product");
+    if (product === "cinta-colombiana") return "sales-cinta-colombiana";
     if (product === "secador-uv") return "sales";
     if (product === "cabide-secador") return "sales-roupas";
     if (product === "roteador-5g") return "sales-roteador";
@@ -484,7 +497,8 @@ export default function App() {
     view === "sales-roupas" ||
     view === "sales-roteador" ||
     view === "sales-base-movel" ||
-    view === "sales-camisa-seda";
+    view === "sales-camisa-seda" ||
+    view === "sales-cinta-colombiana";
 
   const formatPhoneWithCensorship = (phone: string | undefined | null) => {
     if (!phone) return "";
@@ -546,6 +560,12 @@ export default function App() {
         quantity: 3,
         observacoes: "",
       }));
+    } else if (view === "sales-cinta-colombiana") {
+      setFormData((prev) => ({
+        ...prev,
+        quantity: 1,
+        observacoes: "",
+      }));
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -564,11 +584,12 @@ export default function App() {
     return saved
       ? JSON.parse(saved)
       : {
-          "secador-uv": 50,
-          "cabide-secador": 50,
-          "roteador-5g": 50,
-          "base-movel-360": 50,
+          "cinta-colombiana": 50,
           "camisa-seda": 50,
+          "base-movel-360": 50,
+          "roteador-5g": 50,
+          "cabide-secador": 50,
+          "secador-uv": 50,
         };
   });
   const [editingGoalProductId, setEditingGoalProductId] = useState<string | null>(null);
@@ -640,6 +661,14 @@ export default function App() {
     if (!raw) return "Secador Inteligente UV";
     const lower = raw.toLowerCase().trim();
 
+    if (
+      lower.includes("cinta") ||
+      lower.includes("colombiana") ||
+      lower.includes("modeladora") ||
+      lower.includes("bodysuit")
+    ) {
+      return "Cinta Modeladora Colombiana";
+    }
     if (lower.includes("seda") || lower.includes("camisa")) {
       return "Camisa Seda Gelada Premium";
     }
@@ -685,6 +714,18 @@ export default function App() {
   };
 
   const PRODUCTS_LIST = [
+    {
+      id: "cinta-colombiana",
+      title: "Cinta Modeladora Colombiana",
+      subtitle: "Bodysuit com compressão firme de abdómen, levanta-bumbum e renda elegante. 50.000 Kz.",
+      image: "https://i.postimg.cc/mZdkh9k6/nude-cafe-(1).webp",
+      viewName: "sales-cinta-colombiana",
+      paramName: "cinta-colombiana",
+      matchesLead: (l: any) => {
+        const p = normalizeProductName(l.produto || l.product || l.produtoName || l.rawProduto);
+        return p === "Cinta Modeladora Colombiana";
+      },
+    },
     {
       id: "camisa-seda",
       title: "Camisa Seda Gelada Premium",
@@ -1006,7 +1047,10 @@ export default function App() {
     localStorage.setItem("validaC_current_view", view);
 
     const params = new URLSearchParams(window.location.search);
-    if (view === "sales") {
+    if (view === "sales-cinta-colombiana") {
+      params.set("product", "cinta-colombiana");
+      document.title = "Cinta Modeladora Colombiana — C Store Angola";
+    } else if (view === "sales") {
       params.set("product", "secador-uv");
       document.title = "Secador Inteligente UV - Reserva Premium";
     } else if (view === "sales-roupas") {
@@ -1209,7 +1253,8 @@ export default function App() {
       view !== "sales-roupas" &&
       view !== "sales-roteador" &&
       view !== "sales-base-movel" &&
-      view !== "sales-camisa-seda"
+      view !== "sales-camisa-seda" &&
+      view !== "sales-cinta-colombiana"
     )
       return;
 
@@ -1239,18 +1284,21 @@ export default function App() {
       view === "sales-roupas" ||
       view === "sales-roteador" ||
       view === "sales-base-movel" ||
-      view === "sales-camisa-seda"
+      view === "sales-camisa-seda" ||
+      view === "sales-cinta-colombiana"
     ) {
       const produtoName =
-        view === "sales-roupas"
-          ? "Secador Expresso Pro 35 000 Kz"
-          : view === "sales-roteador"
-            ? "Roteador 5G Ultra Desbloqueado"
-            : view === "sales-base-movel"
-              ? "Base Móvel 360°"
-              : view === "sales-camisa-seda"
-                ? "Camisa Seda Gelada Premium"
-                : "Secador Inteligente UV";
+        view === "sales-cinta-colombiana"
+          ? "Cinta Modeladora Colombiana"
+          : view === "sales-roupas"
+            ? "Secador Expresso Pro 35 000 Kz"
+            : view === "sales-roteador"
+              ? "Roteador 5G Ultra Desbloqueado"
+              : view === "sales-base-movel"
+                ? "Base Móvel 360°"
+                : view === "sales-camisa-seda"
+                  ? "Camisa Seda Gelada Premium"
+                  : "Secador Inteligente UV";
       initTracking(produtoName, appSettings);
 
       const imagesList =
@@ -1262,7 +1310,7 @@ export default function App() {
               ? IMAGES_BASE_MOVEL
               : IMAGES;
 
-      if (view !== "sales-camisa-seda") {
+      if (view !== "sales-camisa-seda" && view !== "sales-cinta-colombiana") {
         const timer = setInterval(() => {
           setActiveImage((prev) => (prev + 1) % imagesList.length);
         }, 4000);
@@ -1276,18 +1324,22 @@ export default function App() {
       view !== "sales" &&
       view !== "sales-roupas" &&
       view !== "sales-roteador" &&
-      view !== "sales-base-movel"
+      view !== "sales-base-movel" &&
+      view !== "sales-camisa-seda" &&
+      view !== "sales-cinta-colombiana"
     )
       return;
 
     let timeoutId: NodeJS.Timeout;
+
+    const buyersPool = view === "sales-cinta-colombiana" ? RECENT_BUYERS_CINTA : RECENT_BUYERS;
 
     const scheduleNext = () => {
       // Show every 12 to 25 seconds randomly
       const delay = 12000 + Math.random() * 13000;
       timeoutId = setTimeout(() => {
         const randomBuyer =
-          RECENT_BUYERS[Math.floor(Math.random() * RECENT_BUYERS.length)];
+          buyersPool[Math.floor(Math.random() * buyersPool.length)];
         setActivePopup(randomBuyer);
 
         setTimeout(() => {
@@ -1299,7 +1351,7 @@ export default function App() {
 
     // Initial popup after 3 seconds
     timeoutId = setTimeout(() => {
-      const initialBuyer = RECENT_BUYERS[0];
+      const initialBuyer = buyersPool[0];
       setActivePopup(initialBuyer);
       setTimeout(() => {
         setActivePopup(null);
@@ -1322,25 +1374,29 @@ export default function App() {
     setIsSubmitting(true);
 
     const produtoName =
-      view === "sales-roupas"
-        ? "Secador Expresso Pro 35 000 Kz"
-        : view === "sales-roteador"
-          ? "Roteador 5G Ultra Desbloqueado"
-          : view === "sales-base-movel"
-            ? "Base Móvel 360°"
-            : view === "sales-camisa-seda"
-              ? "Camisa Seda Gelada Premium"
-              : "Secador Inteligente UV";
+      view === "sales-cinta-colombiana"
+        ? "Cinta Modeladora Colombiana"
+        : view === "sales-roupas"
+          ? "Secador Expresso Pro 35 000 Kz"
+          : view === "sales-roteador"
+            ? "Roteador 5G Ultra Desbloqueado"
+            : view === "sales-base-movel"
+              ? "Base Móvel 360°"
+              : view === "sales-camisa-seda"
+                ? "Camisa Seda Gelada Premium"
+                : "Secador Inteligente UV";
     const pricePerUnit =
-      view === "sales-roupas"
-        ? 35000
-        : view === "sales-roteador"
-          ? 240000
-          : view === "sales-base-movel"
-            ? 15000
-            : view === "sales-camisa-seda"
-              ? 35000
-              : 25000;
+      view === "sales-cinta-colombiana"
+        ? 50000
+        : view === "sales-roupas"
+          ? 35000
+          : view === "sales-roteador"
+            ? 240000
+            : view === "sales-base-movel"
+              ? 15000
+              : view === "sales-camisa-seda"
+                ? 35000
+                : 25000;
 
     let computedTotal = formData.quantity * pricePerUnit;
     if (view === "sales-camisa-seda") {
@@ -1348,6 +1404,10 @@ export default function App() {
       else if (formData.quantity === 2) computedTotal = 60000;
       else if (formData.quantity === 3) computedTotal = 86000;
       else if (formData.quantity === 5) computedTotal = 140000;
+    } else if (view === "sales-cinta-colombiana") {
+      if (formData.quantity === 1) computedTotal = 50000;
+      else if (formData.quantity === 2) computedTotal = 90000;
+      else if (formData.quantity === 3) computedTotal = 125000;
     }
 
     const tempLead = {
@@ -1400,15 +1460,17 @@ export default function App() {
     setModalState("none");
 
     const produtoName =
-      view === "sales-roupas"
-        ? "Secador Expresso Pro 34 900 Kz"
-        : view === "sales-roteador"
-          ? "Roteador 5G Ultra Desbloqueado"
-          : view === "sales-base-movel"
-            ? "Base Móvel 360°"
-            : view === "sales-camisa-seda"
-              ? "Camisa Seda Gelada Premium"
-              : "Secador Inteligente UV";
+      view === "sales-cinta-colombiana"
+        ? "Cinta Modeladora Colombiana"
+        : view === "sales-roupas"
+          ? "Secador Expresso Pro 34 900 Kz"
+          : view === "sales-roteador"
+            ? "Roteador 5G Ultra Desbloqueado"
+            : view === "sales-base-movel"
+              ? "Base Móvel 360°"
+              : view === "sales-camisa-seda"
+                ? "Camisa Seda Gelada Premium"
+                : "Secador Inteligente UV";
 
     if (isAccepted) {
       setTimeout(() => setModalState("success"), 300);
@@ -2105,7 +2167,7 @@ Final do dia (16h - 18h)`;
     >
       {/* Navigation */}
       {isAuthenticated && view !== "home" && (
-        <nav className="bg-slate-900 text-white sticky top-0 z-40 shadow-xl border-b border-slate-800">
+        <nav className={`bg-slate-900 text-white shadow-xl border-b border-slate-800 ${isSalesView ? "hidden md:block relative z-20" : "sticky top-0 z-40"}`}>
           <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 h-16 flex justify-between items-center">
             <div
               className="flex items-center gap-3 cursor-pointer"
@@ -4596,6 +4658,21 @@ Final do dia (16h - 18h)`;
         </main>
       )}
 
+      {/* SALES PAGE: CINTA MODELADORA COLOMBIANA */}
+      {view === "sales-cinta-colombiana" && (
+        <CintaColombianaView
+          formData={formData}
+          setFormData={setFormData}
+          isSubmitting={isSubmitting}
+          onSubmit={handleFormSubmit}
+          isCheckoutVisible={isCheckoutVisible}
+          timeLeft={timeLeft}
+          formatTime={formatTime}
+          leadCount={getProductLeadCount("cinta-colombiana")}
+          leadGoal={productGoals["cinta-colombiana"] || 50}
+        />
+      )}
+
       {/* SALES PAGE: CAMISA SEDA GELADA PREMIUM */}
       {view === "sales-camisa-seda" && (
         <CamisaSedaView
@@ -6374,21 +6451,38 @@ Final do dia (16h - 18h)`;
                   <p className="mb-4 text-lg font-medium leading-relaxed">
                     O stock do{" "}
                     <strong>
-                      {view === "sales-roupas"
-                        ? "Secador Expresso Portátil"
-                        : view === "sales-roteador"
-                          ? "ZTE 5G WiFi 6 CPE"
-                          : view === "sales-base-movel"
-                            ? "Base Móvel 360°"
-                            : view === "sales-camisa-seda"
-                              ? "Camisa de Seda Gelada"
-                              : "Secador Inteligente UV"}
+                      {view === "sales-cinta-colombiana"
+                        ? "Cinta Modeladora Colombiana"
+                        : view === "sales-roupas"
+                          ? "Secador Expresso Portátil"
+                          : view === "sales-roteador"
+                            ? "ZTE 5G WiFi 6 CPE"
+                            : view === "sales-base-movel"
+                              ? "Base Móvel 360°"
+                              : view === "sales-camisa-seda"
+                                ? "Camisa de Seda Gelada"
+                                : "Secador Inteligente UV"}
                     </strong>{" "}
                     para entrega imediata terminou devido à altíssima procura
                     nas últimas horas.
                   </p>
 
-                  {view === "sales-camisa-seda" ? (
+                  {view === "sales-cinta-colombiana" ? (
+                    <div className="bg-rose-50 border border-rose-200 text-rose-900 p-4 rounded-2xl text-xs sm:text-sm mb-6 text-left flex items-start gap-3 shadow-sm">
+                      <Timer size={22} className="text-rose-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold text-rose-950 text-sm mb-1">
+                          📦 Lote de Lançamento & Entrega em Luanda:
+                        </p>
+                        <p className="text-xs text-rose-900 leading-relaxed font-medium">
+                          O lote de pré-venda será reposto e entregue dentro de <strong>14 dias</strong> após a confirmação.
+                        </p>
+                        <p className="text-xs text-amber-900 bg-amber-50 p-2 rounded-lg font-semibold mt-2 border border-amber-200">
+                          ⚠️ <strong>Atenção:</strong> Certifique-se de que escolheu o tamanho correto (do XS ao 6XL) para a sua cinta.
+                        </p>
+                      </div>
+                    </div>
+                  ) : view === "sales-camisa-seda" ? (
                     <div className="bg-amber-50 border border-amber-200 text-amber-900 p-4 rounded-2xl text-xs sm:text-sm mb-6 text-left flex items-start gap-3 shadow-sm">
                       <Timer size={22} className="text-amber-600 shrink-0 mt-0.5" />
                       <div>
@@ -6422,15 +6516,17 @@ Final do dia (16h - 18h)`;
                     Queres garantir a tua reserva e manter o preço promocional
                     de{" "}
                     <b>
-                      {view === "sales-roupas"
-                        ? "35.000 Kz"
-                        : view === "sales-roteador"
-                          ? "240.000 Kz"
-                          : view === "sales-base-movel"
-                            ? "15.000 Kz"
-                            : view === "sales-camisa-seda"
-                              ? (formData.quantity === 1 ? "35.000 Kz" : formData.quantity === 2 ? "60.000 Kz" : formData.quantity === 3 ? "86.000 Kz" : formData.quantity === 5 ? "140.000 Kz" : "35.000 Kz")
-                              : "25.000 Kz"}
+                      {view === "sales-cinta-colombiana"
+                        ? (formData.quantity === 1 ? "50.000 Kz" : formData.quantity === 2 ? "90.000 Kz" : formData.quantity === 3 ? "125.000 Kz" : "50.000 Kz")
+                        : view === "sales-roupas"
+                          ? "35.000 Kz"
+                          : view === "sales-roteador"
+                            ? "240.000 Kz"
+                            : view === "sales-base-movel"
+                              ? "15.000 Kz"
+                              : view === "sales-camisa-seda"
+                                ? (formData.quantity === 1 ? "35.000 Kz" : formData.quantity === 2 ? "60.000 Kz" : formData.quantity === 3 ? "86.000 Kz" : formData.quantity === 5 ? "140.000 Kz" : "35.000 Kz")
+                                : "25.000 Kz"}
                     </b>
                     ?{" "}
                     <span className="text-indigo-600 font-bold block mt-2">
@@ -6745,31 +6841,51 @@ Final do dia (16h - 18h)`;
                   <p className="text-slate-600 mb-6 leading-relaxed">
                     A tua unidade de{" "}
                     <strong>
-                      {view === "sales-roupas"
-                        ? "Secador Expresso Portátil"
-                        : view === "sales-roteador"
-                          ? "ZTE 5G Ultra"
-                          : view === "sales-base-movel"
-                            ? "Base Móvel 360°"
-                            : view === "sales-camisa-seda"
-                              ? `Combo ${formData.quantity}x Camisa de Seda Gelada`
-                              : "Secador UV"}
+                      {view === "sales-cinta-colombiana"
+                        ? `Combo ${formData.quantity}x Cinta Modeladora Colombiana`
+                        : view === "sales-roupas"
+                          ? "Secador Expresso Portátil"
+                          : view === "sales-roteador"
+                            ? "ZTE 5G Ultra"
+                            : view === "sales-base-movel"
+                              ? "Base Móvel 360°"
+                              : view === "sales-camisa-seda"
+                                ? `Combo ${formData.quantity}x Camisa de Seda Gelada`
+                                : "Secador UV"}
                     </strong>{" "}
                     está reservada ao preço de{" "}
                     <strong>
-                      {view === "sales-roupas"
-                        ? "35.000 Kz"
-                        : view === "sales-roteador"
-                          ? "240.000 Kz"
-                          : view === "sales-base-movel"
-                            ? "15.000 Kz"
-                            : view === "sales-camisa-seda"
-                              ? (formData.quantity === 1 ? "35.000 Kz" : formData.quantity === 2 ? "60.000 Kz" : formData.quantity === 3 ? "86.000 Kz" : formData.quantity === 5 ? "140.000 Kz" : "35.000 Kz")
-                              : "25.000 Kz"}
+                      {view === "sales-cinta-colombiana"
+                        ? (formData.quantity === 1 ? "50.000 Kz" : formData.quantity === 2 ? "90.000 Kz" : formData.quantity === 3 ? "125.000 Kz" : "50.000 Kz")
+                        : view === "sales-roupas"
+                          ? "35.000 Kz"
+                          : view === "sales-roteador"
+                            ? "240.000 Kz"
+                            : view === "sales-base-movel"
+                              ? "15.000 Kz"
+                              : view === "sales-camisa-seda"
+                                ? (formData.quantity === 1 ? "35.000 Kz" : formData.quantity === 2 ? "60.000 Kz" : formData.quantity === 3 ? "86.000 Kz" : formData.quantity === 5 ? "140.000 Kz" : "35.000 Kz")
+                                : "25.000 Kz"}
                     </strong>
                     .
                   </p>
-                  {view === "sales-camisa-seda" ? (
+                  {view === "sales-cinta-colombiana" ? (
+                    <div className="bg-emerald-50 text-emerald-900 p-5 rounded-2xl text-sm mb-8 border border-emerald-200 text-left space-y-2.5 shadow-sm">
+                      <div className="flex items-center gap-2 font-black text-emerald-950 text-base">
+                        <Timer size={20} className="text-emerald-600 shrink-0" />
+                        <span>Prazo de Lançamento & Entrega</span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-emerald-900 leading-relaxed font-medium">
+                        A sua reserva de <strong>Cinta Modeladora Colombiana</strong> foi registrada com sucesso! A entrega será efetuada dentro de <strong>14 dias</strong>.
+                      </p>
+                      <p className="text-xs text-amber-900 bg-amber-50/90 border border-amber-200/80 p-2.5 rounded-xl font-medium">
+                        ⚠️ <strong>Observação:</strong> Certifique-se de ter escolhido o tamanho correto para a sua cinta.
+                      </p>
+                      <p className="text-xs text-emerald-700 font-semibold pt-2 border-t border-emerald-200/80">
+                        Receberás uma mensagem no WhatsApp quando o lote chegar — pagas só no momento da entrega em mãos.
+                      </p>
+                    </div>
+                  ) : view === "sales-camisa-seda" ? (
                     <div className="bg-emerald-50 text-emerald-900 p-5 rounded-2xl text-sm mb-8 border border-emerald-200 text-left space-y-2.5 shadow-sm">
                       <div className="flex items-center gap-2 font-black text-emerald-950 text-base">
                         <Timer size={20} className="text-emerald-600 shrink-0" />
@@ -7481,16 +7597,27 @@ Final do dia (16h - 18h)`;
             onClick={() => {
               const targetId = "comprar";
               const inputId =
-                view === "sales" ? "name-input" : "name-input-roupas";
-              document
-                .getElementById(targetId)
-                ?.scrollIntoView({ behavior: "smooth" });
+                view === "sales-cinta-colombiana"
+                  ? "name-input-cinta"
+                  : view === "sales-camisa-seda"
+                  ? "name-input-camisa"
+                  : view === "sales"
+                  ? "name-input"
+                  : "name-input-roupas";
+              const targetEl = document.getElementById(targetId) || document.getElementById("checkout");
+              targetEl?.scrollIntoView({ behavior: "smooth" });
               setTimeout(() => {
-                if (view === "sales") nameInputRef.current?.focus();
-                else nameInputRoupasRef.current?.focus();
-              }, 800);
+                const inputEl = document.getElementById(inputId) as HTMLInputElement | null;
+                if (inputEl) {
+                  inputEl.focus();
+                } else if (view === "sales") {
+                  nameInputRef.current?.focus();
+                } else {
+                  nameInputRoupasRef.current?.focus();
+                }
+              }, 500);
             }}
-            className="w-full bg-emerald-500 text-white font-bold text-lg py-3.5 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-lg py-3.5 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] active:scale-95 transition-all cursor-pointer"
           >
             QUERO APROVEITAR
           </button>
