@@ -670,7 +670,7 @@ export default function CamisaSedaView({
                 <div className="bg-amber-50 border border-amber-200/90 rounded-xl p-3 text-xs text-amber-900 flex items-start gap-2 shadow-xs">
                   <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
                   <p className="leading-snug font-medium">
-                    <strong>Atenção ao Tamanho:</strong> Certifique-se de escolher o tamanho correto para a sua camisa.
+                    <strong>⚠️ Atenção ao Tamanho:</strong> Certifique-se de escolher o tamanho correto para a sua camisa. O novo lote é entregue dentro de 14 dias após a sua reserva.
                   </p>
                 </div>
 
@@ -925,17 +925,6 @@ export default function CamisaSedaView({
                     <span className="text-2xl font-black text-indigo-600">{new Intl.NumberFormat("pt-AO").format(currentPrice)}</span>
                     <span className="text-xs font-black text-indigo-600">Kz</span>
                   </div>
-                </div>
-              </div>
-
-              {/* Observação sobre a escolha do tamanho */}
-              <div className="bg-amber-50 border border-amber-200/90 rounded-xl p-3.5 text-xs text-amber-900 flex items-start gap-2.5 shadow-xs">
-                <Info size={18} className="text-amber-600 shrink-0 mt-0.5" />
-                <div className="leading-normal">
-                  <span className="font-bold block text-amber-950">Observação sobre o tamanho:</span>
-                  <p className="text-[11px] text-amber-900 mt-0.5">
-                    Por favor, <strong>certifique-se de que escolheu o tamanho e a cor corretos</strong> para a sua camisa antes de confirmar a reserva!
-                  </p>
                 </div>
               </div>
 

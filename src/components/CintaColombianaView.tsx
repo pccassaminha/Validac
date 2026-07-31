@@ -1115,13 +1115,6 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                   <span>Entregas diretas em Luanda</span>
                 </div>
               </div>
-
-              <div className="bg-rose-900/40 border border-rose-800 p-4 rounded-2xl text-xs space-y-2">
-                <span className="font-bold text-rose-300 block">📦 Prazo de Reposição & Entrega:</span>
-                <p className="text-slate-300 leading-relaxed">
-                  O estoque de pré-venda será reposto e entregue dentro de <strong>14 dias</strong> após a confirmação do seu pedido.
-                </p>
-              </div>
             </div>
 
             <div className="pt-6 border-t border-rose-900 text-xs text-rose-300 font-medium">
@@ -1215,11 +1208,11 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                 })}
               </div>
 
-              {/* Alerta de tamanho */}
+              {/* Alerta de tamanho & entrega */}
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 flex items-start gap-2">
                 <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
                 <p className="leading-snug font-medium">
-                  <strong>⚠️ Atenção ao Tamanho:</strong> Certifique-se de que escolheu o tamanho correto para o seu corpo (consulte a nossa tabela acima se tiver dúvidas).
+                  <strong>⚠️ Atenção ao Tamanho:</strong> Certifique-se de escolher o tamanho correto para o seu corpo. O novo lote é entregue dentro de 14 dias após a sua reserva.
                 </p>
               </div>
 
@@ -1556,24 +1549,12 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                   <CheckCircle size={18} /> CONFIRMAR RESERVA
                 </button>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                  <button
-                    onClick={handleEditInformation}
-                    className="w-full py-2.5 px-3 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <Edit3 size={15} className="text-slate-500" /> Quero alterar informações
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setShowConfirmModal(false);
-                      setShowPersuasionStep1(true);
-                    }}
-                    className="w-full py-2.5 px-3 rounded-xl font-bold text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <AlertCircle size={15} /> Não confirmar agora
-                  </button>
-                </div>
+                <button
+                  onClick={handleEditInformation}
+                  className="w-full py-2.5 px-3 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Edit3 size={15} className="text-slate-500" /> Quero alterar informações
+                </button>
               </div>
             </motion.div>
           </motion.div>
@@ -1714,24 +1695,22 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowPersuasionStep1(false)}
-            className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+            className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-rose-200 space-y-5 text-left my-8 relative overflow-hidden"
+              className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-rose-100 space-y-4 text-left my-8"
             >
-              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-rose-600 via-amber-500 to-rose-600" />
-              
-              <div className="flex items-start justify-between border-b border-rose-100 pb-3 pt-1">
+              <div className="flex items-start justify-between border-b border-rose-100 pb-3">
                 <div>
                   <span className="bg-rose-100 text-rose-800 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider inline-flex items-center gap-1 mb-1">
-                    <Sparkles size={12} /> Alerta Importante
+                    <Sparkles size={12} /> Desconto Garantido Hoje
                   </span>
-                  <h3 className="text-xl font-black text-slate-900 leading-snug">
-                    Tem a certeza que deseja cancelar a sua reserva?
+                  <h3 className="text-lg font-black text-slate-900 leading-snug">
+                    Deseja mesmo cancelar a sua reserva?
                   </h3>
                 </div>
                 <button
@@ -1742,35 +1721,29 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                 </button>
               </div>
 
-              <div className="space-y-3 text-slate-700 text-xs sm:text-sm leading-relaxed">
-                <p className="bg-rose-50 p-3.5 rounded-2xl border border-rose-100 text-rose-950 font-medium">
-                  Ao desistir agora, você estará a abrir mão de <strong>reduzir até 7cm de cintura instantaneamente</strong>, definir a sua silhueta e recuperar a confiança com qualquer roupa!
+              <div className="bg-rose-50/80 p-3.5 rounded-2xl border border-rose-100 text-slate-800 text-xs sm:text-sm space-y-1.5 leading-relaxed">
+                <p className="font-semibold text-rose-950">
+                  O desconto de 50% e o <strong>pagamento seguro na entrega em Luanda</strong> são válidos apenas para pedidos de hoje!
                 </p>
-
-                <div className="bg-amber-50 p-3.5 rounded-2xl border border-amber-200 text-amber-950 space-y-1 text-xs">
-                  <p className="font-bold flex items-center gap-1.5 text-amber-900">
-                    <ShieldCheck size={16} className="text-amber-700" /> Lembrete de Risco Zero:
-                  </p>
-                  <p>
-                    O desconto exclusivo de 50% e a garantia de <strong>pagamento 100% no ato da entrega em mãos em Luanda</strong> (Dinheiro, IBAN, Express) só se aplicam para a reserva realizada hoje.
-                  </p>
-                </div>
+                <p className="text-slate-600 text-xs">
+                  Reduza medidas de forma imediata e pague apenas ao receber em mãos.
+                </p>
               </div>
 
               {/* Botões do Passo 1 */}
-              <div className="space-y-2 pt-2">
+              <div className="space-y-2 pt-1">
                 <button
                   onClick={() => handleFinalConfirmation()}
-                  className="w-full py-4 rounded-xl font-black text-xs sm:text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+                  className="w-full py-3.5 rounded-xl font-black text-xs sm:text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
                 >
-                  <CheckCircle size={18} /> CONFIRMAR MINHA RESERVA AGORA
+                  <CheckCircle size={18} /> CONFIRMAR RESERVA
                 </button>
 
                 <button
                   onClick={handleEditInformation}
                   className="w-full py-2.5 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 transition cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <Edit3 size={15} /> Quero alterar o tamanho ou dados antes
+                  <Edit3 size={15} /> Quero alterar informações
                 </button>
 
                 <button
@@ -1780,7 +1753,7 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                   }}
                   className="w-full text-center text-[11px] text-slate-400 hover:text-slate-600 py-1 cursor-pointer font-medium"
                 >
-                  Ainda assim prefiro não confirmar...
+                  Ainda assim não quero confirmar...
                 </button>
               </div>
             </motion.div>
@@ -1788,7 +1761,7 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
         )}
       </AnimatePresence>
 
-      {/* ── PERSUASION MODAL STEP 2: PROVA SOCIAL & RELATO EMOCIONAL ── */}
+      {/* ── PERSUASION MODAL STEP 2: PROVA SOCIAL DIRECTA ── */}
       <AnimatePresence>
         {showPersuasionStep2 && (
           <motion.div
@@ -1796,22 +1769,22 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowPersuasionStep2(false)}
-            className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+            className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-rose-200 space-y-5 text-left my-8"
+              className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-rose-100 space-y-4 text-left my-8"
             >
               <div className="flex items-start justify-between border-b border-rose-100 pb-3">
                 <div>
                   <span className="bg-amber-100 text-amber-900 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider block mb-1">
-                    👑 Relato Real de Transformação
+                    ⭐ Depoimento Real
                   </span>
-                  <h3 className="text-xl font-black text-slate-900 leading-snug">
-                    A Sra. Maria de Luanda também hesitou antes de reservar...
+                  <h3 className="text-lg font-black text-slate-900 leading-snug">
+                    Não perca esta oportunidade!
                   </h3>
                 </div>
                 <button
@@ -1822,36 +1795,27 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                 </button>
               </div>
 
-              <div className="space-y-3 text-slate-700 text-xs sm:text-sm leading-relaxed">
-                <div className="bg-rose-50/70 p-4 rounded-2xl border border-rose-100 space-y-2">
-                  <p className="italic text-slate-800">
-                    &ldquo;Eu também tive medo antes de fazer a reserva. Pensei em desistir, mas decidi experimentar porque não precisava de pagar nada adiantado.&rdquo;
-                  </p>
-                  <p className="font-medium text-rose-950">
-                    &ldquo;Quando o entregador chegou no meu bairro e experimentei a Cinta Colombiana, fiquei chocada! A minha cintura ficou desenhada no mesmo instante, o meu marido elogiou a minha silhueta e voltei a usar o vestido que estava guardado no armário há mais de 2 anos!&rdquo;
-                  </p>
-                  <span className="text-[11px] font-bold text-rose-800 block text-right">— Maria S., Cliente em Luanda</span>
-                </div>
-
-                <p className="text-xs text-slate-600 text-center font-medium">
-                  Não deixe a dúvida ou a hesitação impedirem a sua própria transformação hoje.
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-1.5 text-xs text-slate-700">
+                <p className="italic font-medium text-slate-900">
+                  &ldquo;Também tive dúvidas no início, mas arrisquei porque o pagamento é só na entrega. A cinta modela perfeitamente e a entrega em Luanda foi rápida!&rdquo;
                 </p>
+                <span className="text-[11px] font-bold text-rose-600 block text-right">— Maria S., Luanda</span>
               </div>
 
               {/* Botões do Passo 2 */}
               <div className="space-y-2 pt-1">
                 <button
                   onClick={() => handleFinalConfirmation()}
-                  className="w-full py-4 rounded-xl font-black text-xs sm:text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+                  className="w-full py-3.5 rounded-xl font-black text-xs sm:text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
                 >
-                  <CheckCircle size={18} /> QUERO EXPERIMENTAR E CONFIRMAR RESERVA
+                  <CheckCircle size={18} /> CONFIRMAR RESERVA
                 </button>
 
                 <button
                   onClick={handleEditInformation}
                   className="w-full py-2.5 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 transition cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <Edit3 size={15} /> Alterar informações ou escolher outro tamanho
+                  <Edit3 size={15} /> Quero alterar informações
                 </button>
               </div>
             </motion.div>
