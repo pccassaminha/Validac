@@ -15,6 +15,7 @@ import {
   HelpCircle,
   Ruler,
   AlertCircle,
+  Edit3,
   ThumbsUp,
   Flame,
   Star,
@@ -183,6 +184,8 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
   // Confirmation & Hesitation Modals state
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showObjectionModal, setShowObjectionModal] = useState(false);
+  const [showPersuasionStep1, setShowPersuasionStep1] = useState(false);
+  const [showPersuasionStep2, setShowPersuasionStep2] = useState(false);
   const [selectedObjection, setSelectedObjection] = useState<string | null>(null);
 
   const checkoutRef = useRef<HTMLDivElement>(null);
@@ -192,6 +195,14 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
     checkoutRef.current?.scrollIntoView({ behavior: "smooth" });
     const input = document.getElementById("name-input-cinta");
     if (input) setTimeout(() => input.focus(), 600);
+  };
+
+  const handleEditInformation = () => {
+    setShowConfirmModal(false);
+    setShowObjectionModal(false);
+    setShowPersuasionStep1(false);
+    setShowPersuasionStep2(false);
+    scrollToCheckout();
   };
 
   const scrollToSizeTable = () => {
@@ -237,6 +248,8 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
     if (e) e.preventDefault();
     setShowConfirmModal(false);
     setShowObjectionModal(false);
+    setShowPersuasionStep1(false);
+    setShowPersuasionStep2(false);
 
     const configString = Array.from({ length: formData.quantity || 1 })
       .map((_, i) => {
@@ -1260,7 +1273,9 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                   <span>Total da Encomenda:</span>
                   <span className="text-rose-600 text-sm font-black">{new Intl.NumberFormat("pt-AO").format(currentPrice)} Kz</span>
                 </div>
-                <p className="text-[11px] text-slate-500">Pagamento efetuado 100% no ato da entrega em mãos.</p>
+                <p className="text-[11px] text-slate-600 font-medium">
+                  Pagamento na entrega: <strong>Dinheiro, Express, Transferência ou IBAN</strong>
+                </p>
               </div>
 
               {/* Submit Button & Cancellation / Objection Question Link */}
@@ -1529,27 +1544,36 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
               {/* Garantia */}
               <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-900 flex items-center gap-2 font-medium">
                 <ShieldCheck size={18} className="text-emerald-600 shrink-0" />
-                <span>Pagamento 100% no ato da entrega em mãos em Luanda (Dinheiro ou TPA). Zero risco!</span>
+                <span>Pagamento 100% seguro na entrega (Transferências, IBAN, Express ou Dinheiro)</span>
               </div>
 
-              {/* Ações */}
-              <div className="space-y-2 pt-1">
+              {/* Ações da Confirmação */}
+              <div className="space-y-2.5 pt-1">
                 <button
                   onClick={() => handleFinalConfirmation()}
                   className="w-full py-4 rounded-xl font-black text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
                 >
-                  <CheckCircle size={18} /> CONFIRMAR RESERVA E RECEBER EM MÃOS
+                  <CheckCircle size={18} /> CONFIRMAR RESERVA
                 </button>
 
-                <button
-                  onClick={() => {
-                    setShowConfirmModal(false);
-                    setShowObjectionModal(true);
-                  }}
-                  className="w-full py-2.5 rounded-xl font-bold text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <HelpCircle size={15} className="text-rose-500" /> Tenho dúvidas / Quero alterar informações
-                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                  <button
+                    onClick={handleEditInformation}
+                    className="w-full py-2.5 px-3 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <Edit3 size={15} className="text-slate-500" /> Quero alterar informações
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowConfirmModal(false);
+                      setShowPersuasionStep1(true);
+                    }}
+                    className="w-full py-2.5 px-3 rounded-xl font-bold text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <AlertCircle size={15} /> Não confirmar agora
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -1600,7 +1624,8 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                     id: "size",
                     icon: "📏",
                     title: "Tenho receio do tamanho não me servir",
-                    reassurance: "🛡️ Garantia de Troca Imediata em Luanda: Se quando o entregador chegar o tamanho não for o ideal, realizamos a troca do tamanho sem qualquer custo adicional!"
+                    reassurance: "📐 Guia & Simulador de Tamanho Ideal: Para evitar transtornos e garantir o caimento perfeito, disponibilizamos a nossa Calculadora e Tabela de Medidas na página. Por favor, consulte as suas medidas (cintura ou peso) e escolha o tamanho correto com atenção antes de concluir a reserva!",
+                    hasSimulatorButton: true
                   },
                   {
                     id: "comfort",
@@ -1611,20 +1636,14 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                   {
                     id: "price",
                     icon: "💰",
-                    title: "Como funciona o pagamento? Pago adiantado?",
-                    reassurance: "🔒 Zero Pagamento Online: Não precisa pagar nada agora! O valor só é pago em mãos (em Dinheiro ou TPA) no momento em que receber e conferir a cinta em Luanda."
+                    title: "Quais são as formas de pagamento aceites?",
+                    reassurance: "🔒 Formas de Pagamento na Entrega: Aceitamos Transferências, IBAN, Express e Dinheiro físico no ato da entrega em mãos em Luanda!"
                   },
                   {
                     id: "delivery",
                     icon: "🚚",
                     title: "Qual é o prazo exacto de entrega no meu bairro em Luanda?",
-                    reassurance: "⚡ Entrega Direta em Luanda: Agendamos diretamente com você no WhatsApp e entregamos no seu bairro em 24h a 48h úteis."
-                  },
-                  {
-                    id: "whatsapp",
-                    icon: "💬",
-                    title: "Prefiro tirar dúvidas com uma consultora por WhatsApp",
-                    reassurance: "📲 Atendimento Personalizado: Clique no botão verde abaixo para conversar diretamente com a nossa especialista."
+                    reassurance: "⚡ Entrega Direta em Luanda: Entregamos diretamente no seu bairro em 24h a 48h úteis com pagamento apenas no momento da receção."
                   }
                 ].map((obj) => (
                   <button
@@ -1640,13 +1659,26 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                     <div className="flex-1">
                       <span className="font-bold text-slate-900 text-xs sm:text-sm block">{obj.title}</span>
                       {selectedObjection === obj.id && (
-                        <motion.p
+                        <motion.div
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: "auto" }}
-                          className="mt-2 text-xs text-rose-950 font-medium bg-white p-3 rounded-xl border border-rose-200 leading-relaxed shadow-xs"
+                          className="mt-2 text-xs text-rose-950 font-medium bg-white p-3 rounded-xl border border-rose-200 leading-relaxed shadow-xs space-y-2.5"
                         >
-                          {obj.reassurance}
-                        </motion.p>
+                          <p>{obj.reassurance}</p>
+                          {obj.hasSimulatorButton && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowObjectionModal(false);
+                                scrollToSizeTable();
+                              }}
+                              className="w-full py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                            >
+                              <Ruler size={14} /> Usar Simulador e Ver Tabela de Medidas
+                            </button>
+                          )}
+                        </motion.div>
                       )}
                     </div>
                   </button>
@@ -1659,25 +1691,167 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                   onClick={() => handleFinalConfirmation()}
                   className="w-full py-3.5 rounded-xl font-black text-xs sm:text-sm bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
                 >
-                  <CheckCircle size={16} /> ENTENDIDO! CONFIRMAR E FINALIZAR RESERVA
+                  <CheckCircle size={16} /> CONFIRMAR RESERVA
                 </button>
 
-                <a
-                  href={`https://wa.me/244923000000?text=${encodeURIComponent(
-                    "Olá! Tenho dúvidas sobre a Cinta Modeladora Colombiana (tamanho/entrega) antes de fazer a reserva."
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white transition cursor-pointer flex items-center justify-center gap-2 shadow-sm text-center justify-center"
+                <button
+                  onClick={handleEditInformation}
+                  className="w-full text-center text-xs text-slate-600 font-bold hover:text-slate-800 py-2 cursor-pointer flex items-center justify-center gap-1"
                 >
-                  <MessageCircle size={16} /> FALAR COM CONSULTORA NO WHATSAPP
-                </a>
+                  <Edit3 size={14} /> Quero alterar informações no formulário
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── PERSUASION MODAL STEP 1: PERSUASÃO E MANUTENÇÃO DA OFERTA ── */}
+      <AnimatePresence>
+        {showPersuasionStep1 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowPersuasionStep1(false)}
+            className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-rose-200 space-y-5 text-left my-8 relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-rose-600 via-amber-500 to-rose-600" />
+              
+              <div className="flex items-start justify-between border-b border-rose-100 pb-3 pt-1">
+                <div>
+                  <span className="bg-rose-100 text-rose-800 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider inline-flex items-center gap-1 mb-1">
+                    <Sparkles size={12} /> Alerta Importante
+                  </span>
+                  <h3 className="text-xl font-black text-slate-900 leading-snug">
+                    Tem a certeza que deseja cancelar a sua reserva?
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowPersuasionStep1(false)}
+                  className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer shrink-0"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="space-y-3 text-slate-700 text-xs sm:text-sm leading-relaxed">
+                <p className="bg-rose-50 p-3.5 rounded-2xl border border-rose-100 text-rose-950 font-medium">
+                  Ao desistir agora, você estará a abrir mão de <strong>reduzir até 7cm de cintura instantaneamente</strong>, definir a sua silhueta e recuperar a confiança com qualquer roupa!
+                </p>
+
+                <div className="bg-amber-50 p-3.5 rounded-2xl border border-amber-200 text-amber-950 space-y-1 text-xs">
+                  <p className="font-bold flex items-center gap-1.5 text-amber-900">
+                    <ShieldCheck size={16} className="text-amber-700" /> Lembrete de Risco Zero:
+                  </p>
+                  <p>
+                    O desconto exclusivo de 50% e a garantia de <strong>pagamento 100% no ato da entrega em mãos em Luanda</strong> (Dinheiro, IBAN, Express) só se aplicam para a reserva realizada hoje.
+                  </p>
+                </div>
+              </div>
+
+              {/* Botões do Passo 1 */}
+              <div className="space-y-2 pt-2">
+                <button
+                  onClick={() => handleFinalConfirmation()}
+                  className="w-full py-4 rounded-xl font-black text-xs sm:text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+                >
+                  <CheckCircle size={18} /> CONFIRMAR MINHA RESERVA AGORA
+                </button>
 
                 <button
-                  onClick={() => setShowObjectionModal(false)}
-                  className="w-full text-center text-xs text-slate-500 font-medium hover:text-slate-700 py-1 cursor-pointer"
+                  onClick={handleEditInformation}
+                  className="w-full py-2.5 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 transition cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  Voltar ao formulário
+                  <Edit3 size={15} /> Quero alterar o tamanho ou dados antes
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowPersuasionStep1(false);
+                    setShowPersuasionStep2(true);
+                  }}
+                  className="w-full text-center text-[11px] text-slate-400 hover:text-slate-600 py-1 cursor-pointer font-medium"
+                >
+                  Ainda assim prefiro não confirmar...
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── PERSUASION MODAL STEP 2: PROVA SOCIAL & RELATO EMOCIONAL ── */}
+      <AnimatePresence>
+        {showPersuasionStep2 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowPersuasionStep2(false)}
+            className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-rose-200 space-y-5 text-left my-8"
+            >
+              <div className="flex items-start justify-between border-b border-rose-100 pb-3">
+                <div>
+                  <span className="bg-amber-100 text-amber-900 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider block mb-1">
+                    👑 Relato Real de Transformação
+                  </span>
+                  <h3 className="text-xl font-black text-slate-900 leading-snug">
+                    A Sra. Maria de Luanda também hesitou antes de reservar...
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowPersuasionStep2(false)}
+                  className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer shrink-0"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="space-y-3 text-slate-700 text-xs sm:text-sm leading-relaxed">
+                <div className="bg-rose-50/70 p-4 rounded-2xl border border-rose-100 space-y-2">
+                  <p className="italic text-slate-800">
+                    &ldquo;Eu também tive medo antes de fazer a reserva. Pensei em desistir, mas decidi experimentar porque não precisava de pagar nada adiantado.&rdquo;
+                  </p>
+                  <p className="font-medium text-rose-950">
+                    &ldquo;Quando o entregador chegou no meu bairro e experimentei a Cinta Colombiana, fiquei chocada! A minha cintura ficou desenhada no mesmo instante, o meu marido elogiou a minha silhueta e voltei a usar o vestido que estava guardado no armário há mais de 2 anos!&rdquo;
+                  </p>
+                  <span className="text-[11px] font-bold text-rose-800 block text-right">— Maria S., Cliente em Luanda</span>
+                </div>
+
+                <p className="text-xs text-slate-600 text-center font-medium">
+                  Não deixe a dúvida ou a hesitação impedirem a sua própria transformação hoje.
+                </p>
+              </div>
+
+              {/* Botões do Passo 2 */}
+              <div className="space-y-2 pt-1">
+                <button
+                  onClick={() => handleFinalConfirmation()}
+                  className="w-full py-4 rounded-xl font-black text-xs sm:text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+                >
+                  <CheckCircle size={18} /> QUERO EXPERIMENTAR E CONFIRMAR RESERVA
+                </button>
+
+                <button
+                  onClick={handleEditInformation}
+                  className="w-full py-2.5 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 transition cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Edit3 size={15} /> Alterar informações ou escolher outro tamanho
                 </button>
               </div>
             </motion.div>
