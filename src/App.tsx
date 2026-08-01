@@ -6774,7 +6774,15 @@ Final do dia (16h - 18h)`;
                       <span>Reposição & Entrega Garantida:</span>
                     </div>
                     <p className="leading-relaxed text-slate-700">
-                      O lote de entrega imediata esgotou. A sua reserva foi registada e o produto será reposto e entregue no seu endereço dentro de <strong>14 dias</strong> após a confirmação.
+                      {view === "sales-base-movel" ? (
+                        <>
+                          O lote de entrega imediata esgotou. A sua reserva foi registada e o produto será reposto e entregue no seu endereço assim que o próximo lote for liberado após a confirmação.
+                        </>
+                      ) : (
+                        <>
+                          O lote de entrega imediata esgotou. A sua reserva foi registada e o produto será reposto e entregue no seu endereço dentro de <strong>14 dias</strong> após a confirmação.
+                        </>
+                      )}
                     </p>
                     <p className="text-xs font-semibold text-emerald-700 bg-emerald-50 p-2 rounded-xl border border-emerald-200">
                       💡 Pagamento 100% Seguro entrega
