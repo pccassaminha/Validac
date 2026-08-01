@@ -241,7 +241,7 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
       alert("Por favor, preencha o seu Nome, WhatsApp e Bairro/Zona em Luanda para continuar.");
       return;
     }
-    setShowConfirmModal(true);
+    handleFinalConfirmation(e);
   };
 
   const handleFinalConfirmation = (e?: React.FormEvent) => {
@@ -1206,14 +1206,6 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                     </div>
                   );
                 })}
-              </div>
-
-              {/* Alerta de tamanho & entrega */}
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 flex items-start gap-2">
-                <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
-                <p className="leading-snug font-medium">
-                  <strong>📦 Lote chegará dentro de 14 dias após a sua reserva.</strong>
-                </p>
               </div>
 
               {/* Campos de Contacto */}

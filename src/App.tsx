@@ -58,6 +58,7 @@ import {
   Power,
   ToggleLeft,
   ToggleRight,
+  CheckSquare,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { db, auth, handleFirestoreError, OperationType } from "./firebase";
@@ -301,6 +302,7 @@ const IMAGES_ROUPAS = [
 type ModalState =
   | "none"
   | "step1"
+  | "step2"
   | "last-chance"
   | "testimonial-rebound"
   | "success"
@@ -312,6 +314,7 @@ type ModalState =
   | "danger-action-all-prompt"
   | "danger-alert"
   | "delete-lead-confirm"
+  | "delete-bulk-confirm"
   | "lead-preview"
   | "admin-financial-panel";
 
@@ -537,6 +540,12 @@ export default function App() {
     productName: string;
   } | null>(null);
   const [leadToDelete, setLeadToDelete] = useState<any>(null);
+  const [isDeletingLead, setIsDeletingLead] = useState(false);
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false);
+  const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
+  const [isSelectionModeActive, setIsSelectionModeActive] = useState(false);
+  const [selectedPagesFilter, setSelectedPagesFilter] = useState<string[]>([]);
+  const [isPageFilterDropdownOpen, setIsPageFilterDropdownOpen] = useState(false);
   const [selectedLeadForPreview, setSelectedLeadForPreview] =
     useState<any>(null);
   const [isCheckoutVisible, setIsCheckoutVisible] = useState(false);
@@ -1938,10 +1947,12 @@ Final do dia (16h - 18h)`;
       }
     }
     const matchesProduct =
-      filterProduct === "" ||
-      (lead.produto || "Secador Inteligente UV")
-        .toLowerCase()
-        .includes(filterProduct.toLowerCase());
+      selectedPagesFilter.length > 0
+        ? selectedPagesFilter.includes(lead.produto || "Secador Inteligente UV")
+        : filterProduct === "" ||
+          (lead.produto || "Secador Inteligente UV")
+            .toLowerCase()
+            .includes(filterProduct.toLowerCase());
 
     // Filtro CRM por período (Hoje, Últimos 7 dias, etc.)
     let passesTimeRange = true;
@@ -2010,10 +2021,12 @@ Final do dia (16h - 18h)`;
       }
     }
     const matchesProduct =
-      filterProduct === "" ||
-      (lead.produto || "Secador Inteligente UV")
-        .toLowerCase()
-        .includes(filterProduct.toLowerCase());
+      selectedPagesFilter.length > 0
+        ? selectedPagesFilter.includes(lead.produto || "Secador Inteligente UV")
+        : filterProduct === "" ||
+          (lead.produto || "Secador Inteligente UV")
+            .toLowerCase()
+            .includes(filterProduct.toLowerCase());
 
     let passesTimeRange = true;
     let leadDateStr = lead.timestamp;
@@ -2053,6 +2066,7 @@ Final do dia (16h - 18h)`;
 
   const uniquePages = Array.from(
     new Set([
+      "Cinta Modeladora Colombiana",
       "Secador Inteligente UV",
       "Secador Expresso Pro 35 000 Kz",
       "Roteador 5G Ultra Desbloqueado",
@@ -5384,35 +5398,91 @@ Final do dia (16h - 18h)`;
                     value={filterDate}
                     onChange={(e) => setFilterDate(e.target.value)}
                   />
-                  <div className="relative min-w-[160px] shrink-0">
+
+                  {/* SELECTOR NATIVO DE PÁGINAS INDIVIDUAIS */}
+                  <div className="relative min-w-[180px] shrink-0">
                     <Filter
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10"
                       size={16}
                     />
                     <select
-                      className={`w-full pl-9 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none text-sm cursor-pointer transition-colors ${isDark ? "bg-slate-950 border-slate-800 text-white" : "bg-slate-50 border-slate-200 text-slate-750"}`}
+                      className={`w-full pl-9 pr-8 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none text-sm cursor-pointer transition-colors font-medium ${
+                        isDark
+                          ? "bg-slate-950 border-slate-800 text-white"
+                          : "bg-slate-50 border-slate-200 text-slate-750"
+                      }`}
                       value={filterProduct}
-                      onChange={(e) => setFilterProduct(e.target.value)}
+                      onChange={(e) => {
+                        setFilterProduct(e.target.value);
+                        setSelectedPagesFilter([]);
+                      }}
                     >
-                      <option
-                        value=""
-                        className={isDark ? "bg-slate-900 text-white" : ""}
-                      >
-                        Todas as Páginas
+                      <option value="" className={isDark ? "bg-slate-900 text-white" : ""}>
+                        📄 Todas as Páginas
                       </option>
-                      {uniquePages.map((page, index) => (
-                        <option
-                          key={index}
-                          value={page}
-                          className={isDark ? "bg-slate-900 text-white" : ""}
-                        >
-                          {formatPageNameWithCensorship(page)}
-                        </option>
-                      ))}
+                      {uniquePages.map((page, index) => {
+                        const count = adminData.filter((l) => l.produto === page).length;
+                        return (
+                          <option
+                            key={index}
+                            value={page}
+                            className={isDark ? "bg-slate-900 text-white" : ""}
+                          >
+                            📄 {formatPageNameWithCensorship(page)} {count > 0 ? `(${count})` : ""}
+                          </option>
+                        );
+                      })}
                     </select>
+                    <ChevronDown
+                      size={14}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                    />
                   </div>
                 </div>
               </div>
+
+              {/* BARRA DE AÇÕES EM GRUPO (BULK SELECTION TOOLBAR) */}
+              {(isSelectionModeActive || selectedLeadIds.length > 0) && (
+                <div className="bg-gradient-to-r from-indigo-900 to-slate-900 border border-indigo-700/80 p-3.5 px-5 mb-6 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xl text-white">
+                  <div className="flex items-center gap-3 font-bold text-sm">
+                    <span className="w-7 h-7 rounded-xl bg-indigo-500 text-white flex items-center justify-center text-xs font-black shadow-inner">
+                      {selectedLeadIds.length}
+                    </span>
+                    <span>lead(s) selecionado(s) para ação em grupo</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => {
+                        const pageIds = displayedLeads.map((l) => l.id);
+                        setSelectedLeadIds(
+                          Array.from(new Set([...selectedLeadIds, ...pageIds])),
+                        );
+                      }}
+                      className="px-3.5 py-2 bg-indigo-800/80 hover:bg-indigo-700 text-indigo-100 text-xs font-semibold rounded-xl transition cursor-pointer border border-indigo-600/50"
+                    >
+                      Selecionar Todos ({displayedLeads.length})
+                    </button>
+                    {selectedLeadIds.length > 0 && (
+                      <button
+                        onClick={() => setModalState("delete-bulk-confirm")}
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-black rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                      >
+                        <Trash2 size={15} />
+                        <span>Eliminar Selecionados ({selectedLeadIds.length})</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setSelectedLeadIds([]);
+                        setIsSelectionModeActive(false);
+                      }}
+                      className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl transition cursor-pointer border border-slate-700"
+                    >
+                      Sair da Seleção
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* SECTIONS / SESSÕES DE LEADS */}
               <div className="flex bg-slate-900 border border-slate-800 p-1.5 rounded-2xl mb-6 gap-1.5 w-full sm:w-max shadow-xl">
@@ -5503,6 +5573,40 @@ Final do dia (16h - 18h)`;
                           className={isDark ? "bg-slate-950" : "bg-slate-50"}
                         >
                           <tr>
+                            {(isSelectionModeActive || selectedLeadIds.length > 0) && (
+                              <th className="px-4 py-4 w-10 text-center">
+                                <input
+                                  type="checkbox"
+                                  className="w-4 h-4 rounded border-slate-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                  checked={
+                                    displayedLeads.length > 0 &&
+                                    displayedLeads.every((l) =>
+                                      selectedLeadIds.includes(l.id),
+                                    )
+                                  }
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      const pageIds = displayedLeads.map((l) => l.id);
+                                      setSelectedLeadIds(
+                                        Array.from(
+                                          new Set([...selectedLeadIds, ...pageIds]),
+                                        ),
+                                      );
+                                    } else {
+                                      const pageIds = new Set(
+                                        displayedLeads.map((l) => l.id),
+                                      );
+                                      setSelectedLeadIds(
+                                        selectedLeadIds.filter(
+                                          (id) => !pageIds.has(id),
+                                        ),
+                                      );
+                                    }
+                                  }}
+                                  title="Selecionar todos os visíveis"
+                                />
+                              </th>
+                            )}
                             <th
                               className={`px-6 py-4 text-left text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-slate-500"}`}
                             >
@@ -5551,8 +5655,34 @@ Final do dia (16h - 18h)`;
                           {displayedLeads.map((lead, i) => (
                             <tr
                               key={i}
-                              className={`transition-colors border-b ${isDark ? "hover:bg-slate-800/40 border-slate-800/40" : "hover:bg-slate-50 border-slate-100/50"}`}
+                              className={`transition-colors border-b ${
+                                selectedLeadIds.includes(lead.id)
+                                  ? isDark
+                                    ? "bg-indigo-950/40 border-indigo-900/50"
+                                    : "bg-indigo-50/60 border-indigo-100"
+                                  : isDark
+                                    ? "hover:bg-slate-800/40 border-slate-800/40"
+                                    : "hover:bg-slate-50 border-slate-100/50"
+                              }`}
                             >
+                              {(isSelectionModeActive || selectedLeadIds.length > 0) && (
+                                <td className="px-4 py-4 w-10 text-center">
+                                  <input
+                                    type="checkbox"
+                                    className="w-4 h-4 rounded border-slate-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                    checked={selectedLeadIds.includes(lead.id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedLeadIds([...selectedLeadIds, lead.id]);
+                                      } else {
+                                        setSelectedLeadIds(
+                                          selectedLeadIds.filter((id) => id !== lead.id),
+                                        );
+                                      }
+                                    }}
+                                  />
+                                </td>
+                              )}
                               <td className="px-6 py-4 whitespace-nowrap text-xs text-slate-450">
                                 {lead.timestamp
                                   ? new Date(
@@ -5660,7 +5790,7 @@ Final do dia (16h - 18h)`;
                                         className={`absolute right-0 z-50 w-44 rounded-xl border py-1 shadow-2xl top-full mt-2 ${
                                           isDark
                                             ? "border-slate-800 bg-slate-950 text-slate-200"
-                                            : "border-slate-200 bg-white text-slate-805"
+                                            : "border-slate-200 bg-white text-slate-800"
                                         }`}
                                       >
                                         <button
@@ -5708,7 +5838,7 @@ Final do dia (16h - 18h)`;
                                           className={`flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-xs font-semibold transition-colors ${
                                             isDark
                                               ? "hover:bg-slate-900 hover:text-white"
-                                              : "hover:bg-slate-100 hover:text-emerald-650"
+                                              : "hover:bg-slate-100 hover:text-emerald-600"
                                           }`}
                                         >
                                           <MessageCircle
@@ -5716,6 +5846,31 @@ Final do dia (16h - 18h)`;
                                             className="text-emerald-500"
                                           />
                                           <span>WhatsApp</span>
+                                        </button>
+
+                                        <button
+                                          onClick={() => {
+                                            setActiveDropdownLeadId(null);
+                                            setIsSelectionModeActive(true);
+                                            if (!selectedLeadIds.includes(lead.id)) {
+                                              setSelectedLeadIds([...selectedLeadIds, lead.id]);
+                                            }
+                                          }}
+                                          className={`flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-xs font-semibold transition-colors ${
+                                            isDark
+                                              ? "hover:bg-slate-900 hover:text-white"
+                                              : "hover:bg-slate-100 hover:text-indigo-600"
+                                          }`}
+                                        >
+                                          <CheckSquare
+                                            size={14}
+                                            className="text-indigo-500"
+                                          />
+                                          <span>
+                                            {selectedLeadIds.includes(lead.id)
+                                              ? "Marcar (Selecionado)"
+                                              : "Marcar / Selecionar"}
+                                          </span>
                                         </button>
 
                                         <div
@@ -5734,7 +5889,7 @@ Final do dia (16h - 18h)`;
                                         >
                                           <Trash2
                                             size={14}
-                                            className="text-red-550"
+                                            className="text-red-500"
                                           />
                                           <span>Eliminar Lead</span>
                                         </button>
@@ -6445,7 +6600,7 @@ Final do dia (16h - 18h)`;
             className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex justify-center items-center p-4 overflow-y-auto"
             onClick={() => setModalState("none")}
           >
-            {/* Step 1: Confirmation & Sold-Out Reservation Registered Modal */}
+            {/* Step 1: Confirmation of Customer Data & Order Details */}
             {modalState === "step1" && (
               <motion.div
                 initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -6455,44 +6610,30 @@ Final do dia (16h - 18h)`;
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}
-                <div className="bg-gradient-to-r from-red-600 to-rose-700 p-6 text-center text-white relative">
+                <div className="bg-gradient-to-r from-indigo-600 to-blue-700 p-6 text-center text-white relative">
                   <button
                     onClick={() => closeModal()}
-                    className="absolute top-4 right-4 text-rose-200 hover:text-white p-1 rounded-full hover:bg-white/10 transition"
+                    className="absolute top-4 right-4 text-indigo-200 hover:text-white p-1 rounded-full hover:bg-white/10 transition"
                   >
                     <XCircle size={24} />
                   </button>
                   <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-3 backdrop-blur-sm border border-white/20 shadow-inner">
-                    <CheckCircle className="w-8 h-8 text-white" />
+                    <User className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-2xl font-black tracking-tight">
-                    🎉 Reserva Registada!
+                    📋 Confirme os seus Dados
                   </h3>
-                  <p className="text-xs text-rose-100 mt-1 font-semibold">
-                    🔴 Lote para entrega imediata esgotado em Luanda
+                  <p className="text-xs text-indigo-100 mt-1 font-semibold">
+                    Por favor, verifique as informações antes de prosseguir
                   </p>
                 </div>
 
                 <div className="p-6 space-y-5 text-slate-700 text-sm">
-                  {/* Mensagem Principal */}
-                  <div className="bg-rose-50 border border-rose-200/90 rounded-2xl p-4 text-xs sm:text-sm text-rose-950 space-y-2">
-                    <div className="flex items-center gap-2 font-black text-rose-900 text-sm">
-                      <Timer size={18} className="text-rose-600 shrink-0" />
-                      <span>Prazo do Lote de Pré-Venda:</span>
-                    </div>
-                    <p className="leading-relaxed text-slate-700">
-                      A sua reserva foi registada com sucesso! O lote de pré-venda será reposto e entregue no seu endereço dentro de <strong>14 dias</strong> após a sua reserva.
-                    </p>
-                    <p className="text-xs font-semibold text-emerald-700 bg-emerald-50 p-2 rounded-xl border border-emerald-200">
-                      💡 <strong>Pagamento 100% Seguro:</strong> Pagas somente em mãos no ato da entrega!
-                    </p>
-                  </div>
-
                   {/* Dados do Cliente */}
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2">
                     <div className="flex items-center gap-2 font-bold text-slate-900 border-b border-slate-200/80 pb-2 text-xs uppercase tracking-wider text-indigo-600">
                       <User size={15} />
-                      <span>Seus Dados Registados</span>
+                      <span>Seus Dados de Contacto & Entrega</span>
                     </div>
                     <div className="grid grid-cols-1 gap-1.5 text-xs sm:text-sm">
                       <div className="flex justify-between">
@@ -6572,22 +6713,14 @@ Final do dia (16h - 18h)`;
                     </div>
                   </div>
 
-                  {/* Lembrete de verificação */}
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 flex items-start gap-2">
-                    <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
-                    <p className="leading-snug font-medium">
-                      Certifique-se de ter escolhido o <strong>tamanho e cor corretos</strong>. Se precisar alterar algo, clique em Editar Detalhes abaixo.
-                    </p>
-                  </div>
-
-                  {/* Botões */}
-                  <div className="space-y-2 pt-1">
+                  {/* Botões de Ação da Etapa 1 */}
+                  <div className="space-y-2.5 pt-2">
                     <button
-                      onClick={() => closeModal()}
-                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 px-4 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98] text-base flex justify-center items-center gap-2"
+                      onClick={() => setModalState("step2")}
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 px-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98] text-sm flex justify-center items-center gap-2"
                     >
                       <CheckCircle size={20} />
-                      ENTENDIDO, CONCLUIR
+                      CONFIRMAR DADOS DO PEDIDO
                     </button>
                     <button
                       onClick={() => {
@@ -6595,10 +6728,73 @@ Final do dia (16h - 18h)`;
                         const formElem = document.getElementById("comprar");
                         if (formElem) formElem.scrollIntoView({ behavior: "smooth" });
                       }}
-                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 px-4 rounded-2xl transition-all active:scale-[0.98] flex justify-center items-center gap-2 text-xs border border-slate-200"
+                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 px-4 rounded-xl transition-all active:scale-[0.98] text-xs flex justify-center items-center gap-1.5 border border-slate-200"
                     >
-                      <Pencil size={16} />
+                      <Pencil size={15} />
                       EDITAR DETALHES DA RESERVA
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 2: Sold-Out Reposition Notice & Decision */}
+            {modalState === "step2" && (
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white max-w-md w-full rounded-3xl shadow-2xl overflow-hidden my-8 border border-slate-100"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className="bg-gradient-to-r from-red-600 to-rose-700 p-6 text-center text-white relative">
+                  <button
+                    onClick={() => closeModal()}
+                    className="absolute top-4 right-4 text-rose-200 hover:text-white p-1 rounded-full hover:bg-white/10 transition"
+                  >
+                    <XCircle size={24} />
+                  </button>
+                  <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-3 backdrop-blur-sm border border-white/20 shadow-inner">
+                    <Timer className="w-8 h-8 text-white animate-pulse" />
+                  </div>
+                  <h3 className="text-2xl font-black tracking-tight">
+                    🔴 Lote Esgotado em Luanda
+                  </h3>
+                  <p className="text-xs text-rose-100 mt-1 font-semibold">
+                    Mas não se preocupe! Seu produto será reposto em breve.
+                  </p>
+                </div>
+
+                <div className="p-6 space-y-5 text-slate-700 text-sm">
+                  {/* Mensagem Principal */}
+                  <div className="bg-rose-50 border border-rose-200/90 rounded-2xl p-4 text-xs sm:text-sm text-rose-950 space-y-2">
+                    <div className="flex items-center gap-2 font-black text-rose-900 text-sm">
+                      <Timer size={18} className="text-rose-600 shrink-0" />
+                      <span>Reposição & Entrega Garantida:</span>
+                    </div>
+                    <p className="leading-relaxed text-slate-700">
+                      O lote de entrega imediata esgotou. A sua reserva foi registada e o produto será reposto e entregue no seu endereço dentro de <strong>14 dias</strong> após a confirmação.
+                    </p>
+                    <p className="text-xs font-semibold text-emerald-700 bg-emerald-50 p-2 rounded-xl border border-emerald-200">
+                      💡 Pagamento 100% Seguro entrega
+                    </p>
+                  </div>
+
+                  {/* Decisão */}
+                  <div className="space-y-3 pt-2">
+                    <button
+                      onClick={() => processReservation(true)}
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 px-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98] text-sm flex justify-center items-center gap-2"
+                    >
+                      <CheckCircle size={20} />
+                      SIM, QUERO GARANTIR A MINHA PROMOÇÃO ✅
+                    </button>
+                    <button
+                      onClick={() => setModalState("last-chance")}
+                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3.5 px-4 rounded-xl transition-all active:scale-[0.98] text-xs flex justify-center items-center gap-1.5 border border-slate-200"
+                    >
+                      PREFIRO CONTINUAR SEM O PRODUTO ❌
                     </button>
                   </div>
                 </div>
@@ -6623,18 +6819,47 @@ Final do dia (16h - 18h)`;
                  <div className="p-8 text-center pt-4">
                    <p className="text-slate-700 mb-6 font-bold text-lg">
                      Sem a{" "}
-                     {view === "sales-roupas"
-                       ? "Secador Expresso Portátil"
-                       : view === "sales-roteador"
-                         ? "Roteador 5G Ultra"
-                         : view === "sales-base-movel"
-                           ? "Base Móvel 360°"
-                           : view === "sales-camisa-seda"
-                             ? "Camisa de Seda Gelada"
-                             : "Secador UV"}
+                     {view === "sales-cinta-colombiana"
+                       ? "Cinta Modeladora Colombiana"
+                       : view === "sales-roupas"
+                         ? "Secador Expresso Portátil"
+                         : view === "sales-roteador"
+                           ? "Roteador 5G Ultra"
+                           : view === "sales-base-movel"
+                             ? "Base Móvel 360°"
+                             : view === "sales-camisa-seda"
+                               ? "Camisa de Seda Gelada"
+                               : "Secador UV"}
                      , vais continuar a:
                    </p>
-                   {view === "sales-roteador" ? (
+                   {view === "sales-cinta-colombiana" ? (
+                     <ul className="text-left text-slate-600 mb-8 space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">💃</span>{" "}
+                         <span className="font-medium">
+                           Esconder a barriga e evitar usar aquelas roupas que tanto gostas
+                         </span>
+                       </li>
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">🧍‍♀️</span>{" "}
+                         <span className="font-medium">
+                           Sofrer com má postura e dores na coluna durante o dia
+                         </span>
+                       </li>
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">😓</span>{" "}
+                         <span className="font-medium">
+                           Usar cintas desconfortáveis que enrolam e marcam debaixo da roupa
+                         </span>
+                       </li>
+                       <li className="flex items-start gap-3">
+                         <span className="text-xl">💸</span>{" "}
+                         <span className="font-medium">
+                           Perder a oportunidade do lote promocional de pré-venda em Luanda
+                         </span>
+                       </li>
+                     </ul>
+                   ) : view === "sales-roteador" ? (
                      <ul className="text-left text-slate-600 mb-8 space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
                        <li className="flex items-start gap-3">
                          <span className="text-xl">🛜</span>{" "}
@@ -6645,8 +6870,7 @@ Final do dia (16h - 18h)`;
                        <li className="flex items-start gap-3">
                          <span className="text-xl">🐢</span>{" "}
                          <span className="font-medium">
-                           Ficar com internet super lenta quando muita gente
-                           conecta
+                           Ficar com internet super lenta quando muita gente conecta
                          </span>
                        </li>
                        <li className="flex items-start gap-3">
@@ -6676,20 +6900,13 @@ Final do dia (16h - 18h)`;
                            Riscar e danificar o piso ao empurrar equipamentos pesados com dores nas costas
                          </span>
                        </li>
-                       <li className="flex items-start gap-3">
-                         <span className="text-xl">💸</span>{" "}
-                         <span className="font-medium">
-                           Gastar dinheiro e tempo contratando alguém só para mover eletrodomésticos
-                         </span>
-                       </li>
                      </ul>
                    ) : view === "sales-roupas" ? (
                      <ul className="text-left text-slate-600 mb-8 space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
                        <li className="flex items-start gap-3">
                          <span className="text-xl">🩲</span>{" "}
                          <span className="font-medium">
-                           Ter vergonha de deixar roupa íntima no estendal comum
-                           dos vizinhos
+                           Ter vergonha de deixar roupa íntima no estendal comum dos vizinhos
                          </span>
                        </li>
                        <li className="flex items-start gap-3">
@@ -6701,14 +6918,7 @@ Final do dia (16h - 18h)`;
                        <li className="flex items-start gap-3">
                          <span className="text-xl">😤</span>{" "}
                          <span className="font-medium">
-                           Ver camisas, calças e uniformes escolares húmidos de
-                           manhã
-                         </span>
-                       </li>
-                       <li className="flex items-start gap-3">
-                         <span className="text-xl">🏠</span>{" "}
-                         <span className="font-medium">
-                           Ter a casa cheia de roupa espalhada por dias
+                           Ver camisas, calças e uniformes escolares húmidos de manhã
                          </span>
                        </li>
                      </ul>
@@ -6729,13 +6939,7 @@ Final do dia (16h - 18h)`;
                        <li className="flex items-start gap-3">
                          <span className="text-xl">🌬️</span>{" "}
                          <span className="font-medium">
-                           Ficar sem a sensação térmica de frescura extrema que o tecido Seda Gelada Premium proporciona
-                         </span>
-                       </li>
-                       <li className="flex items-start gap-3">
-                         <span className="text-xl">💸</span>{" "}
-                         <span className="font-medium">
-                           Gastar em camisas normais que encolhem e desbotam após poucas lavagens
+                           Ficar sem a sensação térmica de frescura extrema do tecido Seda Gelada
                          </span>
                        </li>
                      </ul>
@@ -6744,8 +6948,7 @@ Final do dia (16h - 18h)`;
                        <li className="flex items-start gap-3">
                          <span className="text-xl">👟</span>{" "}
                          <span className="font-medium">
-                           Ter vergonha de tirar os sapatos em público pelo mau
-                           cheiro
+                           Ter vergonha de tirar os sapatos em público pelo mau cheiro
                          </span>
                        </li>
                        <li className="flex items-start gap-3">
@@ -6760,29 +6963,24 @@ Final do dia (16h - 18h)`;
                            Usar ténis e sapatos húmidos que magoam os pés
                          </span>
                        </li>
-                       <li className="flex items-start gap-3">
-                         <span className="text-xl">💸</span>{" "}
-                         <span className="font-medium">
-                           Ver o calçado estragar-se mais depressa pela humidade
-                         </span>
-                       </li>
                      </ul>
                    )}
-                   <p className="text-sm text-slate-900 font-bold mb-8 p-4 bg-red-50 rounded-xl border border-red-100 text-center">
-                     O próximo lote custará{" "}
-                     <b>
-                       {view === "sales-roupas"
-                         ? "50.000 Kz"
-                         : view === "sales-roteador"
-                           ? "310.000 Kz"
-                           : view === "sales-base-movel"
-                             ? "30.000 Kz"
-                             : view === "sales-camisa-seda"
-                               ? (formData.quantity === 1 ? "50.000 Kz" : formData.quantity === 2 ? "100.000 Kz" : formData.quantity === 3 ? "150.000 Kz" : formData.quantity === 5 ? "250.000 Kz" : "50.000 Kz")
-                               : "45.000 Kz"}
-                     </b>
-                     . Vais mesmo deixar passar?
-                   </p>
+
+                   {/* Pergunta Q2 do Fluxograma */}
+                   <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 mb-6 text-slate-900 font-bold text-sm">
+                     {view === "sales-cinta-colombiana"
+                       ? "Você prefere ter a cintura fina e postura elegante ou continuar a esconder a barriga?"
+                       : view === "sales-camisa-seda"
+                         ? "Você prefere elegância e frescura extrema no calor ou continuar a suar e colar a camisa ao corpo?"
+                         : view === "sales-roupas"
+                           ? "Você prefere roupas secas e cheirosas em 2 horas ou continuar a suportar o cheiro a bafio?"
+                           : view === "sales-roteador"
+                             ? "Você prefere internet 5G ultra-rápida sem travamento ou continuar a passar raiva com sinal caindo?"
+                             : view === "sales-base-movel"
+                               ? "Você prefere mover móveis e limpar com 1 dedo ou continuar com dores nas costas e chão riscado?"
+                               : "Você prefere calçados limpos e sem chulé ou continuar com o mau cheiro ao tirar os sapatos?"}
+                   </div>
+
                    <div className="space-y-3">
                      <button
                        onClick={() => processReservation(true)}
@@ -6835,7 +7033,9 @@ Final do dia (16h - 18h)`;
                             ? "A Dona Rosa do Kilamba também hesitou. Hoje consegue arrastar a geladeira e a máquina de lavar sozinha só com uma mão para limpar. Sem pedir ajuda e sem riscar o chão."
                             : view === "sales-camisa-seda"
                               ? "O Ricardo de Luanda também hesitou. Hoje agradece todos os dias por ter reservado. O tecido de Seda Gelada é super fresco e não precisa de passar a ferro. Sinto-me super elegante e muito confortável o dia inteiro."
-                              : "O Paulo do Kilamba também hesitou. Hoje agradece todos os dias por ter reservado. O mau cheiro dos ténis de treino desapareceu completamente. Sinto os pés muito mais saudáveis e frescos."}
+                              : view === "sales-cinta-colombiana"
+                                ? "A Ana do Kilamba também hesitou. Hoje agradece todos os dias por ter reservado. A Cinta Colombiana modela a cintura na hora e dá uma postura incrível sem magoar nem enrolar na roupa!"
+                                : "O Paulo do Kilamba também hesitou. Hoje agradece todos os dias por ter reservado. O mau cheiro dos ténis de treino desapareceu completamente. Sinto os pés muito mais saudáveis e frescos."}
                       "
                     </p>
                     <div className="flex items-center gap-1 text-amber-400">
@@ -7462,32 +7662,120 @@ Final do dia (16h - 18h)`;
 
                 <div className="flex gap-3">
                   <button
+                    disabled={isDeletingLead}
                     onClick={() => {
-                      setLeadToDelete(null);
-                      setModalState("none");
+                      if (!isDeletingLead) {
+                        setLeadToDelete(null);
+                        setModalState("none");
+                      }
                     }}
-                    className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 px-4 rounded-xl transition-colors"
+                    className="flex-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 font-bold py-3 px-4 rounded-xl transition-colors cursor-pointer"
                   >
                     Não, manter
                   </button>
                   <button
+                    disabled={isDeletingLead}
                     onClick={async () => {
+                      setIsDeletingLead(true);
                       try {
                         await deleteDoc(doc(db, "leads", leadToDelete.id));
                         if (view === "admin") {
-                          setAdminData(
-                            adminData.filter((l) => l.id !== leadToDelete.id),
+                          setAdminData((prev) =>
+                            prev.filter((l) => l.id !== leadToDelete.id),
                           );
                         }
+                        setSelectedLeadIds((prev) =>
+                          prev.filter((id) => id !== leadToDelete.id),
+                        );
                         setModalState("none");
                         setLeadToDelete(null);
                       } catch (e) {
                         handleFirestoreError(e, OperationType.DELETE, "leads");
+                      } finally {
+                        setIsDeletingLead(false);
                       }
                     }}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl transition-colors"
+                    className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-75 text-white font-bold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    Sim, excluir
+                    {isDeletingLead ? (
+                      <>
+                        <Loader2 className="animate-spin" size={18} />
+                        <span>A processar...</span>
+                      </>
+                    ) : (
+                      <span>Sim, excluir</span>
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {modalState === "delete-bulk-confirm" && selectedLeadIds.length > 0 && (
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="bg-white max-w-sm w-full rounded-3xl shadow-2xl overflow-hidden my-8 p-6 text-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
+                  <Trash2 size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-800 mb-2">
+                  Eliminar {selectedLeadIds.length} lead(s) em grupo?
+                </h3>
+                <p className="text-sm text-slate-500 mb-6 font-medium">
+                  Esta ação é permanente e irreversível. Os{" "}
+                  <span className="font-bold text-slate-700">
+                    {selectedLeadIds.length}
+                  </span>{" "}
+                  leads selecionados serão eliminados permanentemente.
+                </p>
+
+                <div className="flex gap-3">
+                  <button
+                    disabled={isDeletingBulk}
+                    onClick={() => {
+                      if (!isDeletingBulk) {
+                        setModalState("none");
+                      }
+                    }}
+                    className="flex-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 font-bold py-3 px-4 rounded-xl transition-colors cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    disabled={isDeletingBulk}
+                    onClick={async () => {
+                      setIsDeletingBulk(true);
+                      try {
+                        await Promise.all(
+                          selectedLeadIds.map((id) =>
+                            deleteDoc(doc(db, "leads", id)),
+                          ),
+                        );
+                        if (view === "admin") {
+                          setAdminData((prev) =>
+                            prev.filter((l) => !selectedLeadIds.includes(l.id)),
+                          );
+                        }
+                        setSelectedLeadIds([]);
+                        setModalState("none");
+                      } catch (e) {
+                        handleFirestoreError(e, OperationType.DELETE, "leads");
+                      } finally {
+                        setIsDeletingBulk(false);
+                      }
+                    }}
+                    className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-75 text-white font-bold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {isDeletingBulk ? (
+                      <>
+                        <Loader2 className="animate-spin" size={18} />
+                        <span>A processar...</span>
+                      </>
+                    ) : (
+                      <span>Sim, eliminar</span>
+                    )}
                   </button>
                 </div>
               </motion.div>

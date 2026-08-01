@@ -667,13 +667,6 @@ export default function CamisaSedaView({
                   <p className="text-[11px] text-slate-500 mt-0.5">Selecione a cor e o tamanho ideal para cada uma das camisas do seu pacote:</p>
                 </div>
 
-                <div className="bg-amber-50 border border-amber-200/90 rounded-xl p-3 text-xs text-amber-900 flex items-start gap-2 shadow-xs">
-                  <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
-                  <p className="leading-snug font-medium">
-                    <strong>📦 Lote chegará dentro de 14 dias após a sua reserva.</strong>
-                  </p>
-                </div>
-
                 <div className="space-y-4">
                   {Array.from({ length: formData.quantity }).map((_, index) => {
                     const currentConf = shirtConfigs[index] || { color: COLOR_IMAGES[0].color, size: "L - G" };
