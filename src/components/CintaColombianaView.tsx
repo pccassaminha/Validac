@@ -49,11 +49,10 @@ const COLOR_OPTIONS = [
     id: "nude",
     name: "Nude-Café",
     hex: "#d2b49c",
-    image: "https://i.postimg.cc/mZdkh9k6/nude-cafe-(1).webp",
+    image: "https://i.postimg.cc/tRknm8DP/NUDE-CAFE-1.jpg",
     gallery: [
-      "https://i.postimg.cc/mZdkh9k6/nude-cafe-(1).webp",
-      "https://i.postimg.cc/ZYfn0NnX/imagem-extra-(2).webp",
-      "https://i.postimg.cc/dQW3DC3X/imagem-extra-(1).webp"
+      "https://i.postimg.cc/tRknm8DP/NUDE-CAFE-1.jpg",
+      "https://i.postimg.cc/jqcnkBvH/n-UDE-CAFE-2.jpg"
     ],
     badge: "Mais Vendido"
   },
@@ -61,9 +60,10 @@ const COLOR_OPTIONS = [
     id: "black",
     name: "Preto Elegante",
     hex: "#1e1e1e",
-    image: "https://i.postimg.cc/HWSnjMnB/preta_luxuasa.webp",
+    image: "https://i.postimg.cc/QNmKnvSp/Preto-elegante-1.jpg",
     gallery: [
-      "https://i.postimg.cc/HWSnjMnB/preta_luxuasa.webp"
+      "https://i.postimg.cc/QNmKnvSp/Preto-elegante-1.jpg",
+      "https://i.postimg.cc/3r10bz9C/Preto-elegante-2.jpg"
     ],
     badge: "Edição Clássica"
   }
@@ -72,35 +72,35 @@ const COLOR_OPTIONS = [
 const REAL_PHOTOS = [
   {
     id: "nude-1",
-    url: "https://i.postimg.cc/mZdkh9k6/nude-cafe-(1).webp",
+    url: "https://i.postimg.cc/tRknm8DP/NUDE-CAFE-1.jpg",
     title: "Modelo Nude-Café (Visão Frontal)",
     subtitle: "Ajuste perfeito de compressão no abdómen e quadril",
     color: "Nude-Café",
     badge: "Fotos Reais Nude"
   },
   {
-    id: "nude-3",
-    url: "https://i.postimg.cc/ZYfn0NnX/imagem-extra-(2).webp",
-    title: "Modelo Nude-Café (Silhueta Ampulheta)",
+    id: "nude-2",
+    url: "https://i.postimg.cc/jqcnkBvH/n-UDE-CAFE-2.jpg",
+    title: "Modelo Nude-Café (Visão Detalhada)",
     subtitle: "Renda antiderrapante na coxa e elevação de bumbum",
     color: "Nude-Café",
     badge: "Fotos Reais Nude"
   },
   {
     id: "black-1",
-    url: "https://i.postimg.cc/HWSnjMnB/preta_luxuasa.webp",
-    title: "Modelo Preto Elegante (Frente & Postura)",
+    url: "https://i.postimg.cc/QNmKnvSp/Preto-elegante-1.jpg",
+    title: "Modelo Preto Elegante (Visão Frontal)",
     subtitle: "Modela e sustenta a postura sem achatar o bumbum",
     color: "Preto Elegante",
     badge: "Fotos Reais Preto"
   },
   {
-    id: "main-5",
-    url: "https://i.postimg.cc/xjs8qm84/main-image-5.webp",
-    title: "Modelo Cinta Colombiana (Detalhe & Compressão)",
+    id: "black-2",
+    url: "https://i.postimg.cc/3r10bz9C/Preto-elegante-2.jpg",
+    title: "Modelo Preto Elegante (Visão Detalhada)",
     subtitle: "Modelação anatómica de alta compressão e conforto",
-    color: "Cinta Colombiana",
-    badge: "Fotos Reais"
+    color: "Preto Elegante",
+    badge: "Fotos Reais Preto"
   },
   {
     id: "before-after",
