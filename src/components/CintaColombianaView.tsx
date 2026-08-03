@@ -421,6 +421,122 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
               </p>
             </div>
 
+            {/* Illustrative Combo Offer Blocks (2 & 3 Units) */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-black uppercase tracking-wider text-rose-950 flex items-center gap-1.5">
+                  <Flame size={14} className="text-rose-600 fill-rose-600" /> KITS PROMOCIONAIS COM DESCONTO:
+                </span>
+                <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  Economia Extra
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                {/* 2 Units Card */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData((prev) => ({ ...prev, quantity: 2 }));
+                    scrollToCheckout();
+                  }}
+                  className={`group relative bg-gradient-to-b from-rose-50/90 to-white p-3.5 rounded-2xl border transition-all text-left cursor-pointer flex flex-col justify-between shadow-xs ${
+                    formData.quantity === 2
+                      ? "border-rose-600 ring-2 ring-rose-500/20 shadow-md bg-rose-50/60"
+                      : "border-rose-200/90 hover:border-rose-400 hover:shadow-md"
+                  }`}
+                >
+                  <div className="absolute -top-2.5 right-2 bg-gradient-to-r from-rose-600 to-pink-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
+                    Poupa 10.000 Kz
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <div className="flex -space-x-1.5 shrink-0">
+                        <img
+                          src="https://i.postimg.cc/tRknm8DP/NUDE-CAFE-1.jpg"
+                          alt="Cinta 1"
+                          className="w-7 h-7 rounded-lg object-cover border-2 border-white shadow-xs"
+                        />
+                        <img
+                          src="https://i.postimg.cc/QNmKnvSp/Preto-elegante-1.jpg"
+                          alt="Cinta 2"
+                          className="w-7 h-7 rounded-lg object-cover border-2 border-white shadow-xs"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-xs font-black text-slate-900 leading-tight block">
+                          2x Cintas
+                        </span>
+                        <span className="text-[10px] text-rose-600 font-extrabold block">
+                          35.000 Kz / cada
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium leading-tight mb-2">
+                      Ideal para alternar cores (Nude + Preto)
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-rose-100 flex items-baseline justify-between">
+                    <span className="text-slate-400 line-through text-[11px] font-semibold">80.000 Kz</span>
+                    <span className="text-sm font-black text-rose-600">70.000 Kz</span>
+                  </div>
+                </button>
+
+                {/* 3 Units Card */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData((prev) => ({ ...prev, quantity: 3 }));
+                    scrollToCheckout();
+                  }}
+                  className={`group relative bg-gradient-to-b from-amber-50/90 to-white p-3.5 rounded-2xl border transition-all text-left cursor-pointer flex flex-col justify-between shadow-xs ${
+                    formData.quantity === 3
+                      ? "border-amber-600 ring-2 ring-amber-500/20 shadow-md bg-amber-50/60"
+                      : "border-amber-200/90 hover:border-amber-400 hover:shadow-md"
+                  }`}
+                >
+                  <div className="absolute -top-2.5 right-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
+                    Poupa 21.000 Kz
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <div className="flex -space-x-2 shrink-0">
+                        <img
+                          src="https://i.postimg.cc/tRknm8DP/NUDE-CAFE-1.jpg"
+                          alt="Cinta 1"
+                          className="w-7 h-7 rounded-lg object-cover border-2 border-white shadow-xs"
+                        />
+                        <img
+                          src="https://i.postimg.cc/QNmKnvSp/Preto-elegante-1.jpg"
+                          alt="Cinta 2"
+                          className="w-7 h-7 rounded-lg object-cover border-2 border-white shadow-xs"
+                        />
+                        <img
+                          src="https://i.postimg.cc/jqcnkBvH/n-UDE-CAFE-2.jpg"
+                          alt="Cinta 3"
+                          className="w-7 h-7 rounded-lg object-cover border-2 border-white shadow-xs"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-xs font-black text-slate-900 leading-tight block">
+                          3x Cintas
+                        </span>
+                        <span className="text-[10px] text-amber-700 font-extrabold block">
+                          33.000 Kz / cada
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium leading-tight mb-2">
+                      Kit Sedutor / Máxima Poupança
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-amber-100 flex items-baseline justify-between">
+                    <span className="text-slate-400 line-through text-[11px] font-semibold">120.000 Kz</span>
+                    <span className="text-sm font-black text-amber-700">99.000 Kz</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
             {/* Quick Specs bullets */}
             <div className="grid grid-cols-2 gap-2.5 text-xs font-bold text-slate-700">
               <div className="bg-white/80 p-3 rounded-xl border border-rose-100 flex items-center gap-2">
@@ -1144,7 +1260,7 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                   {[
                     { qty: 1, title: "1x Cinta Modeladora", price: "40.000 Kz", sub: "Preço Padrão de Lançamento" },
                     { qty: 2, title: "2x Cintas (KIT DUPLO)", price: "70.000 Kz", sub: "Poupa 10.000 Kz!" },
-                    { qty: 3, title: "3x Cintas (KIT FAMÍLIA)", price: "99.000 Kz", sub: "Poupa 21.000 Kz!" }
+                    { qty: 3, title: "3x Cintas (KIT SEDUTOR)", price: "99.000 Kz", sub: "Poupa 21.000 Kz!" }
                   ].map((pkg) => (
                     <button
                       key={pkg.qty}
