@@ -221,14 +221,14 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
   };
 
   const getCalculatedPrice = (qty: number) => {
-    if (qty === 1) return 50000;
-    if (qty === 2) return 90000; // Poupa 10.000 Kz
-    if (qty === 3) return 125000; // Poupa 25.000 Kz
-    return qty * 50000;
+    if (qty === 1) return 40000;
+    if (qty === 2) return 70000; // Poupa 10.000 Kz
+    if (qty === 3) return 99000; // Poupa 21.000 Kz
+    return qty * 40000;
   };
 
   const getOldPrice = (qty: number) => {
-    return qty * 100000;
+    return qty * 80000;
   };
 
   const currentPrice = getCalculatedPrice(formData.quantity || 1);
@@ -409,10 +409,10 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
             {/* Pricing Card */}
             <div className="bg-white p-5 rounded-3xl border border-rose-100 shadow-xl space-y-3">
               <div className="flex items-baseline gap-3">
-                <span className="text-3xl sm:text-4xl font-black text-rose-600">50.000 Kz</span>
-                <span className="text-slate-400 line-through text-base font-semibold">100.000 Kz</span>
+                <span className="text-3xl sm:text-4xl font-black text-rose-600">40.000 Kz</span>
+                <span className="text-slate-400 line-through text-base font-semibold">80.000 Kz</span>
                 <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full">
-                  Poupa 50.000 Kz
+                  Poupa 40.000 Kz
                 </span>
               </div>
               <p className="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
@@ -478,7 +478,7 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                 onClick={scrollToCheckout}
                 className="w-full bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-black text-lg py-4 px-6 rounded-2xl shadow-[0_10px_30px_rgba(225,29,72,0.4)] transition-all transform hover:-translate-y-0.5 active:scale-[0.98] flex items-center justify-center gap-3 cursor-pointer group"
               >
-                <span>RESERVAR A MINHA CINTA — 50.000 KZ</span>
+                <span>RESERVAR A MINHA CINTA — 40.000 KZ</span>
                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
               </button>
 
@@ -1071,7 +1071,7 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
           </h2>
 
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-xl mx-auto">
-            Estamos a lançar esta Cinta Modeladora Colombiana em Luanda em quantidade limitada. Ao efetuar a sua reserva hoje, garante prioridade no primeiro lote com <strong>50% de desconto promocional</strong>.
+            Estamos a lançar esta Cinta Modeladora Colombiana em Luanda em quantidade limitada. Ao efetuar a sua reserva hoje, garante prioridade no primeiro lote com <strong>desconto promocional de lançamento</strong>.
           </p>
 
           <div className="pt-2">
@@ -1142,9 +1142,9 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                 </label>
                 <div className="space-y-2">
                   {[
-                    { qty: 1, title: "1x Cinta Modeladora", price: "50.000 Kz", sub: "Preço Padrão de Lançamento" },
-                    { qty: 2, title: "2x Cintas (KIT DUPLO)", price: "90.000 Kz", sub: "Poupa 10.000 Kz!" },
-                    { qty: 3, title: "3x Cintas (KIT FAMÍLIA)", price: "125.000 Kz", sub: "Poupa 25.000 Kz!" }
+                    { qty: 1, title: "1x Cinta Modeladora", price: "40.000 Kz", sub: "Preço Padrão de Lançamento" },
+                    { qty: 2, title: "2x Cintas (KIT DUPLO)", price: "70.000 Kz", sub: "Poupa 10.000 Kz!" },
+                    { qty: 3, title: "3x Cintas (KIT FAMÍLIA)", price: "99.000 Kz", sub: "Poupa 21.000 Kz!" }
                   ].map((pkg) => (
                     <button
                       key={pkg.qty}
@@ -1365,14 +1365,14 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
             "A mulher confiante já está em você. A cinta só revela."
           </h2>
           <p className="text-sm text-slate-300">
-            Garanta agora a sua Cinta Modeladora Colombiana com 50% de desconto no lançamento.
+            Garanta agora a sua Cinta Modeladora Colombiana com preço especial no lançamento.
           </p>
           <div>
             <button
               onClick={scrollToCheckout}
               className="bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-black text-lg py-4 px-8 rounded-2xl shadow-[0_10px_30px_rgba(225,29,72,0.5)] transition-all cursor-pointer transform hover:-translate-y-0.5 active:scale-95"
             >
-              RESERVAR AGORA (50.000 KZ)
+              RESERVAR AGORA (40.000 KZ)
             </button>
           </div>
         </div>
@@ -1715,7 +1715,7 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
 
               <div className="bg-rose-50/80 p-3.5 rounded-2xl border border-rose-100 text-slate-800 text-xs sm:text-sm space-y-1.5 leading-relaxed">
                 <p className="font-semibold text-rose-950">
-                  O desconto de 50% e o <strong>pagamento seguro na entrega em Luanda</strong> são válidos apenas para pedidos de hoje!
+                  O preço promocional de lançamento e o <strong>pagamento seguro na entrega em Luanda</strong> são válidos apenas para pedidos de hoje!
                 </p>
                 <p className="text-slate-600 text-xs">
                   Reduza medidas de forma imediata e pague apenas ao receber em mãos.
