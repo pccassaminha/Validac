@@ -221,14 +221,14 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
   };
 
   const getCalculatedPrice = (qty: number) => {
-    if (qty === 1) return 40000;
-    if (qty === 2) return 70000; // Poupa 10.000 Kz
-    if (qty === 3) return 99000; // Poupa 21.000 Kz
-    return qty * 40000;
+    if (qty === 1) return 45000;
+    if (qty === 2) return 80000; // Poupa 10.000 Kz
+    if (qty === 3) return 110000; // Poupa 25.000 Kz
+    return qty * 45000;
   };
 
   const getOldPrice = (qty: number) => {
-    return qty * 80000;
+    return qty * 100000;
   };
 
   const currentPrice = getCalculatedPrice(formData.quantity || 1);
@@ -409,10 +409,10 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
             {/* Pricing Card */}
             <div className="bg-white p-5 rounded-3xl border border-rose-100 shadow-xl space-y-3">
               <div className="flex items-baseline gap-3">
-                <span className="text-3xl sm:text-4xl font-black text-rose-600">40.000 Kz</span>
-                <span className="text-slate-400 line-through text-base font-semibold">80.000 Kz</span>
+                <span className="text-3xl sm:text-4xl font-black text-rose-600">45.000 Kz</span>
+                <span className="text-slate-400 line-through text-base font-semibold">100.000 Kz</span>
                 <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full">
-                  Poupa 40.000 Kz
+                  Poupa 55.000 Kz
                 </span>
               </div>
               <p className="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
@@ -467,7 +467,7 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                           2x Cintas
                         </span>
                         <span className="text-[10px] text-rose-600 font-extrabold block">
-                          35.000 Kz / cada
+                          40.000 Kz / cada
                         </span>
                       </div>
                     </div>
@@ -476,8 +476,8 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                     </p>
                   </div>
                   <div className="pt-2 border-t border-rose-100 flex items-baseline justify-between">
-                    <span className="text-slate-400 line-through text-[11px] font-semibold">80.000 Kz</span>
-                    <span className="text-sm font-black text-rose-600">70.000 Kz</span>
+                    <span className="text-slate-400 line-through text-[11px] font-semibold">200.000 Kz</span>
+                    <span className="text-sm font-black text-rose-600">80.000 Kz</span>
                   </div>
                 </button>
 
@@ -495,7 +495,7 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                   }`}
                 >
                   <div className="absolute -top-2.5 right-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
-                    Poupa 21.000 Kz
+                    Poupa 25.000 Kz
                   </div>
                   <div>
                     <div className="flex items-center gap-1.5 mb-2">
@@ -521,7 +521,7 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                           3x Cintas
                         </span>
                         <span className="text-[10px] text-amber-700 font-extrabold block">
-                          33.000 Kz / cada
+                          36.667 Kz / cada
                         </span>
                       </div>
                     </div>
@@ -530,8 +530,8 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                     </p>
                   </div>
                   <div className="pt-2 border-t border-amber-100 flex items-baseline justify-between">
-                    <span className="text-slate-400 line-through text-[11px] font-semibold">120.000 Kz</span>
-                    <span className="text-sm font-black text-amber-700">99.000 Kz</span>
+                    <span className="text-slate-400 line-through text-[11px] font-semibold">300.000 Kz</span>
+                    <span className="text-sm font-black text-amber-700">110.000 Kz</span>
                   </div>
                 </button>
               </div>
@@ -594,7 +594,7 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                 onClick={scrollToCheckout}
                 className="w-full bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-black text-lg py-4 px-6 rounded-2xl shadow-[0_10px_30px_rgba(225,29,72,0.4)] transition-all transform hover:-translate-y-0.5 active:scale-[0.98] flex items-center justify-center gap-3 cursor-pointer group"
               >
-                <span>RESERVAR A MINHA CINTA — 40.000 KZ</span>
+                <span>RESERVAR A MINHA CINTA — 45.000 KZ</span>
                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
               </button>
 
@@ -1258,9 +1258,9 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                 </label>
                 <div className="space-y-2">
                   {[
-                    { qty: 1, title: "1x Cinta Modeladora", price: "40.000 Kz", sub: "Preço Padrão de Lançamento" },
-                    { qty: 2, title: "2x Cintas (KIT DUPLO)", price: "70.000 Kz", sub: "Poupa 10.000 Kz!" },
-                    { qty: 3, title: "3x Cintas (KIT SEDUTOR)", price: "99.000 Kz", sub: "Poupa 21.000 Kz!" }
+                    { qty: 1, title: "1x Cinta Modeladora", price: "45.000 Kz", sub: "Preço Padrão de Lançamento" },
+                    { qty: 2, title: "2x Cintas (KIT DUPLO)", price: "80.000 Kz", sub: "Poupa 10.000 Kz!" },
+                    { qty: 3, title: "3x Cintas (KIT SEDUTOR)", price: "110.000 Kz", sub: "Poupa 25.000 Kz!" }
                   ].map((pkg) => (
                     <button
                       key={pkg.qty}
@@ -1488,7 +1488,7 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
               onClick={scrollToCheckout}
               className="bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-black text-lg py-4 px-8 rounded-2xl shadow-[0_10px_30px_rgba(225,29,72,0.5)] transition-all cursor-pointer transform hover:-translate-y-0.5 active:scale-95"
             >
-              RESERVAR AGORA (40.000 KZ)
+              RESERVAR AGORA (45.000 KZ)
             </button>
           </div>
         </div>

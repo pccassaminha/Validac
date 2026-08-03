@@ -735,7 +735,7 @@ export default function App() {
     {
       id: "cinta-colombiana",
       title: "Cinta Modeladora Colombiana",
-      subtitle: "Bodysuit com compressão firme de abdómen, levanta-bumbum e renda elegante. 40.000 Kz.",
+      subtitle: "Bodysuit com compressão firme de abdómen, levanta-bumbum e renda elegante. 45.000 Kz.",
       image: "https://i.postimg.cc/tRknm8DP/NUDE-CAFE-1.jpg",
       viewName: "sales-cinta-colombiana",
       paramName: "cinta-colombiana",
@@ -1405,7 +1405,7 @@ export default function App() {
                 : "Secador Inteligente UV";
     const pricePerUnit =
       view === "sales-cinta-colombiana"
-        ? 40000
+        ? 45000
         : view === "sales-roupas"
           ? 35000
           : view === "sales-roteador"
@@ -1423,9 +1423,9 @@ export default function App() {
       else if (formData.quantity === 3) computedTotal = 86000;
       else if (formData.quantity === 5) computedTotal = 140000;
     } else if (view === "sales-cinta-colombiana") {
-      if (formData.quantity === 1) computedTotal = 40000;
-      else if (formData.quantity === 2) computedTotal = 70000;
-      else if (formData.quantity === 3) computedTotal = 99000;
+      if (formData.quantity === 1) computedTotal = 45000;
+      else if (formData.quantity === 2) computedTotal = 80000;
+      else if (formData.quantity === 3) computedTotal = 110000;
     }
 
     const tempLead = {
@@ -4716,7 +4716,7 @@ Final do dia (16h - 18h)`;
       )}
 
       {/* FOOTER */}
-      {isSalesView && (
+      {isSalesView && view !== "sales-cinta-colombiana" && (
         <footer className="bg-slate-900 text-slate-400 py-12 px-4 text-center mt-auto pb-28 md:pb-12 shadow-[inset_0_10px_30px_rgba(0,0,0,0.5)]">
           <div className="max-w-4xl mx-auto flex flex-col items-center">
             <img
@@ -6704,7 +6704,7 @@ Final do dia (16h - 18h)`;
                               view === "sales-camisa-seda"
                                 ? (formData.quantity === 1 ? 35000 : formData.quantity === 2 ? 60000 : formData.quantity === 3 ? 86000 : formData.quantity === 5 ? 140000 : 35000)
                                 : view === "sales-cinta-colombiana"
-                                  ? (formData.quantity === 1 ? 40000 : formData.quantity === 2 ? 70000 : formData.quantity === 3 ? 99000 : 40000)
+                                  ? (formData.quantity === 1 ? 45000 : formData.quantity === 2 ? 80000 : formData.quantity === 3 ? 110000 : 45000)
                                   : 35000
                             )
                           )} Kz
@@ -7118,7 +7118,7 @@ Final do dia (16h - 18h)`;
                     está reservada ao preço de{" "}
                     <strong>
                       {view === "sales-cinta-colombiana"
-                        ? (formData.quantity === 1 ? "40.000 Kz" : formData.quantity === 2 ? "70.000 Kz" : formData.quantity === 3 ? "99.000 Kz" : "40.000 Kz")
+                        ? (formData.quantity === 1 ? "45.000 Kz" : formData.quantity === 2 ? "80.000 Kz" : formData.quantity === 3 ? "110.000 Kz" : "45.000 Kz")
                         : view === "sales-roupas"
                           ? "35.000 Kz"
                           : view === "sales-roteador"
