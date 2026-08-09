@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
+  Check,
+  CheckCheck,
+  BadgeCheck,
   ShieldCheck,
   ShieldAlert,
   Activity,
@@ -1242,9 +1245,19 @@ export default function App() {
               const rawProduto = doc.data().produto || doc.data().product || doc.data().produtoName || "";
               const normalizedProduto = normalizeProductName(rawProduto);
 
+              let isDoubleChecked = !!(doc.data().doubleCheck || doc.data().verified2x);
+              try {
+                const cache = JSON.parse(localStorage.getItem("verified_leads_cache") || "{}");
+                if (cache[doc.id] !== undefined) {
+                  isDoubleChecked = !!cache[doc.id];
+                }
+              } catch (e) {}
+
               return {
                 id: doc.id,
                 ...doc.data(),
+                doubleCheck: isDoubleChecked,
+                verified2x: isDoubleChecked,
                 produto: normalizedProduto,
                 rawProduto: rawProduto,
                 timestamp: ts,
@@ -1735,9 +1748,19 @@ export default function App() {
         const rawProduto = doc.data().produto || doc.data().product || doc.data().produtoName || "";
         const normalizedProduto = normalizeProductName(rawProduto);
 
+        let isDoubleChecked = !!(doc.data().doubleCheck || doc.data().verified2x);
+        try {
+          const cache = JSON.parse(localStorage.getItem("verified_leads_cache") || "{}");
+          if (cache[doc.id] !== undefined) {
+            isDoubleChecked = !!cache[doc.id];
+          }
+        } catch (e) {}
+
         return {
           id: doc.id,
           ...doc.data(),
+          doubleCheck: isDoubleChecked,
+          verified2x: isDoubleChecked,
           produto: normalizedProduto,
           rawProduto: rawProduto,
           timestamp: ts,
@@ -1880,6 +1903,46 @@ Final do dia (16h - 18h)`;
       console.error("Erro ao atualizar status:", err);
       // Carregar os dados reais em caso de erro no servidor
       loadAdminData();
+    }
+  };
+
+  const toggleLeadDoubleCheck = async (leadId: string, currentVal: boolean) => {
+    const newVal = !currentVal;
+
+    // Save to localStorage for instant client persistence across reloads/offline
+    try {
+      const cache = JSON.parse(localStorage.getItem("verified_leads_cache") || "{}");
+      cache[leadId] = newVal;
+      localStorage.setItem("verified_leads_cache", JSON.stringify(cache));
+    } catch (e) {
+      console.error("Erro no cache de verificação local", e);
+    }
+
+    setAdminData((prev) =>
+      prev.map((l) =>
+        l.id === leadId
+          ? { ...l, doubleCheck: newVal, verified2x: newVal }
+          : l,
+      ),
+    );
+    if (selectedLeadForPreview && selectedLeadForPreview.id === leadId) {
+      setSelectedLeadForPreview((prev: any) =>
+        prev ? { ...prev, doubleCheck: newVal, verified2x: newVal } : null,
+      );
+    }
+    try {
+      await updateDoc(doc(db, "leads", leadId), {
+        doubleCheck: newVal,
+        verified2x: newVal,
+      });
+    } catch (err: any) {
+      if (
+        err instanceof Error &&
+        err.message.includes("missing or insufficient permissions")
+      ) {
+        handleFirestoreError(err, OperationType.UPDATE, `leads/${leadId}`);
+      }
+      console.error("Erro ao atualizar verificação:", err);
     }
   };
 
@@ -5679,6 +5742,11 @@ Final do dia (16h - 18h)`;
                               Status
                             </th>
                             <th
+                              className={`px-6 py-4 text-center text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-slate-500"}`}
+                            >
+                              Verificado
+                            </th>
+                            <th
                               className={`px-6 py-4 text-right text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-slate-500"}`}
                             >
                               Ações
@@ -5789,6 +5857,36 @@ Final do dia (16h - 18h)`;
                                     🚫 Cancelado
                                   </option>
                                 </select>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-center">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleLeadDoubleCheck(
+                                      lead.id,
+                                      !!(lead.doubleCheck || lead.verified2x),
+                                    );
+                                  }}
+                                  title={
+                                    lead.doubleCheck || lead.verified2x
+                                      ? "Lead verificado 2x (confirmado por ligação). Clique para desmarcar."
+                                      : "Marcar lead como verificado 2x (confirmado por ligação)"
+                                  }
+                                  className={`group mx-auto w-8 h-8 rounded-xl border flex items-center justify-center transition-all cursor-pointer duration-200 select-none ${
+                                    lead.doubleCheck || lead.verified2x
+                                      ? "bg-gradient-to-tr from-emerald-500 to-teal-500 border-emerald-400 text-white shadow-md shadow-emerald-500/25 scale-105 hover:scale-110 active:scale-95"
+                                      : isDark
+                                        ? "bg-slate-800/80 border-slate-700 hover:border-emerald-500 hover:bg-emerald-950/40 text-slate-600 hover:text-emerald-400"
+                                        : "bg-slate-50 border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/60 text-slate-300 hover:text-emerald-600 shadow-xs"
+                                  }`}
+                                >
+                                  {lead.doubleCheck || lead.verified2x ? (
+                                    <CheckCheck size={18} className="stroke-[2.5]" />
+                                  ) : (
+                                    <Check size={16} className="opacity-0 group-hover:opacity-100 transition-opacity stroke-[2.5]" />
+                                  )}
+                                </button>
                               </td>
                               <td className="relative whitespace-nowrap px-6 py-4 text-right text-sm">
                                 <div className="relative flex justify-end">
@@ -7929,6 +8027,52 @@ Final do dia (16h - 18h)`;
                           selectedLeadForPreview.address ||
                           "N/A"}
                       </p>
+                    </div>
+
+                    <div className="p-3.5 bg-gradient-to-r from-slate-50 to-emerald-50/40 border border-slate-200 rounded-2xl flex items-center justify-between shadow-xs">
+                      <div>
+                        <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                          <BadgeCheck size={15} className={selectedLeadForPreview.doubleCheck || selectedLeadForPreview.verified2x ? "text-emerald-600" : "text-slate-400"} />
+                          2ª Confirmação (Ligação)
+                        </span>
+                        <p className="text-xs font-semibold mt-0.5">
+                          {selectedLeadForPreview.doubleCheck || selectedLeadForPreview.verified2x ? (
+                            <span className="text-emerald-700 font-bold flex items-center gap-1">
+                              <CheckCheck size={15} className="text-emerald-600 stroke-[2.5]" /> Confirmado 2x por ligação
+                            </span>
+                          ) : (
+                            <span className="text-slate-500 font-medium">
+                              ⏳ Aguardando 2ª confirmação por telefone
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          toggleLeadDoubleCheck(
+                            selectedLeadForPreview.id,
+                            !!(selectedLeadForPreview.doubleCheck || selectedLeadForPreview.verified2x),
+                          )
+                        }
+                        className={`px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all cursor-pointer ${
+                          selectedLeadForPreview.doubleCheck || selectedLeadForPreview.verified2x
+                            ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/20 active:scale-95"
+                            : "bg-white border border-slate-300 text-slate-700 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50/50 shadow-xs active:scale-95"
+                        }`}
+                      >
+                        {selectedLeadForPreview.doubleCheck || selectedLeadForPreview.verified2x ? (
+                          <>
+                            <CheckCheck size={16} className="stroke-[2.5]" />
+                            <span>Verificado</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check size={16} className="stroke-[2.5]" />
+                            <span>Marcar Verificado</span>
+                          </>
+                        )}
+                      </button>
                     </div>
                     {selectedLeadForPreview.observacoes && (
                       <div>

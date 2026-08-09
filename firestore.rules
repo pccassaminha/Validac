@@ -43,7 +43,9 @@ service cloud.firestore {
         && data.phone is string && data.phone.size() > 0 && data.phone.size() <= 50
         && data.produto is string
         && data.status is string
-        && data.createdAt == existing().createdAt;
+        && data.createdAt == existing().createdAt
+        && (!('doubleCheck' in data) || data.doubleCheck is bool)
+        && (!('verified2x' in data) || data.verified2x is bool);
     }
 
     function isValidUser(data) {
@@ -69,11 +71,11 @@ service cloud.firestore {
       // Anyone can submit a lead (unauthenticated creation is allowed for public forms)
       allow create: if isValidId(leadId) && isValidLead(incoming());
 
-      // allow anyone to update status, but admins can do other updates.
+      // allow status or doubleCheck updates, or full updates by admin
       allow update: if isValidLeadUpdate(incoming())
         && (
-          incoming().diff(existing()).affectedKeys().hasOnly(['status']) 
-          || (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly([]))
+          isAdmin()
+          || incoming().diff(existing()).affectedKeys().hasOnly(['status', 'doubleCheck', 'verified2x'])
         );
 
       // Only Admins can delete
