@@ -210,10 +210,13 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
   };
 
   const updateConfig = (index: number, field: "color" | "size", val: string) => {
+    if (field === "size" && index === 0) {
+      setSelectedMainSize(val);
+    }
     setCintaConfigs((prev) => {
       const next = [...prev];
       if (!next[index]) {
-        next[index] = { color: COLOR_OPTIONS[0].name, size: "M" };
+        next[index] = { color: COLOR_OPTIONS[0].name, size: val };
       }
       next[index] = { ...next[index], [field]: val };
       return next;
@@ -575,7 +578,10 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                 {SIZE_OPTIONS.map((s) => (
                   <button
                     key={s.size}
-                    onClick={() => setSelectedMainSize(s.size)}
+                    onClick={() => {
+                      setSelectedMainSize(s.size);
+                      updateConfig(0, "size", s.size);
+                    }}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       selectedMainSize === s.size
                         ? "bg-rose-600 text-white shadow-md scale-105"
@@ -975,7 +981,9 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  setSelectedMainSize(getRecommendedSize());
+                  const rec = getRecommendedSize();
+                  setSelectedMainSize(rec);
+                  updateConfig(0, "size", rec);
                   scrollToCheckout();
                 }}
                 className="w-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-black py-3 px-4 rounded-xl shadow-lg transition-all"

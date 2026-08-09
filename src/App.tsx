@@ -24,6 +24,8 @@ import {
   EyeOff,
   Copy,
   MessageCircle,
+  MessageSquare,
+  Truck,
   Search,
   Filter,
   Download,
@@ -1458,7 +1460,9 @@ export default function App() {
           : formData.province,
       area: formData.area || "", // Bairro/Zona
       observacoes: selectedColor && selectedSize
-        ? `Cor: ${selectedColor} | Tamanho: ${selectedSize}${formData.observacoes ? ` | Obs: ${formData.observacoes}` : ""}`
+        ? selectedColor.includes("Unidade ")
+          ? `${formData.quantity || 1} ${(formData.quantity || 1) === 1 ? "Unidade" : "Unidades"} | ${selectedColor}${formData.observacoes ? ` | Obs: ${formData.observacoes}` : ""}`
+          : `1 Unidade | Cor: ${selectedColor} | Tamanho: ${selectedSize}${formData.observacoes ? ` | Obs: ${formData.observacoes}` : ""}`
         : formData.observacoes,
       produto: produtoName,
       totalPrice: computedTotal,
@@ -1828,49 +1832,177 @@ export default function App() {
     return q * unitPrice;
   };
 
+  const getCleanObservacoes = (lead: any): string => {
+    if (!lead) return "";
+    const rawObs = (lead.observacoes || "").trim();
+    const qty = lead.quantity || 1;
+
+    if (!rawObs) {
+      const parts = [];
+      parts.push(`${qty} ${qty === 1 ? "Unidade" : "Unidades"}`);
+      if (lead.cor) parts.push(`Cor: ${lead.cor}`);
+      if (lead.tamanho) parts.push(`Tamanho: ${lead.tamanho}`);
+      return parts.join(" | ");
+    }
+
+    // Extra user note (e.g. "| Obs: ...")
+    let userNote = "";
+    let baseObs = rawObs;
+    const noteMatch = rawObs.match(/\|\s*Obs:\s*(.+)$/i);
+    if (noteMatch) {
+      userNote = noteMatch[1].trim();
+      baseObs = rawObs.substring(0, noteMatch.index).trim();
+    }
+
+    // Find all clothing sizes mentioned in order
+    const sizeRegex = /\b(6XL|5XL|4XL|3XL|2XL|XL|L|M|S|XS)\b/gi;
+    const matches = Array.from(baseObs.matchAll(sizeRegex));
+    const sizesFound = matches.map((m) => m[1].toUpperCase());
+
+    // Check for multi-unit pattern: "Unidade 1:", "Unidade 2:", etc.
+    const unitMatches = Array.from(baseObs.matchAll(/Unidade\s*(\d+)[:\s]*([^(|]+)(?:\(([^)]+)\))?/gi));
+
+    if (unitMatches.length >= 2 && qty > 1) {
+      const formattedUnits = unitMatches.map((m, idx) => {
+        const uNum = m[1] || `${idx + 1}`;
+        let uColor = m[2] ? m[2].replace(/^Cor:\s*/i, "").trim() : "";
+        let uSize = m[3] ? m[3].replace(/Tamanho\s*/i, "").trim().toUpperCase() : "";
+
+        if (!uSize && sizesFound[idx]) {
+          uSize = sizesFound[idx];
+        }
+
+        return `Unidade ${uNum}: ${uColor}${uSize ? ` (${uSize})` : ""}`;
+      });
+
+      let res = `${qty} Unidades | ${formattedUnits.join(" | ")}`;
+      if (userNote) res += ` | Obs: ${userNote}`;
+      return res;
+    }
+
+    // Single unit case
+    // The LAST size mentioned in the string is the true final selected size!
+    const lastSelectedSize = sizesFound.length > 0 ? sizesFound[sizesFound.length - 1] : (lead.tamanho || "");
+
+    // Extract color
+    let color = lead.cor || "";
+    if (!color) {
+      const colorMatch = baseObs.match(/(?:Cor|Unidade\s*\d+)[:\s]+([^(|]+)/i);
+      if (colorMatch) {
+        color = colorMatch[1]
+          .replace(/^Cor:\s*/i, "")
+          .replace(/^Unidade\s*\d+:\s*/i, "")
+          .trim();
+      }
+    }
+    color = color.replace(/^Unidade\s*\d+[:\s]*/gi, "").replace(/^Cor[:\s]*/gi, "").trim();
+
+    const parts = [];
+    parts.push(`${qty} ${qty === 1 ? "Unidade" : "Unidades"}`);
+    if (color) parts.push(`Cor: ${color}`);
+    if (lastSelectedSize) parts.push(`Tamanho: ${lastSelectedSize}`);
+    if (userNote) parts.push(`Obs: ${userNote}`);
+
+    return parts.join(" | ");
+  };
+
   const getFormattedLeadText = (lead: any) => {
     const q = lead.quantity || 1;
     const product = lead.produto || "Secador Inteligente UV";
     const total = formatKz(getLeadPrice(lead));
     const mainProvince = lead.province || "Luanda";
     const mainArea = lead.area || lead.address || "N/A";
-    const obs = lead.observacoes ? `\nObservações: ${lead.observacoes}` : "";
+    const cleanObs = getCleanObservacoes(lead);
+    const obs = cleanObs ? `\nObservações: ${cleanObs}` : "";
 
     return `Cliente: ${lead.name}\ntelefone: ${lead.phone}\nProdutos: ${q} - ${product}\nProvíncia: ${mainProvince}\nEndereço: ${mainArea}\nTotal: ${total}${obs}.`;
   };
 
-  const getWhatsAppMessageText = (lead: any) => {
-    const name = lead.name || "";
-    const date = lead.timestamp
-      ? new Date(lead.timestamp).toLocaleDateString("pt-AO")
-      : "N/A";
-    const product = lead.produto || "Secador Inteligente UV";
-    const quantity = lead.quantity || 1;
+  const getProductPageUrl = (lead: any): string => {
+    if (lead?.pageUrl || lead?.productUrl || lead?.url) {
+      return lead.pageUrl || lead.productUrl || lead.url;
+    }
+    const norm = normalizeProductName(lead?.produto || lead?.product || lead?.produtoName || lead?.rawProduto);
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://www.cstoreao.shop";
+    const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
+    const baseUrl = `${origin}${pathname}`;
+
+    let param = "secador-uv";
+    if (norm.includes("Cinta")) param = "cinta-colombiana";
+    else if (norm.includes("Camisa")) param = "camisa-seda";
+    else if (norm.includes("Base")) param = "base-movel";
+    else if (norm.includes("Roteador")) param = "roteador-5g";
+    else if (norm.includes("Roupa")) param = "cabide-secador";
+
+    return `${baseUrl}?product=${param}`;
+  };
+
+  const getWhatsAppReservationText = (lead: any) => {
+    const name = lead?.name || "Cliente";
+    const product = normalizeProductName(lead?.produto || lead?.product || lead?.produtoName || lead?.rawProduto);
     const totalFormatted = new Intl.NumberFormat("pt-AO", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(getLeadPrice(lead));
-    const address = [lead.province || "Luanda", lead.area || lead.address]
+
+    const address = [lead?.province || "Luanda", lead?.area || lead?.address]
       .filter(Boolean)
       .join(", ");
 
-    return `Olá Sr/a ${name}! 
-Aqui é a C Store Angola!
-No dia ${date} manifestou interesse em adquirir ${product} (${quantity}x) no valor de ${totalFormatted} Kz.
+    const cleanObs = getCleanObservacoes(lead);
+    const pageUrl = getProductPageUrl(lead);
 
-Temos uma boa notícia — o produto já chegou e estamos prontos para fazer a entrega amanhã! 
+    return `Olá Sr/a ${name}! 👋
+Recebemos a sua reserva e queremos confirmar todos os detalhes antes de processar o seu pedido:
 
-Antes de confirmar, os teus dados estão corretos? 
+📦 Produto: ${product}
+📋 Opções / Especificações: ${cleanObs}
+📍 Endereço de Entrega: ${address}
+💰 Valor Total: ${totalFormatted} Kz
 
-Endereço: ${address} 
-Produto: ${product} (${quantity}x)  
-Total a pagar: ${totalFormatted} Kz
+🔗 Link da Página da Reserva:
+${pageUrl}
 
-Se sim, qual é o melhor período para receberes a entrega amanhã? 
+Por favor, responda a esta mensagem confirmando se todas as informações estão corretas para darmos seguimento à sua reserva. Obrigado!`;
+  };
 
-Manhã (8h - 12h)  
-Tarde (12h - 15h)  
-Final do dia (16h - 18h)`;
+  const getWhatsAppDeliveryText = (lead: any) => {
+    const name = lead?.name || "Cliente";
+    const date = lead?.timestamp
+      ? new Date(lead.timestamp).toLocaleDateString("pt-AO")
+      : "N/A";
+    const product = normalizeProductName(lead?.produto || lead?.product || lead?.produtoName || lead?.rawProduto);
+    const totalFormatted = new Intl.NumberFormat("pt-AO", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(getLeadPrice(lead));
+
+    const address = [lead?.province || "Luanda", lead?.area || lead?.address]
+      .filter(Boolean)
+      .join(", ");
+
+    const cleanObs = getCleanObservacoes(lead);
+    const pageUrl = getProductPageUrl(lead);
+
+    return `Olá Sr/a ${name}! 👋
+Aqui é da C Store Angola!
+
+No dia ${date} realizou a reserva de ${product} (${cleanObs}) no valor de ${totalFormatted} Kz.
+
+Temos uma boa notícia — a sua encomenda já chegou e está pronta para entrega! 🚚📦
+
+Por favor, confirme se os dados de entrega estão corretos:
+📍 Endereço: ${address}
+📦 Produto: ${product} (${cleanObs})
+💰 Total a pagar: ${totalFormatted} Kz
+
+🔗 Link do Produto:
+${pageUrl}
+
+Se estiver tudo correto, qual é o melhor período para receber a entrega?
+- Manhã (8h - 12h)
+- Tarde (12h - 15h)
+- Final do dia (16h - 18h)`;
   };
 
   const handleCopyLead = (lead: any) => {
@@ -1879,9 +2011,18 @@ Final do dia (16h - 18h)`;
     alert("Informações copiadas!");
   };
 
-  const handleWhatsApp = (lead: any) => {
+  const handleWhatsAppReservation = (lead: any) => {
+    if (!lead?.phone) return;
     const cleanPhone = lead.phone.replace(/\D/g, "");
-    const text = getWhatsAppMessageText(lead);
+    const text = getWhatsAppReservationText(lead);
+    const encodedText = encodeURIComponent(text);
+    window.open(`https://wa.me/${cleanPhone}/?text=${encodedText}`, "_blank");
+  };
+
+  const handleWhatsAppDelivery = (lead: any) => {
+    if (!lead?.phone) return;
+    const cleanPhone = lead.phone.replace(/\D/g, "");
+    const text = getWhatsAppDeliveryText(lead);
     const encodedText = encodeURIComponent(text);
     window.open(`https://wa.me/${cleanPhone}/?text=${encodedText}`, "_blank");
   };
@@ -5807,8 +5948,20 @@ Final do dia (16h - 18h)`;
                               <td
                                 className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? "text-slate-300" : "text-slate-655"}`}
                               >
-                                {formatPageNameWithCensorship(
-                                  lead.produto || "Secador Inteligente UV",
+                                <div className="font-bold">
+                                  {formatPageNameWithCensorship(
+                                    lead.produto || "Secador Inteligente UV",
+                                  )}
+                                </div>
+                                {lead.observacoes && (
+                                  <div
+                                    className={`text-[11px] font-medium mt-0.5 max-w-[240px] truncate ${
+                                      isDark ? "text-slate-400" : "text-slate-500"
+                                    }`}
+                                    title={getCleanObservacoes(lead)}
+                                  >
+                                    {getCleanObservacoes(lead)}
+                                  </div>
                                 )}
                               </td>
                               <td
@@ -5967,19 +6120,39 @@ Final do dia (16h - 18h)`;
                                         <button
                                           onClick={() => {
                                             setActiveDropdownLeadId(null);
-                                            handleWhatsApp(lead);
+                                            handleWhatsAppReservation(lead);
                                           }}
                                           className={`flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-xs font-semibold transition-colors ${
                                             isDark
-                                              ? "hover:bg-slate-900 hover:text-white"
-                                              : "hover:bg-slate-100 hover:text-emerald-600"
+                                              ? "hover:bg-slate-900 hover:text-emerald-400"
+                                              : "hover:bg-emerald-50 hover:text-emerald-700"
                                           }`}
+                                          title="Enviar mensagem para confirmar a reserva"
                                         >
-                                          <MessageCircle
+                                          <MessageSquare
                                             size={14}
-                                            className="text-emerald-500"
+                                            className="text-emerald-500 shrink-0"
                                           />
-                                          <span>WhatsApp</span>
+                                          <span>Confir. Reserva</span>
+                                        </button>
+
+                                        <button
+                                          onClick={() => {
+                                            setActiveDropdownLeadId(null);
+                                            handleWhatsAppDelivery(lead);
+                                          }}
+                                          className={`flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-xs font-semibold transition-colors ${
+                                            isDark
+                                              ? "hover:bg-slate-900 hover:text-teal-400"
+                                              : "hover:bg-teal-50 hover:text-teal-700"
+                                          }`}
+                                          title="Enviar mensagem para confirmar a entrega"
+                                        >
+                                          <Truck
+                                            size={14}
+                                            className="text-teal-500 shrink-0"
+                                          />
+                                          <span>Confir. Entrega</span>
                                         </button>
 
                                         <button
@@ -8080,26 +8253,37 @@ Final do dia (16h - 18h)`;
                           Observações / Cor & Tamanho
                         </span>
                         <p className="font-semibold text-slate-900 p-2.5 bg-indigo-50/40 border border-indigo-100/50 rounded-lg whitespace-pre-wrap text-xs leading-relaxed">
-                          {selectedLeadForPreview.observacoes}
+                          {getCleanObservacoes(selectedLeadForPreview)}
                         </p>
                       </div>
                     )}
                   </div>
 
                   <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
-                    <div className="flex gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <button
                         onClick={() => handleCopyLead(selectedLeadForPreview)}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl transition"
+                        className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl transition cursor-pointer"
                       >
-                        <Copy size={16} /> Copiar Dados
+                        <Copy size={15} /> Copiar Dados
                       </button>
 
                       <button
-                        onClick={() => handleWhatsApp(selectedLeadForPreview)}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs rounded-xl transition"
+                        onClick={() => handleWhatsAppReservation(selectedLeadForPreview)}
+                        className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 font-bold text-xs rounded-xl transition cursor-pointer shadow-xs"
+                        title="Confirmar detalhes da reserva no WhatsApp"
                       >
-                        <MessageCircle size={16} /> WhatsApp
+                        <MessageSquare size={15} className="text-emerald-600 shrink-0" />
+                        <span>Confir. Reserva</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleWhatsAppDelivery(selectedLeadForPreview)}
+                        className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200/80 font-bold text-xs rounded-xl transition cursor-pointer shadow-xs"
+                        title="Confirmar aviso de chegada e entrega no WhatsApp"
+                      >
+                        <Truck size={15} className="text-teal-600 shrink-0" />
+                        <span>Confir. Entrega</span>
                       </button>
                     </div>
 
