@@ -7131,7 +7131,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                     🔴 Lote Esgotado em Luanda
                   </h3>
                   <p className="text-xs text-rose-100 mt-1 font-semibold">
-                    Mas não se preocupe! Seu produto será reposto em breve.
+                    Mas não se preocupe! Novo lote chega em breve.
                   </p>
                 </div>
 
@@ -7145,7 +7145,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                     <p className="leading-relaxed text-slate-700">
                       {view === "sales-base-movel" ? (
                         <>
-                          O lote de entrega imediata esgotou. A sua reserva foi registada e o produto será reposto e entregue no seu endereço assim que o próximo lote for liberado após a confirmação.
+                          A sua reserva foi registada e o produto será reposto em breve e entregue no seu endereço assim que o próximo lote chegar em Angola.
                         </>
                       ) : (
                         <>
