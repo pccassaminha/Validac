@@ -26,6 +26,7 @@ import {
   MessageCircle,
   MessageSquare,
   Truck,
+  Clock,
   Search,
   Filter,
   Download,
@@ -2023,6 +2024,48 @@ Se estiver tudo correto, qual é o melhor período para receber a entrega?
     if (!lead?.phone) return;
     const cleanPhone = lead.phone.replace(/\D/g, "");
     const text = getWhatsAppDeliveryText(lead);
+    const encodedText = encodeURIComponent(text);
+    window.open(`https://wa.me/${cleanPhone}/?text=${encodedText}`, "_blank");
+  };
+
+  const getWhatsAppPendingText = (lead: any) => {
+    const name = lead?.name || "Cliente";
+    const product = normalizeProductName(lead?.produto || lead?.product || lead?.produtoName || lead?.rawProduto);
+    const totalFormatted = new Intl.NumberFormat("pt-AO", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(getLeadPrice(lead));
+
+    const address = [lead?.province || "Luanda", lead?.area || lead?.address]
+      .filter(Boolean)
+      .join(", ");
+
+    const cleanObs = getCleanObservacoes(lead);
+    const pageUrl = getProductPageUrl(lead);
+
+    return `Olá Sr/a ${name}!
+Aqui é da C Store Angola!
+
+Notamos que iniciou o preenchimento da reserva de ${product}, mas o seu pedido ficou pendente e não foi concluído.
+
+Gostaria de finalizar a sua reserva conosco?
+
+Resumo das opções selecionadas:
+Produto: ${product}
+Especificações: ${cleanObs}
+Endereço: ${address || "A informar"}
+Valor Total: ${totalFormatted} Kz
+
+Pode rever as informações e concluir a sua reserva diretamente neste link:
+${pageUrl}
+
+Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta mensagem. Estamos à disposição!`;
+  };
+
+  const handleWhatsAppPending = (lead: any) => {
+    if (!lead?.phone) return;
+    const cleanPhone = lead.phone.replace(/\D/g, "");
+    const text = getWhatsAppPendingText(lead);
     const encodedText = encodeURIComponent(text);
     window.open(`https://wa.me/${cleanPhone}/?text=${encodedText}`, "_blank");
   };
@@ -6158,6 +6201,25 @@ Se estiver tudo correto, qual é o melhor período para receber a entrega?
                                         <button
                                           onClick={() => {
                                             setActiveDropdownLeadId(null);
+                                            handleWhatsAppPending(lead);
+                                          }}
+                                          className={`flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-xs font-semibold transition-colors ${
+                                            isDark
+                                              ? "hover:bg-slate-900 hover:text-amber-400"
+                                              : "hover:bg-amber-50 hover:text-amber-700"
+                                          }`}
+                                          title="Enviar mensagem para lembrar e recuperar reserva pendente"
+                                        >
+                                          <Clock
+                                            size={14}
+                                            className="text-amber-500 shrink-0"
+                                          />
+                                          <span>Confir. Pendente</span>
+                                        </button>
+
+                                        <button
+                                          onClick={() => {
+                                            setActiveDropdownLeadId(null);
                                             setIsSelectionModeActive(true);
                                             if (!selectedLeadIds.includes(lead.id)) {
                                               setSelectedLeadIds([...selectedLeadIds, lead.id]);
@@ -8260,12 +8322,12 @@ Se estiver tudo correto, qual é o melhor período para receber a entrega?
                   </div>
 
                   <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       <button
                         onClick={() => handleCopyLead(selectedLeadForPreview)}
                         className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl transition cursor-pointer"
                       >
-                        <Copy size={15} /> Copiar Dados
+                        <Copy size={15} /> Copiar
                       </button>
 
                       <button
@@ -8284,6 +8346,15 @@ Se estiver tudo correto, qual é o melhor período para receber a entrega?
                       >
                         <Truck size={15} className="text-teal-600 shrink-0" />
                         <span>Confir. Entrega</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleWhatsAppPending(selectedLeadForPreview)}
+                        className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/80 font-bold text-xs rounded-xl transition cursor-pointer shadow-xs"
+                        title="Enviar mensagem para lembrar e recuperar reserva pendente"
+                      >
+                        <Clock size={15} className="text-amber-600 shrink-0" />
+                        <span>Confir. Pendente</span>
                       </button>
                     </div>
 
