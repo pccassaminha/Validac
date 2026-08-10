@@ -1952,15 +1952,15 @@ export default function App() {
     const cleanObs = getCleanObservacoes(lead);
     const pageUrl = getProductPageUrl(lead);
 
-    return `Olá Sr/a ${name}! 👋
+    return `Olá Sr/a ${name}!
 Recebemos a sua reserva e queremos confirmar todos os detalhes antes de processar o seu pedido:
 
-📦 Produto: ${product}
-📋 Opções / Especificações: ${cleanObs}
-📍 Endereço de Entrega: ${address}
-💰 Valor Total: ${totalFormatted} Kz
+Produto: ${product}
+Opções / Especificações: ${cleanObs}
+Endereço de Entrega: ${address}
+Valor Total: ${totalFormatted} Kz
 
-🔗 Link da Página da Reserva:
+Link da Página da Reserva:
 ${pageUrl}
 
 Por favor, responda a esta mensagem confirmando se todas as informações estão corretas para darmos seguimento à sua reserva. Obrigado!`;
@@ -1984,19 +1984,19 @@ Por favor, responda a esta mensagem confirmando se todas as informações estão
     const cleanObs = getCleanObservacoes(lead);
     const pageUrl = getProductPageUrl(lead);
 
-    return `Olá Sr/a ${name}! 👋
+    return `Olá Sr/a ${name}!
 Aqui é da C Store Angola!
 
 No dia ${date} realizou a reserva de ${product} (${cleanObs}) no valor de ${totalFormatted} Kz.
 
-Temos uma boa notícia — a sua encomenda já chegou e está pronta para entrega! 🚚📦
+Temos uma boa notícia — a sua encomenda já chegou e está pronta para entrega!
 
 Por favor, confirme se os dados de entrega estão corretos:
-📍 Endereço: ${address}
-📦 Produto: ${product} (${cleanObs})
-💰 Total a pagar: ${totalFormatted} Kz
+Endereço: ${address}
+Produto: ${product} (${cleanObs})
+Total a pagar: ${totalFormatted} Kz
 
-🔗 Link do Produto:
+Link do Produto:
 ${pageUrl}
 
 Se estiver tudo correto, qual é o melhor período para receber a entrega?
