@@ -6176,7 +6176,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                                             size={14}
                                             className="text-emerald-500 shrink-0"
                                           />
-                                          <span>Confir. Reserva</span>
+                                          <span>Reconfir. Reserva</span>
                                         </button>
 
                                         <button
@@ -6214,7 +6214,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                                             size={14}
                                             className="text-amber-500 shrink-0"
                                           />
-                                          <span>Confir. Pendente</span>
+                                          <span>Recuperar Pendente</span>
                                         </button>
 
                                         <button
@@ -8336,7 +8336,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                         title="Confirmar detalhes da reserva no WhatsApp"
                       >
                         <MessageSquare size={15} className="text-emerald-600 shrink-0" />
-                        <span>Confir. Reserva</span>
+                        <span>Reconfir. Reserva</span>
                       </button>
 
                       <button
@@ -8354,7 +8354,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                         title="Enviar mensagem para lembrar e recuperar reserva pendente"
                       >
                         <Clock size={15} className="text-amber-600 shrink-0" />
-                        <span>Confir. Pendente</span>
+                        <span>Recuperar Pendente</span>
                       </button>
                     </div>
 
