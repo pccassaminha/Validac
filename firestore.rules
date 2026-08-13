@@ -107,5 +107,10 @@ service cloud.firestore {
       // Only Admins can modify settings
       allow write: if isAdmin();
     }
+
+    // Connection Test Collection
+    match /test/{testId} {
+      allow read: if true;
+    }
   }
 }

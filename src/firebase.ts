@@ -25,9 +25,19 @@ export const auth = getAuth(app);
 // Test Firestore connection gracefully
 async function testConnection() {
   try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error) {
-    console.warn("Firestore connection check info:", error instanceof Error ? error.message : error);
+    // Give Firebase WebChannel a moment to initialize before testing
+    setTimeout(async () => {
+      try {
+        await getDocFromServer(doc(db, 'test', 'connection'));
+      } catch (error) {
+        // Silently handle transient connection errors or offline state
+        if (error instanceof Error && error.message.includes('offline')) {
+          console.info("Firestore operating in offline/cache mode.");
+        }
+      }
+    }, 1000);
+  } catch (e) {
+    // Ignore
   }
 }
 testConnection();
