@@ -493,6 +493,10 @@ function AccordionItem({
 
 export default function App() {
   const [view, setView] = useState<string>(() => {
+    const pathname = window.location.pathname.toLowerCase();
+    if (pathname === "/calculadora" || pathname === "/calculadora/") {
+      return "admin";
+    }
     const params = new URLSearchParams(window.location.search);
     const product = params.get("product");
     if (product === "cinta-colombiana") return "sales-cinta-colombiana";
@@ -953,7 +957,13 @@ export default function App() {
   );
   const [adminCurrentPage, setAdminCurrentPage] = useState(1);
   const [adminSubView, setAdminSubView] = useState<"leads" | "financeiro" | "calculadora">(
-    "leads",
+    () => {
+      const pathname = window.location.pathname.toLowerCase();
+      if (pathname === "/calculadora" || pathname === "/calculadora/") {
+        return "calculadora";
+      }
+      return "leads";
+    },
   );
   const [financeProductFilter, setFinanceProductFilter] = useState("Todos");
   const [theme, setTheme] = useState<"dark" | "light">(
@@ -1077,7 +1087,29 @@ export default function App() {
   };
 
   useEffect(() => {
+    const handlePopState = () => {
+      const pathname = window.location.pathname.toLowerCase();
+      if (pathname === "/calculadora" || pathname === "/calculadora/") {
+        setView("admin");
+        setAdminSubView("calculadora");
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem("validaC_current_view", view);
+
+    if (view === "admin" && adminSubView === "calculadora") {
+      document.title = "Calculadora de Saldos de Cartões - Valida C";
+      if (window.location.pathname !== "/calculadora") {
+        window.history.pushState({}, "", "/calculadora");
+      }
+      return;
+    } else if (window.location.pathname === "/calculadora" && (view !== "admin" || adminSubView !== "calculadora")) {
+      window.history.pushState({}, "", "/");
+    }
 
     const params = new URLSearchParams(window.location.search);
     if (view === "sales-cinta-colombiana") {
@@ -1112,7 +1144,7 @@ export default function App() {
     }
     const newUrl = `${window.location.pathname}${params.toString() ? "?" + params.toString() : ""}`;
     window.history.replaceState({}, "", newUrl);
-  }, [view]);
+  }, [view, adminSubView]);
 
   useEffect(() => {
     let isMounted = true;
@@ -1250,19 +1282,34 @@ export default function App() {
               const rawProduto = doc.data().produto || doc.data().product || doc.data().produtoName || "";
               const normalizedProduto = normalizeProductName(rawProduto);
 
-              let isDoubleChecked = !!(doc.data().doubleCheck || doc.data().verified2x);
+              let vLevel = 0;
+              if (typeof doc.data().verificationLevel === "number") {
+                vLevel = doc.data().verificationLevel;
+              } else if (doc.data().doubleCheck || doc.data().verified2x) {
+                vLevel = 2;
+              } else if (doc.data().singleCheck || doc.data().verified1x) {
+                vLevel = 1;
+              }
+
               try {
                 const cache = JSON.parse(localStorage.getItem("verified_leads_cache") || "{}");
                 if (cache[doc.id] !== undefined) {
-                  isDoubleChecked = !!cache[doc.id];
+                  const cachedVal = cache[doc.id];
+                  if (typeof cachedVal === "number") {
+                    vLevel = cachedVal;
+                  } else if (typeof cachedVal === "boolean") {
+                    vLevel = cachedVal ? 2 : 0;
+                  }
                 }
               } catch (e) {}
 
               return {
                 id: doc.id,
                 ...doc.data(),
-                doubleCheck: isDoubleChecked,
-                verified2x: isDoubleChecked,
+                verificationLevel: vLevel,
+                doubleCheck: vLevel === 2,
+                verified2x: vLevel === 2,
+                verified1x: vLevel >= 1,
                 produto: normalizedProduto,
                 rawProduto: rawProduto,
                 timestamp: ts,
@@ -1755,19 +1802,34 @@ export default function App() {
         const rawProduto = doc.data().produto || doc.data().product || doc.data().produtoName || "";
         const normalizedProduto = normalizeProductName(rawProduto);
 
-        let isDoubleChecked = !!(doc.data().doubleCheck || doc.data().verified2x);
+        let vLevel = 0;
+        if (typeof doc.data().verificationLevel === "number") {
+          vLevel = doc.data().verificationLevel;
+        } else if (doc.data().doubleCheck || doc.data().verified2x) {
+          vLevel = 2;
+        } else if (doc.data().singleCheck || doc.data().verified1x) {
+          vLevel = 1;
+        }
+
         try {
           const cache = JSON.parse(localStorage.getItem("verified_leads_cache") || "{}");
           if (cache[doc.id] !== undefined) {
-            isDoubleChecked = !!cache[doc.id];
+            const cachedVal = cache[doc.id];
+            if (typeof cachedVal === "number") {
+              vLevel = cachedVal;
+            } else if (typeof cachedVal === "boolean") {
+              vLevel = cachedVal ? 2 : 0;
+            }
           }
         } catch (e) {}
 
         return {
           id: doc.id,
           ...doc.data(),
-          doubleCheck: isDoubleChecked,
-          verified2x: isDoubleChecked,
+          verificationLevel: vLevel,
+          doubleCheck: vLevel === 2,
+          verified2x: vLevel === 2,
+          verified1x: vLevel >= 1,
           produto: normalizedProduto,
           rawProduto: rawProduto,
           timestamp: ts,
@@ -2092,13 +2154,34 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
     }
   };
 
-  const toggleLeadDoubleCheck = async (leadId: string, currentVal: boolean) => {
-    const newVal = !currentVal;
+  const toggleLeadDoubleCheck = async (leadId: string, currentValOrLevel?: any) => {
+    let currentLevel = 0;
+    if (typeof currentValOrLevel === "number") {
+      currentLevel = currentValOrLevel;
+    } else if (typeof currentValOrLevel === "boolean") {
+      currentLevel = currentValOrLevel ? 2 : 0;
+    } else {
+      const found = adminData.find((l) => l.id === leadId);
+      if (found) {
+        if (typeof found.verificationLevel === "number") {
+          currentLevel = found.verificationLevel;
+        } else if (found.doubleCheck || found.verified2x) {
+          currentLevel = 2;
+        } else if (found.verified1x) {
+          currentLevel = 1;
+        }
+      }
+    }
+
+    // 3-step engineering: 0 (desmarcado) -> 1 (1x: 1 'v') -> 2 (2x: 2 'v's) -> 0 (desmarcado)
+    const nextLevel = (currentLevel + 1) % 3;
+    const is2x = nextLevel === 2;
+    const is1x = nextLevel >= 1;
 
     // Save to localStorage for instant client persistence across reloads/offline
     try {
       const cache = JSON.parse(localStorage.getItem("verified_leads_cache") || "{}");
-      cache[leadId] = newVal;
+      cache[leadId] = nextLevel;
       localStorage.setItem("verified_leads_cache", JSON.stringify(cache));
     } catch (e) {
       console.error("Erro no cache de verificação local", e);
@@ -2107,19 +2190,35 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
     setAdminData((prev) =>
       prev.map((l) =>
         l.id === leadId
-          ? { ...l, doubleCheck: newVal, verified2x: newVal }
+          ? {
+              ...l,
+              verificationLevel: nextLevel,
+              doubleCheck: is2x,
+              verified2x: is2x,
+              verified1x: is1x,
+            }
           : l,
       ),
     );
     if (selectedLeadForPreview && selectedLeadForPreview.id === leadId) {
       setSelectedLeadForPreview((prev: any) =>
-        prev ? { ...prev, doubleCheck: newVal, verified2x: newVal } : null,
+        prev
+          ? {
+              ...prev,
+              verificationLevel: nextLevel,
+              doubleCheck: is2x,
+              verified2x: is2x,
+              verified1x: is1x,
+            }
+          : null,
       );
     }
     try {
       await updateDoc(doc(db, "leads", leadId), {
-        doubleCheck: newVal,
-        verified2x: newVal,
+        verificationLevel: nextLevel,
+        doubleCheck: is2x,
+        verified2x: is2x,
+        verified1x: is1x,
       });
     } catch (err: any) {
       if (
@@ -6083,34 +6182,49 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                                 </select>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-center">
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleLeadDoubleCheck(
-                                      lead.id,
-                                      !!(lead.doubleCheck || lead.verified2x),
-                                    );
-                                  }}
-                                  title={
-                                    lead.doubleCheck || lead.verified2x
-                                      ? "Lead verificado 2x (confirmado por ligação). Clique para desmarcar."
-                                      : "Marcar lead como verificado 2x (confirmado por ligação)"
-                                  }
-                                  className={`group mx-auto w-8 h-8 rounded-xl border flex items-center justify-center transition-all cursor-pointer duration-200 select-none ${
-                                    lead.doubleCheck || lead.verified2x
-                                      ? "bg-gradient-to-tr from-emerald-500 to-teal-500 border-emerald-400 text-white shadow-md shadow-emerald-500/25 scale-105 hover:scale-110 active:scale-95"
-                                      : isDark
-                                        ? "bg-slate-800/80 border-slate-700 hover:border-emerald-500 hover:bg-emerald-950/40 text-slate-600 hover:text-emerald-400"
-                                        : "bg-slate-50 border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/60 text-slate-300 hover:text-emerald-600 shadow-xs"
-                                  }`}
-                                >
-                                  {lead.doubleCheck || lead.verified2x ? (
-                                    <CheckCheck size={18} className="stroke-[2.5]" />
-                                  ) : (
-                                    <Check size={16} className="opacity-0 group-hover:opacity-100 transition-opacity stroke-[2.5]" />
-                                  )}
-                                </button>
+                                {(() => {
+                                  const level = typeof lead.verificationLevel === "number"
+                                    ? lead.verificationLevel
+                                    : (lead.doubleCheck || lead.verified2x)
+                                      ? 2
+                                      : (lead.singleCheck || lead.verified1x)
+                                        ? 1
+                                        : 0;
+
+                                  return (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleLeadDoubleCheck(lead.id, level);
+                                      }}
+                                      title={
+                                        level === 2
+                                          ? "Confirmado 2x (Dupla confirmação por ligação). Clique para desmarcar."
+                                          : level === 1
+                                            ? "Confirmado 1x (1ª confirmação simples). Clique para Dupla Confirmação (2x)."
+                                            : "Clique para confirmar (1º clique: 1x, 2º clique: 2x, 3º clique: desmarcar)"
+                                      }
+                                      className={`group mx-auto rounded-xl border flex items-center justify-center transition-all cursor-pointer duration-200 select-none ${
+                                        level === 2
+                                          ? "w-9 h-8 bg-gradient-to-tr from-emerald-500 to-teal-500 border-emerald-400 text-white shadow-md shadow-emerald-500/25 scale-105 hover:scale-110 active:scale-95"
+                                          : level === 1
+                                            ? "w-8 h-8 bg-indigo-600 border-indigo-500 text-white shadow-md shadow-indigo-500/25 scale-105 hover:scale-110 active:scale-95"
+                                            : isDark
+                                              ? "w-8 h-8 bg-slate-800/80 border-slate-700 hover:border-indigo-500 hover:bg-indigo-950/40 text-slate-600 hover:text-indigo-400"
+                                              : "w-8 h-8 bg-slate-50 border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/60 text-slate-300 hover:text-indigo-600 shadow-xs"
+                                      }`}
+                                    >
+                                      {level === 2 ? (
+                                        <CheckCheck size={18} className="stroke-[2.5]" />
+                                      ) : level === 1 ? (
+                                        <Check size={16} className="stroke-[2.5]" />
+                                      ) : (
+                                        <Check size={16} className="opacity-0 group-hover:opacity-100 transition-opacity stroke-[2.5]" />
+                                      )}
+                                    </button>
+                                  );
+                                })()}
                               </td>
                               <td className="relative whitespace-nowrap px-6 py-4 text-right text-sm">
                                 <div className="relative flex justify-end">
@@ -8292,51 +8406,69 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                       </p>
                     </div>
 
-                    <div className="p-3.5 bg-gradient-to-r from-slate-50 to-emerald-50/40 border border-slate-200 rounded-2xl flex items-center justify-between shadow-xs">
-                      <div>
-                        <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                          <BadgeCheck size={15} className={selectedLeadForPreview.doubleCheck || selectedLeadForPreview.verified2x ? "text-emerald-600" : "text-slate-400"} />
-                          2ª Confirmação (Ligação)
-                        </span>
-                        <p className="text-xs font-semibold mt-0.5">
-                          {selectedLeadForPreview.doubleCheck || selectedLeadForPreview.verified2x ? (
-                            <span className="text-emerald-700 font-bold flex items-center gap-1">
-                              <CheckCheck size={15} className="text-emerald-600 stroke-[2.5]" /> Confirmado 2x por ligação
+                    {(() => {
+                      const level = typeof selectedLeadForPreview.verificationLevel === "number"
+                        ? selectedLeadForPreview.verificationLevel
+                        : (selectedLeadForPreview.doubleCheck || selectedLeadForPreview.verified2x)
+                          ? 2
+                          : (selectedLeadForPreview.singleCheck || selectedLeadForPreview.verified1x)
+                            ? 1
+                            : 0;
+
+                      return (
+                        <div className="p-3.5 bg-gradient-to-r from-slate-50 to-indigo-50/30 border border-slate-200 rounded-2xl flex items-center justify-between shadow-xs">
+                          <div>
+                            <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                              <BadgeCheck size={15} className={level === 2 ? "text-emerald-600" : level === 1 ? "text-indigo-600" : "text-slate-400"} />
+                              Confirmação do Lead
                             </span>
-                          ) : (
-                            <span className="text-slate-500 font-medium">
-                              ⏳ Aguardando 2ª confirmação por telefone
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          toggleLeadDoubleCheck(
-                            selectedLeadForPreview.id,
-                            !!(selectedLeadForPreview.doubleCheck || selectedLeadForPreview.verified2x),
-                          )
-                        }
-                        className={`px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all cursor-pointer ${
-                          selectedLeadForPreview.doubleCheck || selectedLeadForPreview.verified2x
-                            ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/20 active:scale-95"
-                            : "bg-white border border-slate-300 text-slate-700 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50/50 shadow-xs active:scale-95"
-                        }`}
-                      >
-                        {selectedLeadForPreview.doubleCheck || selectedLeadForPreview.verified2x ? (
-                          <>
-                            <CheckCheck size={16} className="stroke-[2.5]" />
-                            <span>Verificado</span>
-                          </>
-                        ) : (
-                          <>
-                            <Check size={16} className="stroke-[2.5]" />
-                            <span>Marcar Verificado</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
+                            <p className="text-xs font-semibold mt-0.5">
+                              {level === 2 ? (
+                                <span className="text-emerald-700 font-bold flex items-center gap-1">
+                                  <CheckCheck size={15} className="text-emerald-600 stroke-[2.5]" /> Confirmado 2x (Dupla Confirmação)
+                                </span>
+                              ) : level === 1 ? (
+                                <span className="text-indigo-700 font-bold flex items-center gap-1">
+                                  <Check size={15} className="text-indigo-600 stroke-[2.5]" /> Confirmado 1x (Confirmação Simples)
+                                </span>
+                              ) : (
+                                <span className="text-slate-500 font-medium">
+                                  ⏳ Pendente / Desmarcado
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => toggleLeadDoubleCheck(selectedLeadForPreview.id, level)}
+                            className={`px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+                              level === 2
+                                ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/20 active:scale-95"
+                                : level === 1
+                                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20 active:scale-95"
+                                  : "bg-white border border-slate-300 text-slate-700 hover:border-indigo-500 hover:text-indigo-600 hover:bg-indigo-50/50 shadow-xs active:scale-95"
+                            }`}
+                          >
+                            {level === 2 ? (
+                              <>
+                                <CheckCheck size={16} className="stroke-[2.5]" />
+                                <span>Confirmado 2x</span>
+                              </>
+                            ) : level === 1 ? (
+                              <>
+                                <Check size={16} className="stroke-[2.5]" />
+                                <span>Confirmado 1x</span>
+                              </>
+                            ) : (
+                              <>
+                                <Check size={16} className="stroke-[2.5]" />
+                                <span>Marcar 1x</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })()}
                     {selectedLeadForPreview.observacoes && (
                       <div>
                         <span className="block text-xs text-slate-400 font-bold uppercase tracking-wider">

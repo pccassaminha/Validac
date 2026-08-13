@@ -1859,52 +1859,52 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
 
       {/* MODAL POPUP: SIMULADOR DE COMPRAS (🔮 SIMULADOR DE COMPRAS) */}
       {isSimulatorModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-2xl shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-8 w-full max-w-4xl lg:max-w-5xl shadow-2xl space-y-6 max-h-[92vh] overflow-y-auto">
             {/* HEADER */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
               <div>
-                <h3 className="text-base font-black text-white flex items-center gap-2">
-                  <Sparkles size={20} className="text-emerald-400" /> Simulador Inteligente de Compras
+                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                  <Sparkles size={22} className="text-emerald-400" /> Simulador Inteligente de Compras
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-400 mt-1">
                   Simule o custo total de um artigo em qualquer moeda e analise o impacto no saldo atual do cartão.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsSimulatorModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-xl bg-slate-800 hover:bg-slate-700 transition cursor-pointer"
+                className="p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800 hover:bg-slate-700 transition cursor-pointer"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
 
             {/* BARRA DE NAVEGAÇÃO DE SUB-ABAS (NOVA SIMULAÇÃO vs HISTÓRICO GUARDADO) */}
-            <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+            <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
               <button
                 type="button"
                 onClick={() => setSimActiveSubTab("calculator")}
-                className={`px-4 py-2 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-2 ${
+                className={`px-5 py-2.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-2 ${
                   simActiveSubTab === "calculator"
-                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm"
-                    : "text-slate-400 hover:text-white bg-slate-950"
+                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-md"
+                    : "text-slate-400 hover:text-white bg-slate-950 border border-slate-800"
                 }`}
               >
-                <Calculator size={14} />
+                <Calculator size={16} />
                 <span>🧮 Nova Simulação</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setSimActiveSubTab("history")}
-                className={`px-4 py-2 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-2 ${
+                className={`px-5 py-2.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-2 ${
                   simActiveSubTab === "history"
-                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm"
-                    : "text-slate-400 hover:text-white bg-slate-950"
+                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-md"
+                    : "text-slate-400 hover:text-white bg-slate-950 border border-slate-800"
                 }`}
               >
-                <FileText size={14} />
+                <FileText size={16} />
                 <span>📜 Histórico de Simulações Guardadas ({savedSimulations.length})</span>
               </button>
             </div>
@@ -2125,80 +2125,187 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
 
             {/* CONTEÚDO DA ABA: HISTÓRICO DE SIMULAÇÕES GUARDADAS */}
             {simActiveSubTab === "history" && (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {savedSimulations.length === 0 ? (
-                  <div className="text-center py-10 px-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-2">
-                    <Sparkles size={32} className="mx-auto text-slate-600" />
-                    <p className="text-xs text-slate-400 font-medium">
-                      Nenhuma simulação guardada até ao momento.
+                  <div className="text-center py-12 px-6 bg-slate-950/80 rounded-3xl border border-slate-800 space-y-3">
+                    <Sparkles size={38} className="mx-auto text-amber-400/60" />
+                    <p className="text-sm text-slate-300 font-bold">
+                      Nenhuma simulação guardada no histórico.
                     </p>
-                    <p className="text-[11px] text-slate-500">
-                      Utilize o separador <strong>"🧮 Nova Simulação"</strong> para simular artigos e guardá-los aqui para consulta futura.
+                    <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                      Utilize o separador <strong>"🧮 Nova Simulação"</strong> para simular artigos em qualquer moeda e guardá-los aqui para análise prévia ou conversão em compras reais.
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
-                    {savedSimulations.map((sim) => (
-                      <div
-                        key={sim.id}
-                        className="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:border-slate-700 transition"
-                      >
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-black text-sm text-white">{sim.itemName}</span>
-                            <span
-                              className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase ${
-                                sim.canAfford
-                                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                                  : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
-                              }`}
-                            >
-                              {sim.canAfford ? "🟢 Saldo Suficiente" : "🔴 Faltava Saldo"}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-3 text-xs text-slate-400 flex-wrap">
-                            <span>
-                              Preço Original: <strong className="text-white">{formatForeign(sim.originalPrice, sim.currency)}</strong>
-                            </span>
-                            <span>•</span>
-                            <span>
-                              Câmbio: <strong className="text-white">{formatAOA(sim.exchangeRate)}</strong>
-                            </span>
-                            <span>•</span>
-                            <span>
-                              Data: <span className="text-slate-300">{new Date(sim.createdAt).toLocaleDateString("pt-AO")}</span>
-                            </span>
-                          </div>
-
-                          <div className="text-xs pt-1">
-                            <span className="text-slate-400">Custo Total Previsto: </span>
-                            <strong className="text-amber-300 font-black text-sm">{formatAOA(sim.totalCostAOA)}</strong>
-                          </div>
+                  <div className="space-y-4">
+                    {/* BANNER DE RESUMO DO HISTÓRICO */}
+                    <div className="p-4 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-inner">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl">
+                          <FileText size={18} />
                         </div>
-
-                        <div className="flex items-center gap-2 w-full sm:w-auto justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-800">
-                          <button
-                            type="button"
-                            onClick={() => handleConvertSimToRealTx(sim)}
-                            className="px-3.5 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-bold rounded-xl text-xs transition cursor-pointer flex items-center gap-1.5"
-                            title="Registar como compra real no histórico"
-                          >
-                            <CheckCircle2 size={14} />
-                            <span>Registar Compra Real</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteSimulation(sim.id)}
-                            className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded-xl transition cursor-pointer"
-                            title="Eliminar simulação"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                        <div>
+                          <span className="text-xs font-black uppercase tracking-wider text-slate-300 block">
+                            Resumo das Simulações Guardadas
+                          </span>
+                          <span className="text-[11px] text-slate-400">
+                            <strong>{savedSimulations.length}</strong> {savedSimulations.length === 1 ? "artigo guardado" : "artigos guardados"} para análise
+                          </span>
                         </div>
                       </div>
-                    ))}
+
+                      <div className="text-right sm:text-right w-full sm:w-auto border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-800">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                          Soma Total Prevista
+                        </span>
+                        <span className="text-sm font-black text-amber-300">
+                          {formatAOA(savedSimulations.reduce((acc, s) => acc + (s.totalCostAOA || 0), 0))}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* LISTA DE CARDS ESPAÇOSOS */}
+                    <div className="space-y-4 max-h-[62vh] overflow-y-auto pr-1">
+                      {savedSimulations.map((sim) => (
+                        <div
+                          key={sim.id}
+                          className="bg-slate-950/90 border border-slate-800 hover:border-amber-500/40 rounded-3xl p-5 sm:p-6 shadow-xl transition-all duration-200 space-y-4 group"
+                        >
+                          {/* LINHA SUPERIOR: TÍTULO, BADGE DE STATUS E DATA */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+                            <div className="flex items-center gap-2.5 flex-wrap">
+                              <h4 className="font-black text-base sm:text-lg text-white tracking-tight group-hover:text-amber-300 transition-colors">
+                                {sim.itemName}
+                              </h4>
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm ${
+                                  sim.canAfford
+                                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                                    : "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                                }`}
+                              >
+                                {sim.canAfford ? (
+                                  <>
+                                    <CheckCircle2 size={13} className="text-emerald-400" />
+                                    <span>Saldo Suficiente</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <ShieldAlert size={13} className="text-rose-400" />
+                                    <span>Saldo Insuficiente</span>
+                                  </>
+                                )}
+                              </span>
+                            </div>
+
+                            <div className="text-xs text-slate-400 font-medium flex items-center gap-1.5 shrink-0">
+                              <span>📅 Simulado em:</span>
+                              <strong className="text-slate-200">
+                                {new Date(sim.createdAt).toLocaleDateString("pt-AO", {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </strong>
+                            </div>
+                          </div>
+
+                          {/* GRELHA DE MÉTRICAS FINANCEIRAS (DECOMPOSIÇÃO COMPLETA EM 4 COLUNAS) */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                            {/* QUADRANTE 1: PREÇO ORIGINAL & CÂMBIO */}
+                            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 space-y-1">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                                Preço Original
+                              </span>
+                              <span className="text-sm font-black text-white block">
+                                {formatForeign(sim.originalPrice, sim.currency)}
+                              </span>
+                              <span className="text-[10px] text-slate-400 block">
+                                Câmbio: <strong className="text-slate-300">{formatAOA(sim.exchangeRate)}</strong>
+                              </span>
+                            </div>
+
+                            {/* QUADRANTE 2: BASE CONVERTIDA */}
+                            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 space-y-1">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                                Valor Convertido
+                              </span>
+                              <span className="text-sm font-black text-slate-200 block">
+                                {formatAOA(sim.baseAmountAOA)}
+                              </span>
+                              <span className="text-[10px] text-slate-400 block">
+                                Sem taxas bancárias
+                              </span>
+                            </div>
+
+                            {/* QUADRANTE 3: TAXAS & IVA */}
+                            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 space-y-1">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block">
+                                Taxa + IVA ({sim.feePercent || purchaseFeePercent}% + {sim.vatPercent || vatPercent}%)
+                              </span>
+                              <span className="text-sm font-black text-amber-300 block">
+                                {formatAOA((sim.feeAOA || 0) + (sim.vatAOA || 0))}
+                              </span>
+                              <span className="text-[10px] text-slate-400 block">
+                                Taxa: {formatAOA(sim.feeAOA || 0)} | IVA: {formatAOA(sim.vatAOA || 0)}
+                              </span>
+                            </div>
+
+                            {/* QUADRANTE 4: CUSTO TOTAL DEBITADO */}
+                            <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-2xl p-3.5 space-y-1">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">
+                                Custo Total Previsto
+                              </span>
+                              <span className="text-base font-black text-emerald-300 block">
+                                {formatAOA(sim.totalCostAOA)}
+                              </span>
+                              <span className="text-[10px] text-emerald-400/80 font-medium block">
+                                Débito Total no Cartão
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* PAINEL DE AÇÕES E IMPACTO DE SALDO */}
+                          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-slate-800/80">
+                            <div className="text-xs text-slate-300 flex items-center gap-2">
+                              {sim.canAfford ? (
+                                <span className="text-emerald-400 font-semibold flex items-center gap-1 text-[11px]">
+                                  <Sparkles size={13} /> Restaria aprox. <strong>{formatAOA(sim.shortageOrRemainingAOA)}</strong> de saldo no cartão.
+                                </span>
+                              ) : (
+                                <span className="text-rose-400 font-semibold flex items-center gap-1 text-[11px]">
+                                  <ShieldAlert size={13} /> Requer carregamento prévio de pelo menos <strong>{formatAOA(sim.shortageOrRemainingAOA)}</strong>.
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteSimulation(sim.id)}
+                                className="px-3.5 py-2.5 bg-slate-900 hover:bg-rose-950/50 border border-slate-800 hover:border-rose-500/40 text-slate-400 hover:text-rose-300 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                                title="Eliminar simulação do histórico"
+                              >
+                                <Trash2 size={15} />
+                                <span className="hidden sm:inline">Eliminar</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleConvertSimToRealTx(sim)}
+                                className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black rounded-xl text-xs transition cursor-pointer shadow-lg shadow-emerald-500/20 flex items-center gap-2 active:scale-95"
+                                title="Converter e registar como compra real no histórico do cartão"
+                              >
+                                <CheckCircle2 size={16} />
+                                <span>Registar Compra Real</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
