@@ -2600,7 +2600,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                                 }}
                                 className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-amber-400 hover:text-amber-300 hover:bg-slate-700/80 rounded-xl transition-colors text-left"
                               >
-                                <Calculator size={16} className="text-amber-400" /> Calculadora de Saldos & Cartões
+                                <Calculator size={16} className="text-amber-400" /> Calculadora de Saldos
                               </button>
                               <button
                                 onClick={() => {

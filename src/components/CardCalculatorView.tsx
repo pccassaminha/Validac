@@ -27,6 +27,7 @@ import {
   Settings,
   Receipt,
   Camera,
+  Coins,
   Image as ImageIcon,
   Maximize2,
   X,
@@ -249,6 +250,24 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
     loadCalculatorData();
   }, []);
 
+  // Helper to recursively strip undefined properties for Firestore compatibility
+  const sanitizeForFirestore = (obj: any): any => {
+    if (obj === null || obj === undefined) return null;
+    if (Array.isArray(obj)) {
+      return obj.map((item) => sanitizeForFirestore(item));
+    }
+    if (typeof obj === "object") {
+      const clean: Record<string, any> = {};
+      for (const [key, value] of Object.entries(obj)) {
+        if (value !== undefined) {
+          clean[key] = sanitizeForFirestore(value);
+        }
+      }
+      return clean;
+    }
+    return obj;
+  };
+
   // Save changes to Firestore & localStorage
   const saveData = async (
     updatedPlafond: number,
@@ -260,21 +279,23 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
     updatedSimulations: SavedSimulationItem[] = savedSimulations
   ) => {
     setIsSaving(true);
-    const payload = {
-      plafondAOA: updatedPlafond,
-      rates: updatedRates,
-      topupFeePercent: tFee,
-      purchaseFeePercent: pFee,
-      vatPercent: vPercent,
-      transactions: updatedTransactions,
-      savedSimulations: updatedSimulations,
+    const rawPayload = {
+      plafondAOA: updatedPlafond ?? 0,
+      rates: updatedRates ?? {},
+      topupFeePercent: tFee ?? 0,
+      purchaseFeePercent: pFee ?? 0,
+      vatPercent: vPercent ?? 0,
+      transactions: updatedTransactions ?? [],
+      savedSimulations: updatedSimulations ?? [],
       updatedAt: new Date().toISOString(),
     };
 
-    localStorage.setItem("c_store_card_calc", JSON.stringify(payload));
+    localStorage.setItem("c_store_card_calc", JSON.stringify(rawPayload));
+
+    const firestorePayload = sanitizeForFirestore(rawPayload);
 
     try {
-      await setDoc(doc(db, "settings", "card_calculator"), payload, { merge: true });
+      await setDoc(doc(db, "settings", "card_calculator"), firestorePayload, { merge: true });
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, "settings/card_calculator");
     } finally {
@@ -729,7 +750,7 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
             <div className="p-3 bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 text-slate-950 rounded-2xl shadow-lg shadow-amber-500/20">
               <Calculator size={26} />
             </div>
-            Calculadora de Saldos & Cartões
+            Calculadora de Saldos
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Gestão inteligente de limites, câmbios editáveis, taxas e IVA em Angola
@@ -889,7 +910,7 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                   className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white font-bold text-sm focus:outline-none focus:border-amber-400"
                 />
                 <p className="text-[10px] text-slate-400 mt-1">
-                  Valor limite em AOA disponibilizado pelo seu banco para carregamentos do cartão.
+                  Valor limite em AOA disponibilizado pelo seu banco para carregamentos do cartão. Este limite renova-se automaticamente no final de cada mês para o valor padrão definido.
                 </p>
               </div>
             </div>
@@ -1236,24 +1257,55 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
               {formatAOA(currentCardBalanceAOA)}
             </div>
 
-            {/* PEQUENOS PONTOS CONVERTIDOS USD E EURO */}
+            {/* CONVERSÕES EQUIVALENTES PARA TODAS AS MOEDAS REGISTADAS NO SISTEMA */}
             <div className="mt-4 pt-3 border-t border-emerald-500/20 space-y-1.5">
               <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400/80 block">
                 Equivalente em Câmbio Definido
               </span>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center gap-1 bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 px-2.5 py-1 rounded-xl text-xs font-bold shadow-sm">
-                  <DollarSign size={12} className="text-emerald-400" />
-                  {currentCardBalanceUSD !== null
-                    ? `$ ${currentCardBalanceUSD.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                    : "Sem Câmbio USD"}
-                </span>
-                <span className="inline-flex items-center gap-1 bg-indigo-500/20 border border-indigo-500/40 text-indigo-200 px-2.5 py-1 rounded-xl text-xs font-bold shadow-sm">
-                  <Euro size={12} className="text-indigo-400" />
-                  {currentCardBalanceEUR !== null
-                    ? `€ ${currentCardBalanceEUR.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                    : "Sem Câmbio EUR"}
-                </span>
+                {Object.entries(exchangeRates).map(([curr, rate]) => {
+                  const numRate = Number(rate) || 0;
+                  const equiv = numRate > 0 ? currentCardBalanceAOA / numRate : null;
+
+                  let formattedVal = "Sem Câmbio";
+                  if (equiv !== null) {
+                    formattedVal = equiv.toLocaleString("de-DE", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    });
+                  }
+
+                  let badgeStyle = "bg-teal-500/20 border-teal-500/40 text-teal-200";
+                  let icon = <Coins size={12} className="text-teal-400" />;
+
+                  if (curr === "USD") {
+                    badgeStyle = "bg-emerald-500/20 border-emerald-500/40 text-emerald-200";
+                    icon = <DollarSign size={12} className="text-emerald-400" />;
+                  } else if (curr === "EUR") {
+                    badgeStyle = "bg-indigo-500/20 border-indigo-500/40 text-indigo-200";
+                    icon = <Euro size={12} className="text-indigo-400" />;
+                  } else if (curr === "GBP") {
+                    badgeStyle = "bg-purple-500/20 border-purple-500/40 text-purple-200";
+                    icon = <Coins size={12} className="text-purple-400" />;
+                  } else if (curr === "BRL") {
+                    badgeStyle = "bg-amber-500/20 border-amber-500/40 text-amber-200";
+                    icon = <Coins size={12} className="text-amber-400" />;
+                  } else if (curr === "ZAR") {
+                    badgeStyle = "bg-sky-500/20 border-sky-500/40 text-sky-200";
+                    icon = <Coins size={12} className="text-sky-400" />;
+                  }
+
+                  return (
+                    <span
+                      key={curr}
+                      className={`inline-flex items-center gap-1.5 border px-2.5 py-1 rounded-xl text-xs font-bold shadow-sm ${badgeStyle}`}
+                      title={`Taxa de Câmbio Registada: 1 ${curr} = ${numRate} Kz`}
+                    >
+                      {icon}
+                      <span>{curr} {formattedVal}</span>
+                    </span>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -1860,7 +1912,7 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
             {/* CONTEÚDO DA ABA: CALCULADORA / SIMULAÇÃO ATIVA */}
             {simActiveSubTab === "calculator" && (() => {
               const priceVal = parseFloat(simOriginalPrice.replace(/[^0-9.]/g, "")) || 0;
-              const rateVal = simCurrency === "AOA" ? 1 : (parseFloat(simCustomExchangeRate) || exchangeRates[simCurrency] || 1);
+              const rateVal = simCurrency === "AOA" ? 1 : (exchangeRates[simCurrency] || 1);
               const baseAOA = priceVal * rateVal;
               const feeAOA = baseAOA * (purchaseFeePercent / 100);
               const vatAOA = feeAOA * (vatPercent / 100);
@@ -1892,26 +1944,18 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                       </label>
                       <select
                         value={simCurrency}
-                        onChange={(e) => {
-                          setSimCurrency(e.target.value);
-                          if (e.target.value === "AOA") {
-                            setSimCustomExchangeRate("1");
-                          } else if (exchangeRates[e.target.value]) {
-                            setSimCustomExchangeRate(exchangeRates[e.target.value].toString());
-                          }
-                        }}
+                        onChange={(e) => setSimCurrency(e.target.value)}
                         className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none focus:border-emerald-400 cursor-pointer"
                       >
-                        <option value="USD">USD ($ - Dólar Norte-Americano)</option>
-                        <option value="EUR">EUR (€ - Euro)</option>
                         <option value="AOA">AOA (Kz - Kwanza)</option>
-                        {Object.keys(exchangeRates)
-                          .filter((c) => c !== "USD" && c !== "EUR")
-                          .map((curr) => (
+                        {Object.entries(exchangeRates).map(([curr, rate]) => {
+                          const numRate = Number(rate) || 0;
+                          return (
                             <option key={curr} value={curr}>
-                              {curr}
+                              {curr} ({formatAOA(numRate)})
                             </option>
-                          ))}
+                          );
+                        })}
                       </select>
                     </div>
 
@@ -1928,25 +1972,6 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                         className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-emerald-300 font-black text-sm focus:outline-none focus:border-emerald-400"
                       />
                     </div>
-
-                    {simCurrency !== "AOA" && (
-                      <div className="sm:col-span-2">
-                        <label className="block text-[11px] font-bold uppercase text-slate-300 mb-1 flex items-center justify-between">
-                          <span>Taxa de Câmbio Utilizada (1 {simCurrency} = X Kz)</span>
-                          <span className="text-[10px] text-amber-400 font-normal">
-                            Câmbio padrão do banco: {exchangeRates[simCurrency] ? formatAOA(exchangeRates[simCurrency]) : "N/D"}
-                          </span>
-                        </label>
-                        <input
-                          type="number"
-                          step="any"
-                          value={simCustomExchangeRate}
-                          onChange={(e) => setSimCustomExchangeRate(e.target.value)}
-                          placeholder="Ex: 920"
-                          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none focus:border-amber-400"
-                        />
-                      </div>
-                    )}
                   </div>
 
                   {/* PAINEL DE CÁLCULO DE INTELIGÊNCIA */}
