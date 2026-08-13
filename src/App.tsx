@@ -722,7 +722,7 @@ export default function App() {
       lower.includes("34900") ||
       lower.includes("34 900")
     ) {
-      return "Secador Expresso Pro 35 000 Kz";
+      return "Secador Expresso Pro";
     }
     if (
       lower.includes("inteligente") ||
@@ -788,14 +788,14 @@ export default function App() {
     },
     {
       id: "cabide-secador",
-      title: "Secador Expresso Pro 35 000 Kz",
+      title: "Secador Expresso Pro",
       subtitle: "Novo produto voltado a roupas húmidas e dias de chuva.",
       image: IMAGES_ROUPAS[0],
       viewName: "sales-roupas",
       paramName: "cabide-secador",
       matchesLead: (l: any) => {
         const p = normalizeProductName(l.produto || l.product || l.produtoName || l.rawProduto);
-        return p === "Secador Expresso Pro 35 000 Kz";
+        return p === "Secador Expresso Pro" || p === "Secador Expresso Pro 35 000 Kz" || p === "Secador Expresso Pro 34 900 Kz" || p === "Secador Expresso Portátil";
       },
     },
     {
@@ -1332,7 +1332,7 @@ export default function App() {
         view === "sales-cinta-colombiana"
           ? "Cinta Modeladora Colombiana"
           : view === "sales-roupas"
-            ? "Secador Expresso Pro 35 000 Kz"
+            ? "Secador Expresso Pro"
             : view === "sales-roteador"
               ? "Roteador 5G Ultra Desbloqueado"
               : view === "sales-base-movel"
@@ -1418,7 +1418,7 @@ export default function App() {
       view === "sales-cinta-colombiana"
         ? "Cinta Modeladora Colombiana"
         : view === "sales-roupas"
-          ? "Secador Expresso Pro 35 000 Kz"
+          ? "Secador Expresso Pro"
           : view === "sales-roteador"
             ? "Roteador 5G Ultra Desbloqueado"
             : view === "sales-base-movel"
@@ -1510,7 +1510,7 @@ export default function App() {
       view === "sales-cinta-colombiana"
         ? "Cinta Modeladora Colombiana"
         : view === "sales-roupas"
-          ? "Secador Expresso Pro 34 900 Kz"
+          ? "Secador Expresso Pro"
           : view === "sales-roteador"
             ? "Roteador 5G Ultra Desbloqueado"
             : view === "sales-base-movel"
@@ -2322,7 +2322,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
     new Set([
       "Cinta Modeladora Colombiana",
       "Secador Inteligente UV",
-      "Secador Expresso Pro 35 000 Kz",
+      "Secador Expresso Pro",
       "Roteador 5G Ultra Desbloqueado",
       "Base Móvel 360°",
       "Camisa Seda Gelada Premium",
@@ -7035,7 +7035,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                           {view === "sales-cinta-colombiana"
                             ? "Cinta Modeladora Colombiana"
                             : view === "sales-roupas"
-                              ? "Secador Expresso Portátil"
+                              ? "Secador Expresso Pro"
                               : view === "sales-roteador"
                                 ? "ZTE 5G Ultra WiFi"
                                 : view === "sales-base-movel"
@@ -7199,7 +7199,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                      {view === "sales-cinta-colombiana"
                        ? "Cinta Modeladora Colombiana"
                        : view === "sales-roupas"
-                         ? "Secador Expresso Portátil"
+                         ? "Secador Expresso Pro"
                          : view === "sales-roteador"
                            ? "Roteador 5G Ultra"
                            : view === "sales-base-movel"
@@ -7475,7 +7475,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                       {view === "sales-cinta-colombiana"
                         ? `Combo ${formData.quantity}x Cinta Modeladora Colombiana`
                         : view === "sales-roupas"
-                          ? "Secador Expresso Portátil"
+                          ? "Secador Expresso Pro"
                           : view === "sales-roteador"
                             ? "ZTE 5G Ultra"
                             : view === "sales-base-movel"
