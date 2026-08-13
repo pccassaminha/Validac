@@ -4865,17 +4865,17 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                     <label className="block text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">
                       Quantidade de Pares <span className="text-amber-400 font-normal lowercase">(1 Par = 2 bases inclusas)</span>
                     </label>
-                    <div className="flex gap-2">
-                      {[1, 2, 3, 4].map((q) => (
+                    <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+                      {[1, 2, 3, 4, 5].map((q) => (
                         <button
                           key={q}
                           type="button"
                           onClick={() => setFormData({ ...formData, quantity: q })}
-                          className={`flex-1 py-3 border ${
+                          className={`py-3 border ${
                             q === formData.quantity
                               ? "bg-amber-500 border-amber-400 text-slate-950 font-black shadow-md scale-[1.02]"
                               : "bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700"
-                          } rounded-xl transition-all text-sm`}
+                          } rounded-xl transition-all text-xs sm:text-sm font-bold`}
                         >
                           {q} {q === 1 ? "Par" : "Pares"}
                         </button>
@@ -7479,7 +7479,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                           : view === "sales-roteador"
                             ? "ZTE 5G Ultra"
                             : view === "sales-base-movel"
-                              ? "Base Móvel 360°"
+                              ? (formData.quantity > 1 ? `Combo ${formData.quantity}x Base Móvel 360°` : "Base Móvel 360°")
                               : view === "sales-camisa-seda"
                                 ? `Combo ${formData.quantity}x Camisa de Seda Gelada`
                                 : "Secador UV"}
@@ -7493,7 +7493,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                           : view === "sales-roteador"
                             ? "240.000 Kz"
                             : view === "sales-base-movel"
-                              ? "15.000 Kz"
+                              ? `${new Intl.NumberFormat("pt-AO").format(formData.quantity * 15000)} Kz`
                               : view === "sales-camisa-seda"
                                 ? (formData.quantity === 1 ? "35.000 Kz" : formData.quantity === 2 ? "60.000 Kz" : formData.quantity === 3 ? "86.000 Kz" : formData.quantity === 5 ? "140.000 Kz" : "35.000 Kz")
                                 : "25.000 Kz"}
