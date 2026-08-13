@@ -65,6 +65,7 @@ import {
   ToggleLeft,
   ToggleRight,
   CheckSquare,
+  Calculator,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { db, auth, handleFirestoreError, OperationType } from "./firebase";
@@ -101,6 +102,7 @@ import UsersView from "./UsersView";
 import HomeView from "./HomeView";
 import CamisaSedaView from "./components/CamisaSedaView";
 import { CintaColombianaView } from "./components/CintaColombianaView";
+import { CardCalculatorView } from "./components/CardCalculatorView";
 
 // ==========================================
 // MÁQUINA DE GROWTH: Configuração de Pixels
@@ -950,7 +952,7 @@ export default function App() {
         | "arquivados") || "geral",
   );
   const [adminCurrentPage, setAdminCurrentPage] = useState(1);
-  const [adminSubView, setAdminSubView] = useState<"leads" | "financeiro">(
+  const [adminSubView, setAdminSubView] = useState<"leads" | "financeiro" | "calculadora">(
     "leads",
   );
   const [financeProductFilter, setFinanceProductFilter] = useState("Todos");
@@ -2589,6 +2591,16 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                                 className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-xl transition-colors text-left"
                               >
                                 <Store size={16} /> Painel Financeiro
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setIsDropdownOpen(false);
+                                  setView("admin");
+                                  setAdminSubView("calculadora");
+                                }}
+                                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-amber-400 hover:text-amber-300 hover:bg-slate-700/80 rounded-xl transition-colors text-left"
+                              >
+                                <Calculator size={16} className="text-amber-400" /> Calculadora de Saldos & Cartões
                               </button>
                               <button
                                 onClick={() => {
@@ -5017,7 +5029,12 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
       {/* ADMIN VIEW */}
       {view === "admin" && (
         <main className="w-full max-w-[1600px] mx-auto px-4 py-10 flex-grow">
-          {adminSubView === "financeiro" ? (
+          {adminSubView === "calculadora" ? (
+            <CardCalculatorView
+              isDark={isDark}
+              onBack={() => setAdminSubView("leads")}
+            />
+          ) : adminSubView === "financeiro" ? (
             <div className="animate-fadeIn">
               <div className="mb-4">
                 <button
@@ -5447,6 +5464,17 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                           <EyeOff size={16} /> Censurar Dados
                         </>
                       )}
+                    </button>
+                    <button
+                      onClick={() => setAdminSubView("calculadora")}
+                      className={`text-sm px-4 py-2 flex items-center gap-2 rounded-lg font-bold transition border cursor-pointer ${
+                        isDark
+                          ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/30"
+                          : "bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200"
+                      }`}
+                      title="Calculadora de Saldos de Cartões e Câmbio"
+                    >
+                      <Calculator size={16} /> Calculadora de Saldos
                     </button>
                     <button
                       onClick={handleExportCSV}
