@@ -2316,20 +2316,29 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
 
       // Banner Superior
       doc.setFillColor(30, 41, 59);
-      doc.rect(0, 0, 297, 24, "F");
+      doc.rect(0, 0, 297, 26, "F");
 
+      // Badge Grupo Cassaminha
+      doc.setFillColor(79, 70, 229);
+      doc.roundedRect(14, 4, 42, 5.5, 1, 1, "F");
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(15);
+      doc.setFontSize(7);
       doc.setFont("helvetica", "bold");
-      doc.text("Relatório de Leads & Encomendas - Valida C", 14, 15);
+      doc.text("GRUPO CASSAMINHA", 16, 7.8);
 
-      doc.setFontSize(9);
+      // Título do Relatório
+      doc.setFontSize(13);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(255, 255, 255);
+      doc.text("Relatório de Encomendas & Leads — Valdessa (Grupo Cassaminha)", 14, 19);
+
+      doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(203, 213, 225);
       doc.text(
-        `Gerado em: ${new Date().toLocaleString("pt-AO")} | Total: ${filteredData.length} item(ns)`,
-        170,
-        15,
+        `Gerado em: ${new Date().toLocaleString("pt-AO")} | Total: ${filteredData.length} registo(s)`,
+        180,
+        19,
       );
 
       const tableHeaders = [
@@ -2393,7 +2402,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
       autoTable(doc, {
         head: tableHeaders,
         body: tableRows,
-        startY: 28,
+        startY: 30,
         theme: "striped",
         styles: {
           fontSize: 8,
@@ -2418,9 +2427,70 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
         alternateRowStyles: {
           fillColor: [248, 250, 252],
         },
+        didDrawPage: (data) => {
+          // Rodapé em todas as páginas
+          const pageSize = doc.internal.pageSize;
+          const pageHeight = pageSize.height || pageSize.getHeight();
+          doc.setFontSize(8);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(100, 116, 139);
+          doc.text(
+            "Documento Oficial de Relatório — Valdessa | Grupo Cassaminha",
+            14,
+            pageHeight - 7,
+          );
+          doc.text(
+            `Página ${data.pageNumber}`,
+            283,
+            pageHeight - 7,
+            { align: "right" },
+          );
+        },
       });
 
-      doc.save(`Leads_Valida_C_${new Date().toISOString().split("T")[0]}.pdf`);
+      // Bloco de Assinatura e Autenticação do Grupo Cassaminha no final da tabela
+      const finalY = (doc as any).lastAutoTable?.finalY || 160;
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      // Se não houver espaço suficiente no fim da página para o bloco de assinatura, adiciona nova página
+      const requiredSpace = 32;
+      let sigY = finalY + 8;
+      if (sigY + requiredSpace > pageHeight - 15) {
+        doc.addPage();
+        sigY = 20;
+      }
+
+      // Caixa de Assinatura Oficial
+      doc.setDrawColor(203, 213, 225);
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(14, sigY, 269, 26, 3, 3, "FD");
+
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(30, 41, 59);
+      doc.text("EMPRESA RESPONSÁVEL:", 18, sigY + 7);
+      doc.setFont("helvetica", "normal");
+      doc.text("Grupo Cassaminha — Valdessa", 62, sigY + 7);
+
+      doc.setFont("helvetica", "bold");
+      doc.text("SISTEMA & PLATAFORMA:", 18, sigY + 13);
+      doc.setFont("helvetica", "normal");
+      doc.text("Valida C (Gestão Unificada de Encomendas)", 62, sigY + 13);
+
+      doc.setFont("helvetica", "bold");
+      doc.text("ASSINATURA / AUTENTICAÇÃO:", 18, sigY + 19);
+
+      // Linha de Assinatura
+      doc.setLineWidth(0.4);
+      doc.setDrawColor(79, 70, 229);
+      doc.line(62, sigY + 19, 170, sigY + 19);
+
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(79, 70, 229);
+      doc.text("Assinatura Autorizada — Grupo Cassaminha", 62, sigY + 23);
+
+      doc.save(`Leads_Grupo_Cassaminha_Valdessa_${new Date().toISOString().split("T")[0]}.pdf`);
     } catch (err) {
       console.error("Erro ao gerar PDF:", err);
       alert("Ocorreu um erro ao gerar o ficheiro PDF.");
