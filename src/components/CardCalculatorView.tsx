@@ -31,7 +31,10 @@ import {
   Image as ImageIcon,
   Maximize2,
   X,
-  FileText
+  FileText,
+  ExternalLink,
+  Link as LinkIcon,
+  MoreVertical
 } from "lucide-react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db, handleFirestoreError, OperationType } from "../firebase";
@@ -69,6 +72,7 @@ export interface SavedSimulationItem {
   cardBalanceAtSimAOA: number;
   canAfford: boolean;
   shortageOrRemainingAOA: number;
+  productUrl?: string;
   createdAt: string;
 }
 
@@ -153,21 +157,97 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
   const [editTxRate, setEditTxRate] = useState<string>("1");
   const [editTxPhoto, setEditTxPhoto] = useState<string>("");
 
-  // Filter for transactions table
+  // Filter & selection for transactions table
   const [tableFilter, setTableFilter] = useState<"all" | "topup" | "purchase" | "withdrawal">("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [visibleTxCount, setVisibleTxCount] = useState<number>(10);
+  const [selectedTxIds, setSelectedTxIds] = useState<string[]>([]);
+  const [txMenuState, setTxMenuState] = useState<{ id: string; top: number; right: number; openUpward: boolean } | null>(null);
+
+  // Auto-select all transactions on initial load or when new transactions are added
+  useEffect(() => {
+    if (transactions.length > 0) {
+      setSelectedTxIds((prev) => {
+        const validPrev = prev.filter((id) => transactions.some((t) => t.id === id));
+        if (validPrev.length === 0) {
+          return transactions.map((t) => t.id);
+        }
+        const newIds = transactions.map((t) => t.id).filter((id) => !prev.includes(id));
+        return [...validPrev, ...newIds];
+      });
+    } else {
+      setSelectedTxIds([]);
+    }
+  }, [transactions]);
+
+  const handleToggleSelectTx = (id: string) => {
+    setSelectedTxIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleToggleSelectAllTxs = () => {
+    if (selectedTxIds.length === filteredTransactions.length) {
+      setSelectedTxIds([]);
+    } else {
+      setSelectedTxIds(filteredTransactions.map((t) => t.id));
+    }
+  };
 
   // Purchase Simulator State
   const [isSimulatorModalOpen, setIsSimulatorModalOpen] = useState<boolean>(false);
   const [simItemName, setSimItemName] = useState<string>("");
+  const [simProductUrl, setSimProductUrl] = useState<string>("");
+  const [isLinkInputOpen, setIsLinkInputOpen] = useState<boolean>(false);
   const [simCurrency, setSimCurrency] = useState<string>("USD");
   const [simOriginalPrice, setSimOriginalPrice] = useState<string>("");
   const [simCustomExchangeRate, setSimCustomExchangeRate] = useState<string>("920");
   const [simActiveSubTab, setSimActiveSubTab] = useState<"calculator" | "history">("calculator");
 
-  // Saved simulations list
+  // Saved simulations list & selection state & 3-dots action menu state
   const [savedSimulations, setSavedSimulations] = useState<SavedSimulationItem[]>([]);
+  const [selectedSimIds, setSelectedSimIds] = useState<string[]>([]);
+  const [simMenuState, setSimMenuState] = useState<{ id: string; top: number; right: number; openUpward: boolean } | null>(null);
+
+  // Auto-select all simulation items on initial load or when new items are added
+  useEffect(() => {
+    if (savedSimulations.length > 0) {
+      setSelectedSimIds((prev) => {
+        // Keep existing selections that still exist, plus add any new simulation IDs
+        const validPrev = prev.filter((id) => savedSimulations.some((s) => s.id === id));
+        if (validPrev.length === 0) {
+          return savedSimulations.map((s) => s.id);
+        }
+        // Add any newly added simulation IDs automatically
+        const newIds = savedSimulations.map((s) => s.id).filter((id) => !prev.includes(id));
+        return [...validPrev, ...newIds];
+      });
+    } else {
+      setSelectedSimIds([]);
+    }
+  }, [savedSimulations]);
+
+  const handleToggleSelectSim = (id: string) => {
+    setSelectedSimIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleToggleSelectAllSims = () => {
+    if (selectedSimIds.length === savedSimulations.length) {
+      setSelectedSimIds([]);
+    } else {
+      setSelectedSimIds(savedSimulations.map((s) => s.id));
+    }
+  };
+
+  // Edit simulation modal state
+  const [editingSim, setEditingSim] = useState<SavedSimulationItem | null>(null);
+  const [editSimName, setEditSimName] = useState<string>("");
+  const [editSimCurrency, setEditSimCurrency] = useState<string>("USD");
+  const [editSimPrice, setEditSimPrice] = useState<string>("");
+  const [editSimRate, setEditSimRate] = useState<string>("");
+  const [editSimUrl, setEditSimUrl] = useState<string>("");
 
   const cameraFileInputRef = useRef<HTMLInputElement | null>(null);
   const cameraEditInputRef = useRef<HTMLInputElement | null>(null);
@@ -584,7 +664,8 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
     vatAOA: number,
     totalCostAOA: number,
     canAfford: boolean,
-    shortageOrRemainingAOA: number
+    shortageOrRemainingAOA: number,
+    productUrl?: string
   ) => {
     if (!originalPrice || originalPrice <= 0) {
       setNotification({ type: "error", message: "Introduza um valor válido para a simulação." });
@@ -606,12 +687,17 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
       cardBalanceAtSimAOA: currentCardBalanceAOA,
       canAfford,
       shortageOrRemainingAOA,
+      productUrl: productUrl?.trim() || undefined,
       createdAt: new Date().toISOString(),
     };
 
     const updatedSims = [newSim, ...savedSimulations];
     setSavedSimulations(updatedSims);
     saveData(plafondAOA, exchangeRates, transactions, topupFeePercent, purchaseFeePercent, vatPercent, updatedSims);
+
+    setSimItemName("");
+    setSimProductUrl("");
+    setSimOriginalPrice("");
 
     setNotification({
       type: "success",
@@ -664,6 +750,67 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
     setNotification({
       type: "info",
       message: "Simulação removida do histórico.",
+    });
+  };
+
+  // Edit Simulation Handlers
+  const handleOpenEditSim = (sim: SavedSimulationItem) => {
+    setEditingSim(sim);
+    setEditSimName(sim.itemName);
+    setEditSimCurrency(sim.currency);
+    setEditSimPrice(sim.originalPrice.toString());
+    setEditSimRate(sim.exchangeRate.toString());
+    setEditSimUrl(sim.productUrl || "");
+  };
+
+  const handleSaveEditedSimulation = () => {
+    if (!editingSim) return;
+
+    const priceVal = parseFloat(editSimPrice.replace(/[^0-9.]/g, ""));
+    const rateVal = parseFloat(editSimRate);
+
+    if (isNaN(priceVal) || priceVal <= 0 || isNaN(rateVal) || rateVal <= 0) {
+      setNotification({ type: "error", message: "Insira um preço e taxa de câmbio válidos para a simulação." });
+      return;
+    }
+
+    const baseAOA = priceVal * rateVal;
+    const feeAOA = baseAOA * (purchaseFeePercent / 100);
+    const vatAOA = feeAOA * (vatPercent / 100);
+    const totalCostAOA = baseAOA + feeAOA + vatAOA;
+    const remainingAOA = currentCardBalanceAOA - totalCostAOA;
+    const canAfford = remainingAOA >= 0;
+    const shortageOrRemainingAOA = canAfford ? remainingAOA : Math.abs(remainingAOA);
+
+    const updatedSims = savedSimulations.map((s) => {
+      if (s.id === editingSim.id) {
+        return {
+          ...s,
+          itemName: editSimName.trim() || `Simulação ${priceVal} ${editSimCurrency}`,
+          currency: editSimCurrency,
+          originalPrice: priceVal,
+          exchangeRate: rateVal,
+          baseAmountAOA: baseAOA,
+          feePercent: purchaseFeePercent,
+          feeAOA,
+          vatPercent: vatPercent,
+          vatAOA,
+          totalCostAOA,
+          cardBalanceAtSimAOA: currentCardBalanceAOA,
+          canAfford,
+          shortageOrRemainingAOA,
+          productUrl: editSimUrl.trim() || undefined,
+        };
+      }
+      return s;
+    });
+
+    setSavedSimulations(updatedSims);
+    saveData(plafondAOA, exchangeRates, transactions, topupFeePercent, purchaseFeePercent, vatPercent, updatedSims);
+    setEditingSim(null);
+    setNotification({
+      type: "success",
+      message: `Simulação "${editSimName || "editada"}" atualizada com sucesso!`,
     });
   };
 
@@ -1698,11 +1845,103 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
           </div>
         </div>
 
-        {/* TABELA FORMATADA COM LIMITE DE 10 REGISTOS */}
+        {/* BANNER DE RESUMO DOS MOVIMENTOS MARCADOS */}
+        {(() => {
+          const selectedTxs = filteredTransactions.filter((t) => selectedTxIds.includes(t.id));
+          const totalBaseAOA = selectedTxs.reduce((acc, t) => acc + (t.amountAOA || 0), 0);
+          const totalFeeAOA = selectedTxs.reduce((acc, t) => acc + (t.feeAOA || 0), 0);
+          const totalVatAOA = selectedTxs.reduce((acc, t) => acc + (t.vatAOA || 0), 0);
+          const totalDebitedAOA = selectedTxs.reduce((acc, t) => acc + (t.totalDebitedAOA || 0), 0);
+          const isAllSelected = filteredTransactions.length > 0 && selectedTxIds.length === filteredTransactions.length;
+
+          return (
+            <div className="p-4 bg-slate-950/90 border border-slate-800 rounded-2xl space-y-3 shadow-inner">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-2.5 border-b border-slate-800/80">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <div className="p-2 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl">
+                    <Receipt size={16} />
+                  </div>
+                  <div>
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-200 block">
+                      Resumo dos Movimentos Marcados
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      <strong>{selectedTxs.length}</strong> de <strong>{filteredTransactions.length}</strong> {filteredTransactions.length === 1 ? "movimento marcado" : "movimentos marcados"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <button
+                    type="button"
+                    onClick={handleToggleSelectAllTxs}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                      isAllSelected
+                        ? "bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30"
+                        : "bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800"
+                    }`}
+                  >
+                    {isAllSelected ? "Desmarcar Todos" : "Marcar Todos"}
+                  </button>
+                </div>
+              </div>
+
+              {/* DETALHAMENTO DE TAXAS, IVA E MONTANTES DOS MOVIMENTOS MARCADOS */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                <div className="p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">
+                    Montante Base
+                  </span>
+                  <span className="text-xs font-black text-white">
+                    {formatAOA(totalBaseAOA)}
+                  </span>
+                </div>
+
+                <div className="p-2.5 bg-slate-900/80 border border-amber-500/20 rounded-xl">
+                  <span className="text-[10px] text-amber-400/80 font-bold uppercase block mb-0.5">
+                    Total Taxas Gastas
+                  </span>
+                  <span className="text-xs font-black text-amber-300">
+                    {formatAOA(totalFeeAOA)}
+                  </span>
+                </div>
+
+                <div className="p-2.5 bg-slate-900/80 border border-rose-500/20 rounded-xl">
+                  <span className="text-[10px] text-rose-400/80 font-bold uppercase block mb-0.5">
+                    Total IVA Gasto
+                  </span>
+                  <span className="text-xs font-black text-rose-300">
+                    {formatAOA(totalVatAOA)}
+                  </span>
+                </div>
+
+                <div className="p-2.5 bg-slate-900/80 border border-emerald-500/20 rounded-xl">
+                  <span className="text-[10px] text-emerald-400/80 font-bold uppercase block mb-0.5">
+                    Total Debitado
+                  </span>
+                  <span className="text-xs font-black text-emerald-300">
+                    {formatAOA(totalDebitedAOA)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* TABELA FORMATADA COM SELEÇÃO E MENU DE AÇÕES */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-800 text-[10px] uppercase font-black tracking-wider text-slate-300 bg-slate-950/60">
+                <th className="py-3 px-3 text-center w-10">
+                  <input
+                    type="checkbox"
+                    checked={filteredTransactions.length > 0 && selectedTxIds.length === filteredTransactions.length}
+                    onChange={handleToggleSelectAllTxs}
+                    className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-amber-400 focus:ring-offset-slate-950 cursor-pointer accent-amber-500"
+                    title={selectedTxIds.length === filteredTransactions.length ? "Desmarcar todos" : "Marcar todos"}
+                  />
+                </th>
                 <th className="py-3 px-3">Data / Hora</th>
                 <th className="py-3 px-3">Movimento / Descrição</th>
                 <th className="py-3 px-3">Valor Orig.</th>
@@ -1718,97 +1957,197 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
             <tbody className="divide-y divide-slate-800/60 font-medium">
               {filteredTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-10 text-center text-slate-400">
+                  <td colSpan={11} className="py-10 text-center text-slate-400">
                     Nenhum movimento registado no histórico com os filtros selecionados.
                   </td>
                 </tr>
               ) : (
-                filteredTransactions.slice(0, visibleTxCount).map((tx) => (
-                  <tr key={tx.id} className="hover:bg-slate-800/60 transition-colors">
-                    <td className="py-3 px-3 text-slate-300 whitespace-nowrap text-[11px]">
-                      {new Date(tx.createdAt).toLocaleDateString("pt-AO", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "2-digit",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </td>
+                filteredTransactions.slice(0, visibleTxCount).map((tx) => {
+                  const isSelected = selectedTxIds.includes(tx.id);
 
-                    <td className="py-3 px-3 font-bold text-white whitespace-nowrap">
-                      <span>{tx.description}</span>
-                    </td>
+                  return (
+                    <tr
+                      key={tx.id}
+                      className={`transition-colors ${
+                        isSelected ? "bg-amber-500/5 hover:bg-amber-500/10" : "hover:bg-slate-800/60 opacity-60"
+                      }`}
+                    >
+                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleSelectTx(tx.id)}
+                          className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-amber-400 focus:ring-offset-slate-950 cursor-pointer accent-amber-500"
+                        />
+                      </td>
 
-                    <td className="py-3 px-3 font-bold text-slate-200 whitespace-nowrap">
-                      {formatForeign(tx.originalAmount, tx.currency)}
-                      {tx.currency !== "AOA" && (
-                        <span className="text-[10px] text-slate-400 block font-normal">
-                          Câmbio: {tx.exchangeRate} Kz
+                      <td className="py-3 px-3 text-slate-300 whitespace-nowrap text-[11px]">
+                        {new Date(tx.createdAt).toLocaleDateString("pt-AO", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </td>
+
+                      <td className="py-3 px-3 font-bold text-white whitespace-nowrap">
+                        <span>{tx.description}</span>
+                      </td>
+
+                      <td className="py-3 px-3 font-bold text-slate-200 whitespace-nowrap">
+                        {formatForeign(tx.originalAmount, tx.currency)}
+                        {tx.currency !== "AOA" && (
+                          <span className="text-[10px] text-slate-400 block font-normal">
+                            Câmbio: {tx.exchangeRate} Kz
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="py-3 px-3 font-bold text-slate-100 whitespace-nowrap">
+                        {formatAOA(tx.amountAOA)}
+                      </td>
+
+                      <td className="py-3 px-3 font-bold text-amber-300 whitespace-nowrap">
+                        <span>{formatAOA(tx.feeAOA)}</span>
+                        <span className="text-[10px] text-amber-400/80 block font-normal">
+                          ({(tx.feeRate * 100).toFixed(1)}% Taxa)
                         </span>
-                      )}
-                    </td>
+                      </td>
 
-                    <td className="py-3 px-3 font-bold text-slate-100 whitespace-nowrap">
-                      {formatAOA(tx.amountAOA)}
-                    </td>
+                      <td className="py-3 px-3 font-bold text-rose-300 whitespace-nowrap">
+                        <span>{formatAOA(tx.vatAOA)}</span>
+                        <span className="text-[10px] text-rose-400/80 block font-normal">
+                          ({((tx.vatRate || 0.14) * 100).toFixed(0)}% IVA)
+                        </span>
+                      </td>
 
-                    <td className="py-3 px-3 font-bold text-amber-300 whitespace-nowrap">
-                      <span>{formatAOA(tx.feeAOA)}</span>
-                      <span className="text-[10px] text-amber-400/80 block font-normal">
-                        ({(tx.feeRate * 100).toFixed(1)}% Taxa)
-                      </span>
-                    </td>
+                      <td className="py-3 px-3 font-black text-amber-300 whitespace-nowrap">
+                        {formatAOA(tx.totalDebitedAOA)}
+                      </td>
 
-                    <td className="py-3 px-3 font-bold text-rose-300 whitespace-nowrap">
-                      <span>{formatAOA(tx.vatAOA)}</span>
-                      <span className="text-[10px] text-rose-400/80 block font-normal">
-                        ({((tx.vatRate || 0.14) * 100).toFixed(0)}% IVA)
-                      </span>
-                    </td>
+                      <td className="py-3 px-3 font-black text-emerald-300 bg-slate-950/60 whitespace-nowrap">
+                        {formatAOA(tx.cardBalanceAfterAOA)}
+                      </td>
 
-                    <td className="py-3 px-3 font-black text-amber-300 whitespace-nowrap">
-                      {formatAOA(tx.totalDebitedAOA)}
-                    </td>
+                      <td className="py-3 px-3 text-center">
+                        {tx.receiptPhotoUrl ? (
+                          <button
+                            onClick={() => setPreviewReceiptUrl(tx.receiptPhotoUrl || null)}
+                            className="p-1 hover:bg-slate-700 rounded-lg transition text-amber-400 cursor-pointer"
+                            title="Ver Foto do Talão"
+                          >
+                            <ImageIcon size={16} />
+                          </button>
+                        ) : (
+                          <span className="text-slate-600 text-[11px]">-</span>
+                        )}
+                      </td>
 
-                    <td className="py-3 px-3 font-black text-emerald-300 bg-slate-950/60 whitespace-nowrap">
-                      {formatAOA(tx.cardBalanceAfterAOA)}
-                    </td>
+                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                        <div className="relative inline-block text-left">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (txMenuState?.id === tx.id) {
+                                setTxMenuState(null);
+                              } else {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const openUpward = (window.innerHeight - rect.bottom) < 220;
+                                setTxMenuState({
+                                  id: tx.id,
+                                  top: rect.top,
+                                  right: window.innerWidth - rect.right,
+                                  openUpward,
+                                });
+                              }
+                            }}
+                            className="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white rounded-xl transition cursor-pointer shadow-sm flex items-center justify-center"
+                            title="Mais opções do movimento"
+                          >
+                            <MoreVertical size={16} />
+                          </button>
 
-                    <td className="py-3 px-3 text-center">
-                      {tx.receiptPhotoUrl ? (
-                        <button
-                          onClick={() => setPreviewReceiptUrl(tx.receiptPhotoUrl || null)}
-                          className="p-1 hover:bg-slate-700 rounded-lg transition text-amber-400 cursor-pointer"
-                          title="Ver Foto do Talão"
-                        >
-                          <ImageIcon size={16} />
-                        </button>
-                      ) : (
-                        <span className="text-slate-600 text-[11px]">-</span>
-                      )}
-                    </td>
+                          {txMenuState?.id === tx.id && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-[90]"
+                                onClick={() => setTxMenuState(null)}
+                              />
+                              <div
+                                className="fixed z-[100] w-52 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl py-2 divide-y divide-slate-800 text-left"
+                                style={{
+                                  right: `${Math.max(12, txMenuState.right)}px`,
+                                  ...(txMenuState.openUpward
+                                    ? { bottom: `${window.innerHeight - txMenuState.top + 6}px` }
+                                    : { top: `${txMenuState.top + 32}px` }),
+                                }}
+                              >
+                                <div className="px-3.5 py-1 text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                                  Opções do Movimento
+                                </div>
+                                <div className="py-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      handleToggleSelectTx(tx.id);
+                                      setTxMenuState(null);
+                                    }}
+                                    className="w-full px-3.5 py-2 hover:bg-slate-800 text-amber-300 text-xs font-semibold flex items-center gap-2.5 transition cursor-pointer"
+                                  >
+                                    <FileText size={14} className="text-amber-400 shrink-0" />
+                                    <span>{isSelected ? "Desmarcar Movimento" : "Marcar Movimento"}</span>
+                                  </button>
 
-                    <td className="py-3 px-3 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => handleOpenEditTx(tx)}
-                          className="p-1.5 text-slate-400 hover:text-amber-300 hover:bg-amber-500/10 rounded-lg transition cursor-pointer"
-                          title="Editar movimento"
-                        >
-                          <Edit3 size={14} />
-                        </button>
+                                  {tx.receiptPhotoUrl && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setTxMenuState(null);
+                                        setPreviewReceiptUrl(tx.receiptPhotoUrl || null);
+                                      }}
+                                      className="w-full px-3.5 py-2 hover:bg-slate-800 text-indigo-300 text-xs font-semibold flex items-center gap-2.5 transition cursor-pointer"
+                                    >
+                                      <ImageIcon size={14} className="text-indigo-400 shrink-0" />
+                                      <span>Ver Talão / Foto</span>
+                                    </button>
+                                  )}
 
-                        <button
-                          onClick={() => handleDeleteTransaction(tx.id)}
-                          className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition cursor-pointer"
-                          title="Eliminar movimento"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setTxMenuState(null);
+                                      handleOpenEditTx(tx);
+                                    }}
+                                    className="w-full px-3.5 py-2 hover:bg-slate-800 text-slate-200 hover:text-white text-xs font-semibold flex items-center gap-2.5 transition cursor-pointer"
+                                  >
+                                    <Edit3 size={14} className="text-slate-400 shrink-0" />
+                                    <span>Editar Movimento</span>
+                                  </button>
+                                </div>
+
+                                <div className="py-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setTxMenuState(null);
+                                      handleDeleteTransaction(tx.id);
+                                    }}
+                                    className="w-full px-3.5 py-2 hover:bg-rose-950/60 text-rose-300 text-xs font-semibold flex items-center gap-2.5 transition cursor-pointer"
+                                  >
+                                    <Trash2 size={14} className="text-rose-400 shrink-0" />
+                                    <span>Eliminar Movimento</span>
+                                  </button>
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -1859,16 +2198,16 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
 
       {/* MODAL POPUP: SIMULADOR DE COMPRAS (🔮 SIMULADOR DE COMPRAS) */}
       {isSimulatorModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-8 w-full max-w-4xl lg:max-w-5xl shadow-2xl space-y-6 max-h-[92vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 md:p-8 w-full max-w-6xl xl:max-w-7xl shadow-2xl space-y-5 max-h-[94vh] overflow-y-auto">
             {/* HEADER */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
               <div>
-                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                <h3 className="text-lg sm:text-xl font-black text-white flex items-center gap-2">
                   <Sparkles size={22} className="text-emerald-400" /> Simulador Inteligente de Compras
                 </h3>
                 <p className="text-xs text-slate-400 mt-1">
-                  Simule o custo total de um artigo em qualquer moeda e analise o impacto no saldo atual do cartão.
+                  Simule livremente qualquer artigo em qualquer moeda. A simulação é um cálculo estimativo independente que não consome saldo.
                 </p>
               </div>
               <button
@@ -1905,7 +2244,7 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                 }`}
               >
                 <FileText size={16} />
-                <span>📜 Histórico de Simulações Guardadas ({savedSimulations.length})</span>
+                <span>📜 Histórico de Simulações ({savedSimulations.length})</span>
               </button>
             </div>
 
@@ -1924,8 +2263,8 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
               return (
                 <div className="space-y-5">
                   {/* INPUTS DE SIMULAÇÃO */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="sm:col-span-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                    <div className="sm:col-span-3">
                       <label className="block text-[11px] font-bold uppercase text-slate-300 mb-1">
                         Nome / Descrição do Artigo
                       </label>
@@ -1945,7 +2284,7 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                       <select
                         value={simCurrency}
                         onChange={(e) => setSimCurrency(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none focus:border-emerald-400 cursor-pointer"
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-bold text-xs focus:outline-none focus:border-emerald-400 cursor-pointer h-[42px]"
                       >
                         <option value="AOA">AOA (Kz - Kwanza)</option>
                         {Object.entries(exchangeRates).map(([curr, rate]) => {
@@ -1961,7 +2300,7 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
 
                     <div>
                       <label className="block text-[11px] font-bold uppercase text-slate-300 mb-1">
-                        Preço do Artigo ({simCurrency})
+                        Preço ({simCurrency})
                       </label>
                       <input
                         type="number"
@@ -1969,9 +2308,48 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                         value={simOriginalPrice}
                         onChange={(e) => setSimOriginalPrice(e.target.value)}
                         placeholder="Ex: 250"
-                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-emerald-300 font-black text-sm focus:outline-none focus:border-emerald-400"
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-emerald-300 font-black text-xs sm:text-sm focus:outline-none focus:border-emerald-400 h-[42px]"
                       />
                     </div>
+
+                    {!isLinkInputOpen && !simProductUrl ? (
+                      <div className="flex flex-col justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setIsLinkInputOpen(true)}
+                          className="w-full h-[42px] px-3 bg-slate-950 hover:bg-slate-900 border border-dashed border-indigo-500/40 hover:border-indigo-400 text-indigo-300 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer"
+                        >
+                          <LinkIcon size={14} className="text-indigo-400 shrink-0" />
+                          <span className="truncate">🔗 Link do Produto</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col justify-end space-y-1">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-[11px] font-bold uppercase text-slate-300 flex items-center gap-1">
+                            <LinkIcon size={12} className="text-indigo-400" />
+                            <span>Link do Produto</span>
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSimProductUrl("");
+                              setIsLinkInputOpen(false);
+                            }}
+                            className="text-[10px] text-slate-400 hover:text-rose-300 transition cursor-pointer font-semibold"
+                          >
+                            Limpar
+                          </button>
+                        </div>
+                        <input
+                          type="url"
+                          value={simProductUrl}
+                          onChange={(e) => setSimProductUrl(e.target.value)}
+                          placeholder="https://exemplo.com/produto"
+                          className="w-full h-[42px] bg-slate-950 border border-indigo-500/40 focus:border-indigo-400 rounded-xl px-3 py-2 text-white font-medium text-xs focus:outline-none"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* PAINEL DE CÁLCULO DE INTELIGÊNCIA */}
@@ -2012,22 +2390,22 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                         className={`p-4 rounded-2xl border transition-all ${
                           canAfford
                             ? "bg-gradient-to-r from-emerald-950/80 via-slate-900 to-teal-950/40 border-emerald-500/50 text-emerald-200"
-                            : "bg-gradient-to-r from-rose-950/80 via-slate-900 to-pink-950/40 border-rose-500/50 text-rose-200"
+                            : "bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 border-slate-800 text-slate-300"
                         }`}
                       >
                         <div className="flex items-start gap-3">
                           {canAfford ? (
                             <CheckCircle2 size={22} className="text-emerald-400 shrink-0 mt-0.5" />
                           ) : (
-                            <ShieldAlert size={22} className="text-rose-400 shrink-0 mt-0.5" />
+                            <ShieldAlert size={22} className="text-amber-400 shrink-0 mt-0.5" />
                           )}
                           <div className="space-y-1.5 w-full">
                             <div className="flex items-center justify-between flex-wrap gap-1">
                               <span className="font-black text-sm uppercase tracking-wide">
-                                {canAfford ? "🟢 Compra Totalmente Viável!" : "🔴 Saldo Insuficiente no Cartão"}
+                                {canAfford ? "🟢 Saldo Disponível Suficiente!" : "🟡 Análise Estimativa do Saldo Atual"}
                               </span>
                               <span className="text-xs font-semibold opacity-90">
-                                Saldo Atual: <strong>{formatAOA(currentCardBalanceAOA)}</strong>
+                                Saldo Atual no Cartão: <strong>{formatAOA(currentCardBalanceAOA)}</strong>
                               </span>
                             </div>
 
@@ -2035,28 +2413,21 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                               <p className="text-xs leading-relaxed opacity-95">
                                 Esta compra de <strong>{formatForeign(priceVal, simCurrency)}</strong> consumirá um custo total de{" "}
                                 <strong>{formatAOA(totalCostAOA)}</strong> do seu cartão. Ficará com um saldo residual estimado de{" "}
-                                <strong className="text-emerald-300 text-sm">{formatAOA(remainingAOA)}</strong>
-                                {simCurrency !== "AOA" && rateVal > 0 && (
-                                  <span> (aprox. <strong>{formatForeign(remainingAOA / rateVal, simCurrency)}</strong>)</span>
-                                )}.
+                                <strong className="text-emerald-300 text-sm">{formatAOA(remainingAOA)}</strong>.
                               </p>
                             ) : (
                               <div className="space-y-1 text-xs">
                                 <p className="leading-relaxed opacity-95">
-                                  A compra pretendida requer um total de <strong>{formatAOA(totalCostAOA)}</strong>, mas o cartão tem apenas{" "}
-                                  <strong>{formatAOA(currentCardBalanceAOA)}</strong> disponíveis.
+                                  A compra pretendida requer <strong>{formatAOA(totalCostAOA)}</strong>. O seu saldo atual é de <strong>{formatAOA(currentCardBalanceAOA)}</strong>.
                                 </p>
-                                <div className="p-2.5 bg-slate-950/80 rounded-xl border border-rose-500/30 text-rose-300 font-bold flex items-center justify-between flex-wrap gap-2">
-                                  <span>Déficit / Valor em Falta:</span>
-                                  <span className="text-sm font-black text-rose-200">
-                                    {formatAOA(shortageAOA)}{" "}
-                                    {simCurrency !== "AOA" && rateVal > 0 && (
-                                      <span className="text-xs font-normal">({formatForeign(shortageAOA / rateVal, simCurrency)})</span>
-                                    )}
+                                <div className="p-2.5 bg-slate-950/80 rounded-xl border border-amber-500/30 text-amber-300 font-bold flex items-center justify-between flex-wrap gap-2">
+                                  <span>Déficit Estimado para esta compra:</span>
+                                  <span className="text-sm font-black text-amber-200">
+                                    {formatAOA(shortageAOA)}
                                   </span>
                                 </div>
-                                <p className="text-[11px] text-amber-300/90 italic pt-0.5">
-                                  💡 <strong>Sugestão:</strong> Realize um carregamento de pelo menos <strong>{formatAOA(shortageAOA)}</strong> no cartão antes de tentar efetuar esta compra.
+                                <p className="text-[11px] text-slate-400 italic pt-0.5">
+                                  💡 <strong>Nota:</strong> Pode guardar esta simulação para consultar mais tarde. O saldo apenas será exigido se clicar em "Converter em Registo de Compra Real".
                                 </p>
                               </div>
                             )}
@@ -2081,14 +2452,15 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                           vatAOA,
                           totalCostAOA,
                           canAfford,
-                          canAfford ? remainingAOA : shortageAOA
+                          canAfford ? remainingAOA : shortageAOA,
+                          simProductUrl
                         )
                       }
                       disabled={priceVal <= 0}
-                      className="w-full sm:w-auto px-5 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+                      className="w-full sm:w-auto px-5 py-3 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-40"
                     >
                       <FileText size={16} className="text-amber-400" />
-                      <span>💾 Guardar na Lista de Simulações</span>
+                      <span>💾 Guardar na Lista de Simulações (Livre)</span>
                     </button>
 
                     <button
@@ -2116,16 +2488,16 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                       className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 disabled:opacity-40 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-lg shadow-emerald-500/20"
                     >
                       <CheckCircle2 size={16} />
-                      <span>⚡ Converter em Registo de Compra Real</span>
+                      <span>⚡ Registar Compra Real</span>
                     </button>
                   </div>
                 </div>
               );
             })()}
 
-            {/* CONTEÚDO DA ABA: HISTÓRICO DE SIMULAÇÕES GUARDADAS */}
+            {/* CONTEÚDO DA ABA: HISTÓRICO DE SIMULAÇÕES GUARDADAS (REFINADO EM TABELA HORIZONTAL) */}
             {simActiveSubTab === "history" && (
-              <div className="space-y-5">
+              <div className="space-y-4">
                 {savedSimulations.length === 0 ? (
                   <div className="text-center py-12 px-6 bg-slate-950/80 rounded-3xl border border-slate-800 space-y-3">
                     <Sparkles size={38} className="mx-auto text-amber-400/60" />
@@ -2137,179 +2509,397 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {/* BANNER DE RESUMO DO HISTÓRICO */}
-                    <div className="p-4 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-inner">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl">
-                          <FileText size={18} />
-                        </div>
-                        <div>
-                          <span className="text-xs font-black uppercase tracking-wider text-slate-300 block">
-                            Resumo das Simulações Guardadas
-                          </span>
-                          <span className="text-[11px] text-slate-400">
-                            <strong>{savedSimulations.length}</strong> {savedSimulations.length === 1 ? "artigo guardado" : "artigos guardados"} para análise
-                          </span>
-                        </div>
-                      </div>
+                  <div className="space-y-3">
+                    {/* BANNER DE RESUMO DO HISTÓRICO COM FILTRO DE MARCAÇÃO */}
+                    {(() => {
+                      const selectedSims = savedSimulations.filter((s) => selectedSimIds.includes(s.id));
+                      const totalSelectedCostAOA = selectedSims.reduce((acc, s) => acc + (s.totalCostAOA || 0), 0);
+                      const isAllSelected = savedSimulations.length > 0 && selectedSimIds.length === savedSimulations.length;
 
-                      <div className="text-right sm:text-right w-full sm:w-auto border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-800">
-                        <span className="text-[10px] text-slate-400 font-bold uppercase block">
-                          Soma Total Prevista
-                        </span>
-                        <span className="text-sm font-black text-amber-300">
-                          {formatAOA(savedSimulations.reduce((acc, s) => acc + (s.totalCostAOA || 0), 0))}
-                        </span>
-                      </div>
-                    </div>
+                      return (
+                        <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-inner">
+                          <div className="flex items-center justify-between w-full sm:w-auto gap-3">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl">
+                                <FileText size={16} />
+                              </div>
+                              <div>
+                                <span className="text-xs font-black uppercase tracking-wider text-slate-200 block">
+                                  Histórico de Simulações Guardadas
+                                </span>
+                                <span className="text-[11px] text-slate-400">
+                                  <strong>{selectedSimIds.length}</strong> de <strong>{savedSimulations.length}</strong> {savedSimulations.length === 1 ? "artigo marcado" : "artigos marcados"}
+                                </span>
+                              </div>
+                            </div>
 
-                    {/* LISTA DE CARDS ESPAÇOSOS */}
-                    <div className="space-y-4 max-h-[62vh] overflow-y-auto pr-1">
-                      {savedSimulations.map((sim) => (
-                        <div
-                          key={sim.id}
-                          className="bg-slate-950/90 border border-slate-800 hover:border-amber-500/40 rounded-3xl p-5 sm:p-6 shadow-xl transition-all duration-200 space-y-4 group"
-                        >
-                          {/* LINHA SUPERIOR: TÍTULO, BADGE DE STATUS E DATA */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
-                            <div className="flex items-center gap-2.5 flex-wrap">
-                              <h4 className="font-black text-base sm:text-lg text-white tracking-tight group-hover:text-amber-300 transition-colors">
-                                {sim.itemName}
-                              </h4>
-                              <span
-                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm ${
-                                  sim.canAfford
-                                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                                    : "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                            {/* Botões rápidos de seleção */}
+                            <div className="flex items-center gap-1.5 ml-2">
+                              <button
+                                type="button"
+                                onClick={handleToggleSelectAllSims}
+                                className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition cursor-pointer ${
+                                  isAllSelected
+                                    ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                                    : "bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800"
                                 }`}
                               >
-                                {sim.canAfford ? (
-                                  <>
-                                    <CheckCircle2 size={13} className="text-emerald-400" />
-                                    <span>Saldo Suficiente</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <ShieldAlert size={13} className="text-rose-400" />
-                                    <span>Saldo Insuficiente</span>
-                                  </>
-                                )}
-                              </span>
-                            </div>
-
-                            <div className="text-xs text-slate-400 font-medium flex items-center gap-1.5 shrink-0">
-                              <span>📅 Simulado em:</span>
-                              <strong className="text-slate-200">
-                                {new Date(sim.createdAt).toLocaleDateString("pt-AO", {
-                                  day: "2-digit",
-                                  month: "2-digit",
-                                  year: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </strong>
+                                {isAllSelected ? "Desmarcar" : "Marcar Todos"}
+                              </button>
                             </div>
                           </div>
 
-                          {/* GRELHA DE MÉTRICAS FINANCEIRAS (DECOMPOSIÇÃO COMPLETA EM 4 COLUNAS) */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                            {/* QUADRANTE 1: PREÇO ORIGINAL & CÂMBIO */}
-                            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 space-y-1">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                                Preço Original
-                              </span>
-                              <span className="text-sm font-black text-white block">
-                                {formatForeign(sim.originalPrice, sim.currency)}
-                              </span>
-                              <span className="text-[10px] text-slate-400 block">
-                                Câmbio: <strong className="text-slate-300">{formatAOA(sim.exchangeRate)}</strong>
-                              </span>
-                            </div>
-
-                            {/* QUADRANTE 2: BASE CONVERTIDA */}
-                            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 space-y-1">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                                Valor Convertido
-                              </span>
-                              <span className="text-sm font-black text-slate-200 block">
-                                {formatAOA(sim.baseAmountAOA)}
-                              </span>
-                              <span className="text-[10px] text-slate-400 block">
-                                Sem taxas bancárias
-                              </span>
-                            </div>
-
-                            {/* QUADRANTE 3: TAXAS & IVA */}
-                            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 space-y-1">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block">
-                                Taxa + IVA ({sim.feePercent || purchaseFeePercent}% + {sim.vatPercent || vatPercent}%)
-                              </span>
-                              <span className="text-sm font-black text-amber-300 block">
-                                {formatAOA((sim.feeAOA || 0) + (sim.vatAOA || 0))}
-                              </span>
-                              <span className="text-[10px] text-slate-400 block">
-                                Taxa: {formatAOA(sim.feeAOA || 0)} | IVA: {formatAOA(sim.vatAOA || 0)}
-                              </span>
-                            </div>
-
-                            {/* QUADRANTE 4: CUSTO TOTAL DEBITADO */}
-                            <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-2xl p-3.5 space-y-1">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">
-                                Custo Total Previsto
-                              </span>
-                              <span className="text-base font-black text-emerald-300 block">
-                                {formatAOA(sim.totalCostAOA)}
-                              </span>
-                              <span className="text-[10px] text-emerald-400/80 font-medium block">
-                                Débito Total no Cartão
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* PAINEL DE AÇÕES E IMPACTO DE SALDO */}
-                          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-slate-800/80">
-                            <div className="text-xs text-slate-300 flex items-center gap-2">
-                              {sim.canAfford ? (
-                                <span className="text-emerald-400 font-semibold flex items-center gap-1 text-[11px]">
-                                  <Sparkles size={13} /> Restaria aprox. <strong>{formatAOA(sim.shortageOrRemainingAOA)}</strong> de saldo no cartão.
-                                </span>
-                              ) : (
-                                <span className="text-rose-400 font-semibold flex items-center gap-1 text-[11px]">
-                                  <ShieldAlert size={13} /> Requer carregamento prévio de pelo menos <strong>{formatAOA(sim.shortageOrRemainingAOA)}</strong>.
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteSimulation(sim.id)}
-                                className="px-3.5 py-2.5 bg-slate-900 hover:bg-rose-950/50 border border-slate-800 hover:border-rose-500/40 text-slate-400 hover:text-rose-300 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
-                                title="Eliminar simulação do histórico"
-                              >
-                                <Trash2 size={15} />
-                                <span className="hidden sm:inline">Eliminar</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => handleConvertSimToRealTx(sim)}
-                                className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black rounded-xl text-xs transition cursor-pointer shadow-lg shadow-emerald-500/20 flex items-center gap-2 active:scale-95"
-                                title="Converter e registar como compra real no histórico do cartão"
-                              >
-                                <CheckCircle2 size={16} />
-                                <span>Registar Compra Real</span>
-                              </button>
-                            </div>
+                          <div className="text-right sm:text-right w-full sm:w-auto border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-800 flex items-center justify-between sm:justify-end gap-3">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                              Soma Prevista ({selectedSimIds.length} {selectedSimIds.length === 1 ? "selecionado" : "selecionados"}):
+                            </span>
+                            <span className="text-sm font-black text-amber-300 bg-amber-500/10 px-3 py-1 rounded-xl border border-amber-500/20">
+                              {formatAOA(totalSelectedCostAOA)}
+                            </span>
                           </div>
                         </div>
-                      ))}
+                      );
+                    })()}
+
+                    {/* TABELA REFINADA E HORIZONTAL DE SIMULAÇÕES COM SELEÇÃO */}
+                    <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/90 shadow-xl max-h-[60vh] overflow-y-auto">
+                      <table className="w-full text-left border-collapse min-w-[700px]">
+                        <thead className="sticky top-0 z-10 bg-slate-900 border-b border-slate-800 text-slate-400 text-[10px] font-black uppercase tracking-wider">
+                          <tr>
+                            <th className="py-3 px-3 text-center w-10">
+                              <input
+                                type="checkbox"
+                                checked={savedSimulations.length > 0 && selectedSimIds.length === savedSimulations.length}
+                                onChange={handleToggleSelectAllSims}
+                                className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-amber-400 focus:ring-offset-slate-950 cursor-pointer accent-amber-500"
+                                title={selectedSimIds.length === savedSimulations.length ? "Desmarcar todos" : "Marcar todos"}
+                              />
+                            </th>
+                            <th className="py-3 px-4">Artigo & Data</th>
+                            <th className="py-3 px-4">Preço Original</th>
+                            <th className="py-3 px-4">Valor Convertido</th>
+                            <th className="py-3 px-4">Taxas + IVA</th>
+                            <th className="py-3 px-4">Custo Total Previsto</th>
+                            <th className="py-3 px-4 text-right">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/60 text-xs">
+                          {savedSimulations.map((sim) => {
+                            const isSelected = selectedSimIds.includes(sim.id);
+                            return (
+                              <tr
+                                key={sim.id}
+                                className={`transition-colors group ${
+                                  isSelected ? "bg-amber-500/5 hover:bg-amber-500/10" : "hover:bg-slate-900/60 opacity-60"
+                                }`}
+                              >
+                                <td className="py-3 px-3 text-center whitespace-nowrap">
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() => handleToggleSelectSim(sim.id)}
+                                    className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-amber-400 focus:ring-offset-slate-950 cursor-pointer accent-amber-500"
+                                  />
+                                </td>
+                                <td className="py-3 px-4">
+                                <div className="flex items-center gap-2">
+                                  <div className="font-bold text-white text-xs group-hover:text-amber-300 transition-colors">
+                                    {sim.itemName}
+                                  </div>
+                                  {sim.productUrl && (
+                                    <a
+                                      href={sim.productUrl.startsWith("http") ? sim.productUrl : `https://${sim.productUrl}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 transition cursor-pointer shrink-0"
+                                      title="Abrir página do produto"
+                                    >
+                                      <ExternalLink size={11} />
+                                      <span>Ver</span>
+                                    </a>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-slate-400">
+                                  {new Date(sim.createdAt).toLocaleDateString("pt-AO", {
+                                    day: "2-digit",
+                                    month: "2-digit",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </div>
+                              </td>
+                              <td className="py-3 px-4 whitespace-nowrap">
+                                <div className="font-bold text-white">
+                                  {formatForeign(sim.originalPrice, sim.currency)}
+                                </div>
+                                <div className="text-[10px] text-slate-400">
+                                  Câmbio: {formatAOA(sim.exchangeRate)}
+                                </div>
+                              </td>
+                              <td className="py-3 px-4 whitespace-nowrap">
+                                <div className="font-bold text-amber-300">
+                                  {formatAOA((sim.feeAOA || 0) + (sim.vatAOA || 0))}
+                                </div>
+                                <div className="text-[10px] text-slate-400">
+                                  {sim.feePercent || purchaseFeePercent}% + {sim.vatPercent || vatPercent}% IVA
+                                </div>
+                              </td>
+                              <td className="py-3 px-4 whitespace-nowrap">
+                                <div className="font-black text-sm text-emerald-300">
+                                  {formatAOA(sim.totalCostAOA)}
+                                </div>
+                                <div className="text-[10px] text-emerald-400/70">Débito no Cartão</div>
+                              </td>
+                              <td className="py-3 px-4 text-right whitespace-nowrap">
+                                <div className="relative inline-block text-left">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (simMenuState?.id === sim.id) {
+                                        setSimMenuState(null);
+                                      } else {
+                                        const rect = e.currentTarget.getBoundingClientRect();
+                                        const openUpward = (window.innerHeight - rect.bottom) < 220;
+                                        setSimMenuState({
+                                          id: sim.id,
+                                          top: rect.top,
+                                          right: window.innerWidth - rect.right,
+                                          openUpward,
+                                        });
+                                      }
+                                    }}
+                                    className="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white rounded-xl transition cursor-pointer shadow-sm flex items-center justify-center"
+                                    title="Mais ações para esta simulação"
+                                  >
+                                    <MoreVertical size={16} />
+                                  </button>
+
+                                  {simMenuState?.id === sim.id && (
+                                    <>
+                                      <div
+                                        className="fixed inset-0 z-[90]"
+                                        onClick={() => setSimMenuState(null)}
+                                      />
+                                      <div
+                                        className="fixed z-[100] w-52 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl py-2 divide-y divide-slate-800 text-left"
+                                        style={{
+                                          right: `${Math.max(12, simMenuState.right)}px`,
+                                          ...(simMenuState.openUpward
+                                            ? { bottom: `${window.innerHeight - simMenuState.top + 6}px` }
+                                            : { top: `${simMenuState.top + 36}px` }),
+                                        }}
+                                      >
+                                        <div className="px-3.5 py-1 text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                                          Opções da Simulação
+                                        </div>
+                                        <div className="py-1">
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              handleToggleSelectSim(sim.id);
+                                              setSimMenuState(null);
+                                            }}
+                                            className="w-full px-3.5 py-2 hover:bg-slate-800 text-amber-300 text-xs font-semibold flex items-center gap-2.5 transition cursor-pointer"
+                                          >
+                                            <FileText size={14} className="text-amber-400 shrink-0" />
+                                            <span>{isSelected ? "Desmarcar Simulação" : "Marcar Simulação"}</span>
+                                          </button>
+                                          {sim.productUrl && (
+                                            <a
+                                              href={sim.productUrl.startsWith("http") ? sim.productUrl : `https://${sim.productUrl}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              onClick={() => setSimMenuState(null)}
+                                              className="w-full px-3.5 py-2 hover:bg-indigo-500/20 text-indigo-300 text-xs font-semibold flex items-center gap-2.5 transition"
+                                            >
+                                              <ExternalLink size={14} className="text-indigo-400 shrink-0" />
+                                              <span>Ver Página do Produto</span>
+                                            </a>
+                                          )}
+
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setSimMenuState(null);
+                                              handleOpenEditSim(sim);
+                                            }}
+                                            className="w-full px-3.5 py-2 hover:bg-slate-800 text-amber-300 text-xs font-semibold flex items-center gap-2.5 transition cursor-pointer"
+                                          >
+                                            <Edit3 size={14} className="text-amber-400 shrink-0" />
+                                            <span>Editar Simulação</span>
+                                          </button>
+
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setSimMenuState(null);
+                                              handleConvertSimToRealTx(sim);
+                                            }}
+                                            className="w-full px-3.5 py-2 hover:bg-emerald-950/60 text-emerald-300 text-xs font-semibold flex items-center gap-2.5 transition cursor-pointer"
+                                          >
+                                            <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                                            <span>Registar Compra Real</span>
+                                          </button>
+                                        </div>
+
+                                        <div className="py-1">
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setSimMenuState(null);
+                                              handleDeleteSimulation(sim.id);
+                                            }}
+                                            className="w-full px-3.5 py-2 hover:bg-rose-950/60 text-rose-300 text-xs font-semibold flex items-center gap-2.5 transition cursor-pointer"
+                                          >
+                                            <Trash2 size={14} className="text-rose-400 shrink-0" />
+                                            <span>Eliminar Simulação</span>
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      </table>
                     </div>
                   </div>
                 )}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE EDIÇÃO DE SIMULAÇÃO */}
+      {editingSim && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl space-y-5 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl">
+                  <Edit3 size={18} />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">Editar Simulação</h3>
+                  <p className="text-[11px] text-slate-400">Atualize os dados e o link da simulação guardada</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingSim(null)}
+                className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-bold uppercase text-slate-300 mb-1">
+                  Nome / Descrição do Artigo
+                </label>
+                <input
+                  type="text"
+                  value={editSimName}
+                  onChange={(e) => setEditSimName(e.target.value)}
+                  placeholder="Ex: Tênis Nike 250$"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase text-slate-300 mb-1">
+                    Moeda
+                  </label>
+                  <select
+                    value={editSimCurrency}
+                    onChange={(e) => {
+                      const curr = e.target.value;
+                      setEditSimCurrency(curr);
+                      if (curr === "AOA") setEditSimRate("1");
+                      else if (exchangeRates[curr]) setEditSimRate(exchangeRates[curr].toString());
+                    }}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-bold text-xs focus:outline-none focus:border-amber-400"
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="AOA">AOA (Kz)</option>
+                    {Object.keys(exchangeRates)
+                      .filter((c) => !["USD", "EUR", "AOA"].includes(c))
+                      .map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase text-slate-300 mb-1">
+                    Preço Original
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editSimPrice}
+                    onChange={(e) => setEditSimPrice(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-bold text-xs focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase text-slate-300 mb-1">
+                  Taxa de Câmbio (1 {editSimCurrency} em Kz)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={editSimRate}
+                  onChange={(e) => setEditSimRate(e.target.value)}
+                  disabled={editSimCurrency === "AOA"}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none focus:border-amber-400 disabled:opacity-50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase text-slate-300 mb-1 flex items-center gap-1.5">
+                  <LinkIcon size={13} className="text-indigo-400" />
+                  <span>Link / URL do Produto (Opcional)</span>
+                </label>
+                <input
+                  type="url"
+                  value={editSimUrl}
+                  onChange={(e) => setEditSimUrl(e.target.value)}
+                  placeholder="https://exemplo.com/pagina-do-produto"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-medium text-xs focus:outline-none focus:border-indigo-400"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setEditingSim(null)}
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-xs transition cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEditedSimulation}
+                className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs transition cursor-pointer flex items-center gap-2 shadow-lg"
+              >
+                <CheckCircle2 size={16} />
+                <span>Guardar Alterações</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
