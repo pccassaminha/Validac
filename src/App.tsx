@@ -66,7 +66,10 @@ import {
   ToggleRight,
   CheckSquare,
   Calculator,
+  FileSpreadsheet,
 } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { motion, AnimatePresence } from "motion/react";
 import { db, auth, handleFirestoreError, OperationType } from "./firebase";
 import {
@@ -975,6 +978,7 @@ export default function App() {
   const [hidePhones, setHidePhones] = useState<boolean>(() => {
     return localStorage.getItem("validaC_hidePhones") === "true";
   });
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("validaC_hidePhones", String(hidePhones));
@@ -2243,24 +2247,41 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
       "WhatsApp",
       "Produto",
       "Qtd",
+      "Detalhes / Características",
       "Endereço",
-      "Status",
+      "Status / Reserva",
     ];
     const csvRows = [headers.join(",")];
 
     filteredData.forEach((lead) => {
       const date = lead.timestamp
-        ? new Date(lead.timestamp).toLocaleDateString()
+        ? new Date(lead.timestamp).toLocaleDateString("pt-AO")
         : "N/A";
-      const q = lead.quantity || 1;
-      // Prevenir problemas com vírgulas escapando com aspas duplas
+      const q = lead.quantity || lead.qtd || lead.quantidade || 1;
+      const colorStr = lead.cor ? `Cor: ${lead.cor}` : "";
+      const sizeStr = lead.tamanho ? `Tamanho: ${lead.tamanho}` : "";
+      const obsStr = lead.observacoes ? getCleanObservacoes(lead) : "";
+      const detailParts: string[] = [];
+      if (colorStr) detailParts.push(colorStr);
+      if (sizeStr) detailParts.push(sizeStr);
+      if (obsStr && !obsStr.includes(colorStr) && !obsStr.includes(sizeStr)) {
+        detailParts.push(obsStr);
+      }
+      const details = detailParts.length > 0 ? detailParts.join(" | ") : `${q} Un.`;
+
+      const addressParts: string[] = [];
+      if (lead.area || lead.address) addressParts.push(lead.area || lead.address);
+      if (lead.province && lead.province !== "Luanda") addressParts.push(lead.province);
+      const address = addressParts.length > 0 ? addressParts.join(", ") : (lead.province || "Luanda");
+
       const row = [
         `"${date}"`,
         `"${lead.name || ""}"`,
         `"${lead.phone || ""}"`,
-        `"${lead.produto || "Secador Inteligente UV"}"`,
+        `"${formatPageNameWithCensorship(lead.produto || "Secador Inteligente UV")}"`,
         q,
-        `"${lead.address || ""}"`,
+        `"${details.replace(/"/g, '""')}"`,
+        `"${address.replace(/"/g, '""')}"`,
         `"${lead.status || ""}"`,
       ];
       csvRows.push(row.join(","));
@@ -2278,6 +2299,132 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
     document.body.appendChild(link);
     link.click();
     link.remove();
+  };
+
+  const handleExportPDF = () => {
+    if (filteredData.length === 0) {
+      alert("Não há dados para exportar com os filtros atuais.");
+      return;
+    }
+
+    try {
+      const doc = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4",
+      });
+
+      // Banner Superior
+      doc.setFillColor(30, 41, 59);
+      doc.rect(0, 0, 297, 24, "F");
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(15);
+      doc.setFont("helvetica", "bold");
+      doc.text("Relatório de Leads & Encomendas - Valida C", 14, 15);
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(203, 213, 225);
+      doc.text(
+        `Gerado em: ${new Date().toLocaleString("pt-AO")} | Total: ${filteredData.length} item(ns)`,
+        170,
+        15,
+      );
+
+      const tableHeaders = [
+        [
+          "Data",
+          "Nome",
+          "Produto",
+          "Detalhes / Características",
+          "Qtd",
+          "Endereço",
+          "Status / Reserva",
+        ],
+      ];
+
+      const tableRows = filteredData.map((lead) => {
+        const date = lead.timestamp
+          ? new Date(lead.timestamp).toLocaleDateString("pt-AO")
+          : "N/A";
+        const name = lead.name || "N/A";
+        const product = formatPageNameWithCensorship(
+          lead.produto || "Secador Inteligente UV",
+        );
+
+        const qty = lead.quantity || lead.qtd || lead.quantidade || 1;
+        const colorStr = lead.cor ? `Cor: ${lead.cor}` : "";
+        const sizeStr = lead.tamanho ? `Tamanho: ${lead.tamanho}` : "";
+        const obsStr = lead.observacoes ? getCleanObservacoes(lead) : "";
+
+        const detailParts: string[] = [];
+        if (colorStr) detailParts.push(colorStr);
+        if (sizeStr) detailParts.push(sizeStr);
+        if (obsStr && !obsStr.includes(colorStr) && !obsStr.includes(sizeStr)) {
+          detailParts.push(obsStr);
+        }
+        const details =
+          detailParts.length > 0 ? detailParts.join(" | ") : `${qty} Unidade(s)`;
+
+        const addressParts: string[] = [];
+        if (lead.area || lead.address) addressParts.push(lead.area || lead.address);
+        if (lead.province && lead.province !== "Luanda")
+          addressParts.push(lead.province);
+        const address =
+          addressParts.length > 0 ? addressParts.join(", ") : lead.province || "Luanda";
+
+        let statusStr = lead.status || "Pendente";
+        if (lead.status && lead.status.includes("Reservado")) {
+          statusStr = "✅ Reservado";
+        } else if (lead.status === "Pendente") {
+          statusStr = "⏳ Pendente (Não Reservado)";
+        } else if (lead.status === "Entregue" || lead.status === "Pago") {
+          statusStr = "📦 Entregue";
+        } else if (lead.status === "Rejeitado") {
+          statusStr = "❌ Rejeitado";
+        } else if (lead.status === "Cancelado") {
+          statusStr = "🚫 Cancelado";
+        }
+
+        return [date, name, product, details, `${qty}`, address, statusStr];
+      });
+
+      autoTable(doc, {
+        head: tableHeaders,
+        body: tableRows,
+        startY: 28,
+        theme: "striped",
+        styles: {
+          fontSize: 8,
+          cellPadding: 3,
+          valign: "middle",
+          overflow: "linebreak",
+        },
+        headStyles: {
+          fillColor: [79, 70, 229],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+        },
+        columnStyles: {
+          0: { cellWidth: 22 },
+          1: { cellWidth: 38 },
+          2: { cellWidth: 42 },
+          3: { cellWidth: 70 },
+          4: { cellWidth: 15, halign: "center" },
+          5: { cellWidth: 50 },
+          6: { cellWidth: 32 },
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252],
+        },
+      });
+
+      doc.save(`Leads_Valida_C_${new Date().toISOString().split("T")[0]}.pdf`);
+    } catch (err) {
+      console.error("Erro ao gerar PDF:", err);
+      alert("Ocorreu um erro ao gerar o ficheiro PDF.");
+    }
   };
 
   const filteredData = adminData.filter((lead) => {
@@ -5576,10 +5723,10 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                       <Calculator size={16} /> Calculadora de Saldos
                     </button>
                     <button
-                      onClick={handleExportCSV}
+                      onClick={() => setIsExportModalOpen(true)}
                       className={`text-sm px-4 py-2 flex items-center gap-2 rounded-lg font-bold transition border cursor-pointer ${isDark ? "bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-850 shadow-2xl" : "bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200 shadow-sm"}`}
                     >
-                      <Download size={16} /> Exportar CSV
+                      <Download size={16} /> Export
                     </button>
                   </div>
                 </div>
@@ -8534,6 +8681,88 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* EXPORT OPTIONS MODAL PROMPT */}
+      {isExportModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-2xl">
+                  <Download size={22} />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">Export Data</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Choose your export format ({filteredData.length} leads selected)
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsExportModalOpen(false)}
+                className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-xl transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsExportModalOpen(false);
+                  handleExportCSV();
+                }}
+                className="p-4 bg-slate-950/90 hover:bg-slate-800/90 border border-slate-800 hover:border-emerald-500/50 rounded-2xl flex items-center gap-4 transition group text-left cursor-pointer active:scale-98"
+              >
+                <div className="p-3 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded-xl group-hover:scale-110 transition-transform">
+                  <FileSpreadsheet size={24} />
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors block">
+                    Export as CSV (.csv)
+                  </span>
+                  <span className="text-xs text-slate-400 block mt-0.5">
+                    Spreadsheet format for Excel, Google Sheets, or CRM
+                  </span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsExportModalOpen(false);
+                  handleExportPDF();
+                }}
+                className="p-4 bg-slate-950/90 hover:bg-slate-800/90 border border-slate-800 hover:border-indigo-500/50 rounded-2xl flex items-center gap-4 transition group text-left cursor-pointer active:scale-98"
+              >
+                <div className="p-3 bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 rounded-xl group-hover:scale-110 transition-transform">
+                  <FileText size={24} />
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors block">
+                    Export as PDF (.pdf)
+                  </span>
+                  <span className="text-xs text-slate-400 block mt-0.5">
+                    Formatted document with dates, names, products, characteristics, quantities, address, and status
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            <div className="pt-2 border-t border-slate-800 text-center">
+              <button
+                type="button"
+                onClick={() => setIsExportModalOpen(false)}
+                className="text-xs font-semibold text-slate-400 hover:text-slate-200 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sticky Mobile CTA (Only visible on mobile when scrolling) */}
       {isSalesView && view !== "sales-camisa-seda" && modalState === "none" && !isCheckoutVisible && (
