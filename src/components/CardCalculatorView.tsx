@@ -164,20 +164,9 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
   const [selectedTxIds, setSelectedTxIds] = useState<string[]>([]);
   const [txMenuState, setTxMenuState] = useState<{ id: string; top: number; right: number; openUpward: boolean } | null>(null);
 
-  // Auto-select all transactions on initial load or when new transactions are added
+  // Clear stale transaction IDs if they were deleted
   useEffect(() => {
-    if (transactions.length > 0) {
-      setSelectedTxIds((prev) => {
-        const validPrev = prev.filter((id) => transactions.some((t) => t.id === id));
-        if (validPrev.length === 0) {
-          return transactions.map((t) => t.id);
-        }
-        const newIds = transactions.map((t) => t.id).filter((id) => !prev.includes(id));
-        return [...validPrev, ...newIds];
-      });
-    } else {
-      setSelectedTxIds([]);
-    }
+    setSelectedTxIds((prev) => prev.filter((id) => transactions.some((t) => t.id === id)));
   }, [transactions]);
 
   const handleToggleSelectTx = (id: string) => {
@@ -209,22 +198,9 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
   const [selectedSimIds, setSelectedSimIds] = useState<string[]>([]);
   const [simMenuState, setSimMenuState] = useState<{ id: string; top: number; right: number; openUpward: boolean } | null>(null);
 
-  // Auto-select all simulation items on initial load or when new items are added
+  // Clear stale simulation IDs if they were deleted
   useEffect(() => {
-    if (savedSimulations.length > 0) {
-      setSelectedSimIds((prev) => {
-        // Keep existing selections that still exist, plus add any new simulation IDs
-        const validPrev = prev.filter((id) => savedSimulations.some((s) => s.id === id));
-        if (validPrev.length === 0) {
-          return savedSimulations.map((s) => s.id);
-        }
-        // Add any newly added simulation IDs automatically
-        const newIds = savedSimulations.map((s) => s.id).filter((id) => !prev.includes(id));
-        return [...validPrev, ...newIds];
-      });
-    } else {
-      setSelectedSimIds([]);
-    }
+    setSelectedSimIds((prev) => prev.filter((id) => savedSimulations.some((s) => s.id === id)));
   }, [savedSimulations]);
 
   const handleToggleSelectSim = (id: string) => {
@@ -1897,11 +1873,11 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                   </span>
                 </div>
 
-                <div className="p-2.5 bg-slate-900/80 border border-amber-500/20 rounded-xl">
-                  <span className="text-[10px] text-amber-400/80 font-bold uppercase block mb-0.5">
+                <div className="p-2.5 bg-slate-900/80 border border-purple-500/20 rounded-xl">
+                  <span className="text-[10px] text-purple-400/80 font-bold uppercase block mb-0.5">
                     Total Taxas Gastas
                   </span>
-                  <span className="text-xs font-black text-amber-300">
+                  <span className="text-xs font-black text-purple-300">
                     {formatAOA(totalFeeAOA)}
                   </span>
                 </div>
@@ -1915,11 +1891,11 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                   </span>
                 </div>
 
-                <div className="p-2.5 bg-slate-900/80 border border-emerald-500/20 rounded-xl">
-                  <span className="text-[10px] text-emerald-400/80 font-bold uppercase block mb-0.5">
+                <div className="p-2.5 bg-slate-900/80 border border-amber-500/20 rounded-xl">
+                  <span className="text-[10px] text-amber-400/80 font-bold uppercase block mb-0.5">
                     Total Debitado
                   </span>
-                  <span className="text-xs font-black text-emerald-300">
+                  <span className="text-xs font-black text-amber-300">
                     {formatAOA(totalDebitedAOA)}
                   </span>
                 </div>
@@ -2510,56 +2486,6 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {/* BANNER DE RESUMO DO HISTÓRICO COM FILTRO DE MARCAÇÃO */}
-                    {(() => {
-                      const selectedSims = savedSimulations.filter((s) => selectedSimIds.includes(s.id));
-                      const totalSelectedCostAOA = selectedSims.reduce((acc, s) => acc + (s.totalCostAOA || 0), 0);
-                      const isAllSelected = savedSimulations.length > 0 && selectedSimIds.length === savedSimulations.length;
-
-                      return (
-                        <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-inner">
-                          <div className="flex items-center justify-between w-full sm:w-auto gap-3">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl">
-                                <FileText size={16} />
-                              </div>
-                              <div>
-                                <span className="text-xs font-black uppercase tracking-wider text-slate-200 block">
-                                  Histórico de Simulações Guardadas
-                                </span>
-                                <span className="text-[11px] text-slate-400">
-                                  <strong>{selectedSimIds.length}</strong> de <strong>{savedSimulations.length}</strong> {savedSimulations.length === 1 ? "artigo marcado" : "artigos marcados"}
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Botões rápidos de seleção */}
-                            <div className="flex items-center gap-1.5 ml-2">
-                              <button
-                                type="button"
-                                onClick={handleToggleSelectAllSims}
-                                className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition cursor-pointer ${
-                                  isAllSelected
-                                    ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                                    : "bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800"
-                                }`}
-                              >
-                                {isAllSelected ? "Desmarcar" : "Marcar Todos"}
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="text-right sm:text-right w-full sm:w-auto border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-800 flex items-center justify-between sm:justify-end gap-3">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase block">
-                              Soma Prevista ({selectedSimIds.length} {selectedSimIds.length === 1 ? "selecionado" : "selecionados"}):
-                            </span>
-                            <span className="text-sm font-black text-amber-300 bg-amber-500/10 px-3 py-1 rounded-xl border border-amber-500/20">
-                              {formatAOA(totalSelectedCostAOA)}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })()}
 
                     {/* TABELA REFINADA E HORIZONTAL DE SIMULAÇÕES COM SELEÇÃO */}
                     <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/90 shadow-xl max-h-[60vh] overflow-y-auto">
@@ -2636,6 +2562,12 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                                 <div className="text-[10px] text-slate-400">
                                   Câmbio: {formatAOA(sim.exchangeRate)}
                                 </div>
+                              </td>
+                              <td className="py-3 px-4 whitespace-nowrap">
+                                <div className="font-semibold text-amber-500">
+                                  {formatAOA(sim.baseAmountAOA)}
+                                </div>
+                                <div className="text-[10px] text-slate-500">Sem taxas</div>
                               </td>
                               <td className="py-3 px-4 whitespace-nowrap">
                                 <div className="font-bold text-amber-300">
