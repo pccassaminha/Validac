@@ -2330,7 +2330,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
       doc.setFontSize(13);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(255, 255, 255);
-      doc.text("Relatório de Encomendas & Leads — Valdessa (Grupo Cassaminha)", 14, 19);
+      doc.text("Relatório de Encomendas & Leads — Grupo Cassaminha", 14, 19);
 
       doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
@@ -2435,7 +2435,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
           doc.setFont("helvetica", "normal");
           doc.setTextColor(100, 116, 139);
           doc.text(
-            "Documento Oficial de Relatório — Valdessa | Grupo Cassaminha",
+            "Documento Oficial de Relatório — Grupo Cassaminha",
             14,
             pageHeight - 7,
           );
@@ -2470,7 +2470,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
       doc.setTextColor(30, 41, 59);
       doc.text("EMPRESA RESPONSÁVEL:", 18, sigY + 7);
       doc.setFont("helvetica", "normal");
-      doc.text("Grupo Cassaminha — Valdessa", 62, sigY + 7);
+      doc.text("Grupo Cassaminha", 62, sigY + 7);
 
       doc.setFont("helvetica", "bold");
       doc.text("SISTEMA & PLATAFORMA:", 18, sigY + 13);
@@ -2490,7 +2490,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
       doc.setTextColor(79, 70, 229);
       doc.text("Assinatura Autorizada — Grupo Cassaminha", 62, sigY + 23);
 
-      doc.save(`Leads_Grupo_Cassaminha_Valdessa_${new Date().toISOString().split("T")[0]}.pdf`);
+      doc.save(`Leads_Grupo_Cassaminha_${new Date().toISOString().split("T")[0]}.pdf`);
     } catch (err) {
       console.error("Erro ao gerar PDF:", err);
       alert("Ocorreu um erro ao gerar o ficheiro PDF.");
