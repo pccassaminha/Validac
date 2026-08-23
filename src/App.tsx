@@ -751,7 +751,7 @@ export default function App() {
       id: "cinta-colombiana",
       title: "Cinta Modeladora Colombiana",
       subtitle: "Bodysuit com compressão firme de abdómen, levanta-bumbum e renda elegante. 45.000 Kz.",
-      image: "https://i.postimg.cc/tRknm8DP/NUDE-CAFE-1.jpg",
+      image: "https://i.postimg.cc/V6rjqL09/NUDE-CAFE-1.jpg",
       viewName: "sales-cinta-colombiana",
       paramName: "cinta-colombiana",
       matchesLead: (l: any) => {

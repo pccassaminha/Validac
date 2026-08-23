@@ -49,10 +49,10 @@ const COLOR_OPTIONS = [
     id: "nude",
     name: "Nude-Café",
     hex: "#d2b49c",
-    image: "https://i.postimg.cc/tRknm8DP/NUDE-CAFE-1.jpg",
+    image: "https://i.postimg.cc/V6rjqL09/NUDE-CAFE-1.jpg",
     gallery: [
-      "https://i.postimg.cc/tRknm8DP/NUDE-CAFE-1.jpg",
-      "https://i.postimg.cc/jqcnkBvH/n-UDE-CAFE-2.jpg"
+      "https://i.postimg.cc/V6rjqL09/NUDE-CAFE-1.jpg",
+      "https://i.postimg.cc/Y95QbK1c/n-UDE-CAFE-2.jpg"
     ],
     badge: "Mais Vendido"
   },
@@ -60,10 +60,10 @@ const COLOR_OPTIONS = [
     id: "black",
     name: "Preto Elegante",
     hex: "#1e1e1e",
-    image: "https://i.postimg.cc/QNmKnvSp/Preto-elegante-1.jpg",
+    image: "https://i.postimg.cc/mDv78fQD/Preto-elegante-1-frente.jpg",
     gallery: [
-      "https://i.postimg.cc/QNmKnvSp/Preto-elegante-1.jpg",
-      "https://i.postimg.cc/3r10bz9C/Preto-elegante-2.jpg"
+      "https://i.postimg.cc/mDv78fQD/Preto-elegante-1-frente.jpg",
+      "https://i.postimg.cc/tJFWcS5R/Preto-elegante-lateral-2.jpg"
     ],
     badge: "Edição Clássica"
   }
@@ -72,7 +72,7 @@ const COLOR_OPTIONS = [
 const REAL_PHOTOS = [
   {
     id: "nude-1",
-    url: "https://i.postimg.cc/tRknm8DP/NUDE-CAFE-1.jpg",
+    url: "https://i.postimg.cc/V6rjqL09/NUDE-CAFE-1.jpg",
     title: "Modelo Nude-Café (Visão Frontal)",
     subtitle: "Ajuste perfeito de compressão no abdómen e quadril",
     color: "Nude-Café",
@@ -80,7 +80,7 @@ const REAL_PHOTOS = [
   },
   {
     id: "nude-2",
-    url: "https://i.postimg.cc/jqcnkBvH/n-UDE-CAFE-2.jpg",
+    url: "https://i.postimg.cc/Y95QbK1c/n-UDE-CAFE-2.jpg",
     title: "Modelo Nude-Café (Visão Detalhada)",
     subtitle: "Renda antiderrapante na coxa e elevação de bumbum",
     color: "Nude-Café",
@@ -88,7 +88,7 @@ const REAL_PHOTOS = [
   },
   {
     id: "black-1",
-    url: "https://i.postimg.cc/QNmKnvSp/Preto-elegante-1.jpg",
+    url: "https://i.postimg.cc/mDv78fQD/Preto-elegante-1-frente.jpg",
     title: "Modelo Preto Elegante (Visão Frontal)",
     subtitle: "Modela e sustenta a postura sem achatar o bumbum",
     color: "Preto Elegante",
@@ -96,19 +96,11 @@ const REAL_PHOTOS = [
   },
   {
     id: "black-2",
-    url: "https://i.postimg.cc/3r10bz9C/Preto-elegante-2.jpg",
+    url: "https://i.postimg.cc/tJFWcS5R/Preto-elegante-lateral-2.jpg",
     title: "Modelo Preto Elegante (Visão Detalhada)",
     subtitle: "Modelação anatómica de alta compressão e conforto",
     color: "Preto Elegante",
     badge: "Fotos Reais Preto"
-  },
-  {
-    id: "before-after",
-    url: "https://i.postimg.cc/dQW3DC3p/Antes-e-depois-iamgem-extra.webp",
-    title: "Resultado Comparativo: Antes vs Depois",
-    subtitle: "Efeito imediato na silhueta e redução visual da cintura",
-    color: "Nude-Café",
-    badge: "Antes & Depois"
   }
 ];
 
@@ -356,9 +348,9 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
             {/* Real Photos Thumbnails Strip */}
             <div className="space-y-2 pt-1">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block text-left flex items-center gap-1">
-                <Camera size={14} className="text-rose-600" /> 📸 Fotos Reais do Produto e Modelo (5 Ângulos):
+                <Camera size={14} className="text-rose-600" /> 📸 Fotos Reais do Produto e Modelo (4 Ângulos):
               </span>
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 {REAL_PHOTOS.map((photo) => {
                   const isSelected = (selectedHeroImage === photo.url) || (!selectedHeroImage && COLOR_OPTIONS[selectedColorIndex].image === photo.url);
                   return (
@@ -380,11 +372,6 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                         alt={photo.title}
                         className="w-full h-full object-cover object-top"
                       />
-                      {photo.id === "before-after" && (
-                        <span className="absolute inset-x-0 bottom-0 bg-rose-900/90 text-white text-[8px] font-black py-0.5 text-center">
-                          A/D
-                        </span>
-                      )}
                     </button>
                   );
                 })}
@@ -455,12 +442,12 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                     <div className="flex items-center gap-1.5 mb-2">
                       <div className="flex -space-x-1.5 shrink-0">
                         <img
-                          src="https://i.postimg.cc/tRknm8DP/NUDE-CAFE-1.jpg"
+                          src="https://i.postimg.cc/V6rjqL09/NUDE-CAFE-1.jpg"
                           alt="Cinta 1"
                           className="w-7 h-7 rounded-lg object-cover border-2 border-white shadow-xs"
                         />
                         <img
-                          src="https://i.postimg.cc/QNmKnvSp/Preto-elegante-1.jpg"
+                          src="https://i.postimg.cc/mDv78fQD/Preto-elegante-1-frente.jpg"
                           alt="Cinta 2"
                           className="w-7 h-7 rounded-lg object-cover border-2 border-white shadow-xs"
                         />
@@ -504,17 +491,17 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
                     <div className="flex items-center gap-1.5 mb-2">
                       <div className="flex -space-x-2 shrink-0">
                         <img
-                          src="https://i.postimg.cc/tRknm8DP/NUDE-CAFE-1.jpg"
+                          src="https://i.postimg.cc/V6rjqL09/NUDE-CAFE-1.jpg"
                           alt="Cinta 1"
                           className="w-7 h-7 rounded-lg object-cover border-2 border-white shadow-xs"
                         />
                         <img
-                          src="https://i.postimg.cc/QNmKnvSp/Preto-elegante-1.jpg"
+                          src="https://i.postimg.cc/mDv78fQD/Preto-elegante-1-frente.jpg"
                           alt="Cinta 2"
                           className="w-7 h-7 rounded-lg object-cover border-2 border-white shadow-xs"
                         />
                         <img
-                          src="https://i.postimg.cc/jqcnkBvH/n-UDE-CAFE-2.jpg"
+                          src="https://i.postimg.cc/Y95QbK1c/n-UDE-CAFE-2.jpg"
                           alt="Cinta 3"
                           className="w-7 h-7 rounded-lg object-cover border-2 border-white shadow-xs"
                         />
@@ -691,7 +678,7 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
         </div>
       </section>
 
-      {/* ── BLOCO 4: PROVA VISUAL ANTES E DEPOIS ── */}
+      {/* ── BLOCO 4: COMPARAÇÃO E RESULTADOS ── */}
       <section className="bg-white py-16 px-4 border-y border-rose-100">
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <div>
@@ -700,44 +687,8 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
               Não é photoshop. É engenharia têxtil colombiana.
             </h2>
             <p className="text-slate-600 text-sm mt-2 max-w-lg mx-auto">
-              Veja o resultado direto por baixo de vestidos, calças sociais e roupas do dia a dia:
+              Veja a diferença direta de sustentação e modelação ao usar vestidos, calças e roupas no dia a dia:
             </p>
-          </div>
-
-          {/* Real Before & After Image Card */}
-          <div className="max-w-2xl mx-auto bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-rose-200 relative group">
-            <div className="relative">
-              <img
-                src="https://i.postimg.cc/dQW3DC3p/Antes-e-depois-iamgem-extra.webp"
-                alt="Resultado Real Antes e Depois com a Cinta Modeladora Colombiana"
-                className="w-full h-auto max-h-[550px] object-cover object-top"
-              />
-
-              {/* Badges Overlays */}
-              <div className="absolute top-4 left-4 bg-red-600/90 backdrop-blur-md text-white font-black text-xs px-3 py-1.5 rounded-full uppercase tracking-wider shadow-lg flex items-center gap-1">
-                <span>ANTES</span>
-                <span className="font-normal opacity-80 sm:inline hidden">(Sem Cinta)</span>
-              </div>
-
-              <div className="absolute top-4 right-4 bg-emerald-600/90 backdrop-blur-md text-white font-black text-xs px-3 py-1.5 rounded-full uppercase tracking-wider shadow-lg flex items-center gap-1">
-                <Sparkles size={14} />
-                <span>DEPOIS</span>
-                <span className="font-normal opacity-90 sm:inline hidden">(Com Cinta Hexin)</span>
-              </div>
-
-              <button
-                onClick={() => setActiveLightboxPhoto(REAL_PHOTOS[4])}
-                className="absolute bottom-4 right-4 bg-white/95 hover:bg-white text-slate-900 font-bold text-xs px-4 py-2 rounded-2xl shadow-xl backdrop-blur-md flex items-center gap-2 transition-transform active:scale-95 cursor-pointer"
-              >
-                <Maximize2 size={14} className="text-rose-600" />
-                <span>Ampliar Foto Real</span>
-              </button>
-            </div>
-
-            <div className="p-4 bg-slate-950 text-rose-100 text-xs text-center font-medium border-t border-slate-800 flex items-center justify-center gap-2">
-              <CheckCircle size={16} className="text-emerald-400 shrink-0" />
-              <span>Foto real sem edições de filtro: redução imediata da circunferência abdominal e alinhamento postural.</span>
-            </div>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-6 text-left">
@@ -1056,7 +1007,7 @@ export const CintaColombianaView: React.FC<CintaColombianaViewProps> = ({
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {REAL_PHOTOS.map((photo) => (
             <div
               key={photo.id}
