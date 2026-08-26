@@ -1908,32 +1908,32 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-slate-800 text-[10px] uppercase font-black tracking-wider text-slate-300 bg-slate-950/60">
-                <th className="py-3 px-3 text-center w-10">
+              <tr className="border-b border-slate-700/80 text-[11px] uppercase font-black tracking-wider text-slate-200 bg-slate-950/80">
+                <th className="py-3.5 px-3 text-center w-10">
                   <input
                     type="checkbox"
                     checked={filteredTransactions.length > 0 && selectedTxIds.length === filteredTransactions.length}
                     onChange={handleToggleSelectAllTxs}
-                    className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-amber-400 focus:ring-offset-slate-950 cursor-pointer accent-amber-500"
+                    className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-amber-500 focus:ring-amber-400 focus:ring-offset-slate-950 cursor-pointer accent-amber-500"
                     title={selectedTxIds.length === filteredTransactions.length ? "Desmarcar todos" : "Marcar todos"}
                   />
                 </th>
-                <th className="py-3 px-3">Data / Hora</th>
-                <th className="py-3 px-3">Movimento / Descrição</th>
-                <th className="py-3 px-3">Valor Orig.</th>
-                <th className="py-3 px-3 text-slate-100">Valor Carregado / Operação (AOA)</th>
-                <th className="py-3 px-3 text-amber-300">Valor da Taxa (% & Kz)</th>
-                <th className="py-3 px-3 text-rose-300">Valor do IVA (% & Kz)</th>
-                <th className="py-3 px-3 text-amber-300">Total Debitado</th>
-                <th className="py-3 px-3 text-emerald-300">Saldo Resultante</th>
-                <th className="py-3 px-3 text-center">Talão</th>
-                <th className="py-3 px-3 text-center">Ações</th>
+                <th className="py-3.5 px-3 text-slate-200">Data / Hora</th>
+                <th className="py-3.5 px-3 text-slate-200">Movimento / Descrição</th>
+                <th className="py-3.5 px-3 text-slate-200">Valor Orig.</th>
+                <th className="py-3.5 px-3 text-slate-100 font-bold">Valor Carregado / Operação (AOA)</th>
+                <th className="py-3.5 px-3 text-amber-300 font-bold">Valor da Taxa (% & Kz)</th>
+                <th className="py-3.5 px-3 text-rose-300 font-bold">Valor do IVA (% & Kz)</th>
+                <th className="py-3.5 px-3 text-amber-300 font-black">Total Debitado</th>
+                <th className="py-3.5 px-3 text-emerald-300 font-black">Saldo Resultante</th>
+                <th className="py-3.5 px-3 text-center text-slate-200">Talão</th>
+                <th className="py-3.5 px-3 text-center text-slate-200">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 font-medium">
+            <tbody className="divide-y divide-slate-800 font-medium">
               {filteredTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="py-10 text-center text-slate-400">
+                  <td colSpan={11} className="py-10 text-center text-slate-300 font-medium">
                     Nenhum movimento registado no histórico com os filtros selecionados.
                   </td>
                 </tr>
@@ -1945,19 +1945,19 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                     <tr
                       key={tx.id}
                       className={`transition-colors ${
-                        isSelected ? "bg-amber-500/5 hover:bg-amber-500/10" : "hover:bg-slate-800/60 opacity-60"
+                        isSelected ? "bg-amber-500/10 hover:bg-amber-500/15" : "bg-slate-900/20 hover:bg-slate-800/80"
                       }`}
                     >
-                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                      <td className="py-3.5 px-3 text-center whitespace-nowrap">
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => handleToggleSelectTx(tx.id)}
-                          className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-amber-400 focus:ring-offset-slate-950 cursor-pointer accent-amber-500"
+                          className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-amber-500 focus:ring-amber-400 focus:ring-offset-slate-950 cursor-pointer accent-amber-500"
                         />
                       </td>
 
-                      <td className="py-3 px-3 text-slate-300 whitespace-nowrap text-[11px]">
+                      <td className="py-3.5 px-3 text-slate-200 whitespace-nowrap text-xs font-semibold">
                         {new Date(tx.createdAt).toLocaleDateString("pt-AO", {
                           day: "2-digit",
                           month: "2-digit",
@@ -1967,60 +1967,60 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                         })}
                       </td>
 
-                      <td className="py-3 px-3 font-bold text-white whitespace-nowrap">
+                      <td className="py-3.5 px-3 font-bold text-white whitespace-nowrap text-xs">
                         <span>{tx.description}</span>
                       </td>
 
-                      <td className="py-3 px-3 font-bold text-slate-200 whitespace-nowrap">
+                      <td className="py-3.5 px-3 font-bold text-slate-100 whitespace-nowrap text-xs">
                         {formatForeign(tx.originalAmount, tx.currency)}
                         {tx.currency !== "AOA" && (
-                          <span className="text-[10px] text-slate-400 block font-normal">
+                          <span className="text-[11px] text-slate-300 block font-medium">
                             Câmbio: {tx.exchangeRate} Kz
                           </span>
                         )}
                       </td>
 
-                      <td className="py-3 px-3 font-bold text-slate-100 whitespace-nowrap">
+                      <td className="py-3.5 px-3 font-bold text-slate-100 whitespace-nowrap text-xs">
                         {formatAOA(tx.amountAOA)}
                       </td>
 
-                      <td className="py-3 px-3 font-bold text-amber-300 whitespace-nowrap">
+                      <td className="py-3.5 px-3 font-bold text-amber-300 whitespace-nowrap text-xs">
                         <span>{formatAOA(tx.feeAOA)}</span>
-                        <span className="text-[10px] text-amber-400/80 block font-normal">
+                        <span className="text-[11px] text-amber-300/90 block font-medium">
                           ({(tx.feeRate * 100).toFixed(1)}% Taxa)
                         </span>
                       </td>
 
-                      <td className="py-3 px-3 font-bold text-rose-300 whitespace-nowrap">
+                      <td className="py-3.5 px-3 font-bold text-rose-300 whitespace-nowrap text-xs">
                         <span>{formatAOA(tx.vatAOA)}</span>
-                        <span className="text-[10px] text-rose-400/80 block font-normal">
+                        <span className="text-[11px] text-rose-300/90 block font-medium">
                           ({((tx.vatRate || 0.14) * 100).toFixed(0)}% IVA)
                         </span>
                       </td>
 
-                      <td className="py-3 px-3 font-black text-amber-300 whitespace-nowrap">
+                      <td className="py-3.5 px-3 font-black text-amber-300 whitespace-nowrap text-xs">
                         {formatAOA(tx.totalDebitedAOA)}
                       </td>
 
-                      <td className="py-3 px-3 font-black text-emerald-300 bg-slate-950/60 whitespace-nowrap">
+                      <td className="py-3.5 px-3 font-black text-emerald-300 bg-slate-950/70 whitespace-nowrap text-xs">
                         {formatAOA(tx.cardBalanceAfterAOA)}
                       </td>
 
-                      <td className="py-3 px-3 text-center">
+                      <td className="py-3.5 px-3 text-center">
                         {tx.receiptPhotoUrl ? (
                           <button
                             onClick={() => setPreviewReceiptUrl(tx.receiptPhotoUrl || null)}
-                            className="p-1 hover:bg-slate-700 rounded-lg transition text-amber-400 cursor-pointer"
+                            className="p-1.5 hover:bg-slate-700 rounded-lg transition text-amber-400 cursor-pointer inline-flex items-center justify-center"
                             title="Ver Foto do Talão"
                           >
-                            <ImageIcon size={16} />
+                            <ImageIcon size={17} />
                           </button>
                         ) : (
-                          <span className="text-slate-600 text-[11px]">-</span>
+                          <span className="text-slate-500 text-xs font-bold">-</span>
                         )}
                       </td>
 
-                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                      <td className="py-3.5 px-3 text-center whitespace-nowrap">
                         <div className="relative inline-block text-left">
                           <button
                             type="button"
@@ -2039,7 +2039,7 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                                 });
                               }
                             }}
-                            className="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white rounded-xl transition cursor-pointer shadow-sm flex items-center justify-center"
+                            className="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 hover:text-white rounded-xl transition cursor-pointer shadow-sm flex items-center justify-center"
                             title="Mais opções do movimento"
                           >
                             <MoreVertical size={16} />
@@ -2501,33 +2501,33 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                                 title={selectedSimIds.length === savedSimulations.length ? "Desmarcar todos" : "Marcar todos"}
                               />
                             </th>
-                            <th className="py-3 px-4">Artigo & Data</th>
-                            <th className="py-3 px-4">Preço Original</th>
-                            <th className="py-3 px-4">Valor Convertido</th>
-                            <th className="py-3 px-4">Taxas + IVA</th>
-                            <th className="py-3 px-4">Custo Total Previsto</th>
-                            <th className="py-3 px-4 text-right">Ações</th>
+                            <th className="py-3 px-4 text-slate-200 font-black text-[11px] uppercase tracking-wider">Artigo & Data</th>
+                            <th className="py-3 px-4 text-slate-200 font-black text-[11px] uppercase tracking-wider">Preço Original</th>
+                            <th className="py-3 px-4 text-amber-400 font-black text-[11px] uppercase tracking-wider">Valor Convertido</th>
+                            <th className="py-3 px-4 text-rose-300 font-black text-[11px] uppercase tracking-wider">Taxas + IVA</th>
+                            <th className="py-3 px-4 text-emerald-300 font-black text-[11px] uppercase tracking-wider">Custo Total Previsto</th>
+                            <th className="py-3 px-4 text-right text-slate-200 font-black text-[11px] uppercase tracking-wider">Ações</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-800/60 text-xs">
+                        <tbody className="divide-y divide-slate-800 text-xs">
                           {savedSimulations.map((sim) => {
                             const isSelected = selectedSimIds.includes(sim.id);
                             return (
                               <tr
                                 key={sim.id}
                                 className={`transition-colors group ${
-                                  isSelected ? "bg-amber-500/5 hover:bg-amber-500/10" : "hover:bg-slate-900/60 opacity-60"
+                                  isSelected ? "bg-amber-500/10 hover:bg-amber-500/15" : "bg-slate-900/20 hover:bg-slate-800/80"
                                 }`}
                               >
-                                <td className="py-3 px-3 text-center whitespace-nowrap">
+                                <td className="py-3.5 px-3 text-center whitespace-nowrap">
                                   <input
                                     type="checkbox"
                                     checked={isSelected}
                                     onChange={() => handleToggleSelectSim(sim.id)}
-                                    className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-amber-400 focus:ring-offset-slate-950 cursor-pointer accent-amber-500"
+                                    className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-amber-500 focus:ring-amber-400 focus:ring-offset-slate-950 cursor-pointer accent-amber-500"
                                   />
                                 </td>
-                                <td className="py-3 px-4">
+                                <td className="py-3.5 px-4">
                                 <div className="flex items-center gap-2">
                                   <div className="font-bold text-white text-xs group-hover:text-amber-300 transition-colors">
                                     {sim.itemName}
@@ -2545,7 +2545,7 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                                     </a>
                                   )}
                                 </div>
-                                <div className="text-[10px] text-slate-400">
+                                <div className="text-[11px] text-slate-300 font-medium">
                                   {new Date(sim.createdAt).toLocaleDateString("pt-AO", {
                                     day: "2-digit",
                                     month: "2-digit",
@@ -2555,35 +2555,35 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                                   })}
                                 </div>
                               </td>
-                              <td className="py-3 px-4 whitespace-nowrap">
-                                <div className="font-bold text-white">
+                              <td className="py-3.5 px-4 whitespace-nowrap">
+                                <div className="font-bold text-white text-xs">
                                   {formatForeign(sim.originalPrice, sim.currency)}
                                 </div>
-                                <div className="text-[10px] text-slate-400">
+                                <div className="text-[11px] text-slate-300 font-medium">
                                   Câmbio: {formatAOA(sim.exchangeRate)}
                                 </div>
                               </td>
-                              <td className="py-3 px-4 whitespace-nowrap">
-                                <div className="font-semibold text-amber-500">
+                              <td className="py-3.5 px-4 whitespace-nowrap">
+                                <div className="font-bold text-amber-400 text-xs">
                                   {formatAOA(sim.baseAmountAOA)}
                                 </div>
-                                <div className="text-[10px] text-slate-500">Sem taxas</div>
+                                <div className="text-[10px] text-slate-400 font-medium">Sem taxas</div>
                               </td>
-                              <td className="py-3 px-4 whitespace-nowrap">
-                                <div className="font-bold text-amber-300">
+                              <td className="py-3.5 px-4 whitespace-nowrap">
+                                <div className="font-bold text-rose-300 text-xs">
                                   {formatAOA((sim.feeAOA || 0) + (sim.vatAOA || 0))}
                                 </div>
-                                <div className="text-[10px] text-slate-400">
+                                <div className="text-[11px] text-slate-300 font-medium">
                                   {sim.feePercent || purchaseFeePercent}% + {sim.vatPercent || vatPercent}% IVA
                                 </div>
                               </td>
-                              <td className="py-3 px-4 whitespace-nowrap">
+                              <td className="py-3.5 px-4 whitespace-nowrap">
                                 <div className="font-black text-sm text-emerald-300">
                                   {formatAOA(sim.totalCostAOA)}
                                 </div>
-                                <div className="text-[10px] text-emerald-400/70">Débito no Cartão</div>
+                                <div className="text-[10px] text-emerald-400/80 font-medium">Débito no Cartão</div>
                               </td>
-                              <td className="py-3 px-4 text-right whitespace-nowrap">
+                              <td className="py-3.5 px-4 text-right whitespace-nowrap">
                                 <div className="relative inline-block text-left">
                                   <button
                                     type="button"
@@ -2602,7 +2602,7 @@ export const CardCalculatorView: React.FC<CardCalculatorViewProps> = ({
                                         });
                                       }
                                     }}
-                                    className="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white rounded-xl transition cursor-pointer shadow-sm flex items-center justify-center"
+                                    className="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 hover:text-white rounded-xl transition cursor-pointer shadow-sm flex items-center justify-center"
                                     title="Mais ações para esta simulação"
                                   >
                                     <MoreVertical size={16} />
