@@ -1988,14 +1988,26 @@ export default function App() {
   };
 
   const getProductPageUrl = (lead: any): string => {
-    if (lead?.pageUrl || lead?.productUrl || lead?.url) {
-      return lead.pageUrl || lead.productUrl || lead.url;
-    }
-    const norm = normalizeProductName(lead?.produto || lead?.product || lead?.produtoName || lead?.rawProduto);
-    
-    // Check if it's the Secador Inteligente (or default secador store link)
-    if (norm === "Secador Inteligente UV" || norm.includes("Inteligente") || norm.includes("Secador Inteligente")) {
+    const rawProd = lead?.produto || lead?.product || lead?.produtoName || lead?.rawProduto;
+    const norm = normalizeProductName(rawProd);
+
+    // Secador Expresso Pro e Secadores -> Redireciona diretamente para a página de vendas oficial na loja
+    if (
+      norm === "Secador Expresso Pro" ||
+      norm.includes("Expresso") ||
+      norm.includes("Roupa") ||
+      norm.includes("Cabide") ||
+      norm.includes("Secador") ||
+      norm.includes("Inteligente")
+    ) {
       return "https://www.cstoreao.shop/produto/Secador-Inteligente";
+    }
+
+    if (lead?.pageUrl || lead?.productUrl || lead?.url) {
+      const explicitUrl = lead.pageUrl || lead.productUrl || lead.url;
+      if (typeof explicitUrl === "string" && explicitUrl.startsWith("http")) {
+        return explicitUrl;
+      }
     }
 
     const origin = typeof window !== "undefined" ? window.location.origin : "https://www.cstoreao.shop";
@@ -2007,7 +2019,6 @@ export default function App() {
     else if (norm.includes("Camisa")) param = "camisa-seda";
     else if (norm.includes("Base")) param = "base-movel";
     else if (norm.includes("Roteador")) param = "roteador-5g";
-    else if (norm.includes("Roupa") || norm.includes("Expresso")) param = "cabide-secador";
 
     return `${baseUrl}?product=${param}`;
   };
@@ -2081,6 +2092,14 @@ Se estiver tudo correto, qual é o melhor período para receber a entrega?
 - Final do dia (16h - 18h)`;
   };
 
+  const formatWhatsAppPhone = (phoneRaw: string): string => {
+    let clean = (phoneRaw || "").replace(/\D/g, "");
+    if (clean.length === 9 && (clean.startsWith("9") || clean.startsWith("2"))) {
+      clean = `244${clean}`;
+    }
+    return clean;
+  };
+
   const handleCopyLead = (lead: any) => {
     const text = getFormattedLeadText(lead);
     navigator.clipboard.writeText(text);
@@ -2089,7 +2108,7 @@ Se estiver tudo correto, qual é o melhor período para receber a entrega?
 
   const handleWhatsAppReservation = (lead: any) => {
     if (!lead?.phone) return;
-    const cleanPhone = lead.phone.replace(/\D/g, "");
+    const cleanPhone = formatWhatsAppPhone(lead.phone);
     const text = getWhatsAppReservationText(lead);
     const encodedText = encodeURIComponent(text);
     window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`, "_blank");
@@ -2097,7 +2116,7 @@ Se estiver tudo correto, qual é o melhor período para receber a entrega?
 
   const handleWhatsAppDelivery = (lead: any) => {
     if (!lead?.phone) return;
-    const cleanPhone = lead.phone.replace(/\D/g, "");
+    const cleanPhone = formatWhatsAppPhone(lead.phone);
     const text = getWhatsAppDeliveryText(lead);
     const encodedText = encodeURIComponent(text);
     window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`, "_blank");
@@ -2139,7 +2158,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
 
   const handleWhatsAppPending = (lead: any) => {
     if (!lead?.phone) return;
-    const cleanPhone = lead.phone.replace(/\D/g, "");
+    const cleanPhone = formatWhatsAppPhone(lead.phone);
     const text = getWhatsAppPendingText(lead);
     const encodedText = encodeURIComponent(text);
     window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`, "_blank");
