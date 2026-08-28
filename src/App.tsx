@@ -1992,6 +1992,12 @@ export default function App() {
       return lead.pageUrl || lead.productUrl || lead.url;
     }
     const norm = normalizeProductName(lead?.produto || lead?.product || lead?.produtoName || lead?.rawProduto);
+    
+    // Check if it's the Secador Inteligente (or default secador store link)
+    if (norm === "Secador Inteligente UV" || norm.includes("Inteligente") || norm.includes("Secador Inteligente")) {
+      return "https://www.cstoreao.shop/produto/Secador-Inteligente";
+    }
+
     const origin = typeof window !== "undefined" ? window.location.origin : "https://www.cstoreao.shop";
     const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
     const baseUrl = `${origin}${pathname}`;
@@ -2001,7 +2007,7 @@ export default function App() {
     else if (norm.includes("Camisa")) param = "camisa-seda";
     else if (norm.includes("Base")) param = "base-movel";
     else if (norm.includes("Roteador")) param = "roteador-5g";
-    else if (norm.includes("Roupa")) param = "cabide-secador";
+    else if (norm.includes("Roupa") || norm.includes("Expresso")) param = "cabide-secador";
 
     return `${baseUrl}?product=${param}`;
   };
@@ -2019,14 +2025,14 @@ export default function App() {
       .join(", ");
 
     const cleanObs = getCleanObservacoes(lead);
+    const obsLine = cleanObs ? `Opções / Especificações: ${cleanObs}\n` : "";
     const pageUrl = getProductPageUrl(lead);
 
     return `Olá Sr/a ${name}!
 Recebemos a sua reserva e queremos confirmar todos os detalhes antes de processar o seu pedido:
 
 Produto: ${product}
-Opções / Especificações: ${cleanObs}
-Endereço de Entrega: ${address}
+${obsLine}Endereço de Entrega: ${address}
 Valor Total: ${totalFormatted} Kz
 
 Link da Página da Reserva:
@@ -2051,18 +2057,19 @@ Por favor, responda a esta mensagem confirmando se todas as informações estão
       .join(", ");
 
     const cleanObs = getCleanObservacoes(lead);
+    const productDetail = cleanObs ? `${product} (${cleanObs})` : product;
     const pageUrl = getProductPageUrl(lead);
 
     return `Olá Sr/a ${name}!
 Aqui é da C Store Angola!
 
-No dia ${date} realizou a reserva de ${product} (${cleanObs}) no valor de ${totalFormatted} Kz.
+No dia ${date} realizou a reserva de ${productDetail} no valor de ${totalFormatted} Kz.
 
 Temos uma boa notícia — a sua encomenda já chegou e está pronta para entrega!
 
 Por favor, confirme se os dados de entrega estão corretos:
 Endereço: ${address}
-Produto: ${product} (${cleanObs})
+Produto: ${productDetail}
 Total a pagar: ${totalFormatted} Kz
 
 Link do Produto:
@@ -2085,7 +2092,7 @@ Se estiver tudo correto, qual é o melhor período para receber a entrega?
     const cleanPhone = lead.phone.replace(/\D/g, "");
     const text = getWhatsAppReservationText(lead);
     const encodedText = encodeURIComponent(text);
-    window.open(`https://wa.me/${cleanPhone}/?text=${encodedText}`, "_blank");
+    window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`, "_blank");
   };
 
   const handleWhatsAppDelivery = (lead: any) => {
@@ -2093,7 +2100,7 @@ Se estiver tudo correto, qual é o melhor período para receber a entrega?
     const cleanPhone = lead.phone.replace(/\D/g, "");
     const text = getWhatsAppDeliveryText(lead);
     const encodedText = encodeURIComponent(text);
-    window.open(`https://wa.me/${cleanPhone}/?text=${encodedText}`, "_blank");
+    window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`, "_blank");
   };
 
   const getWhatsAppPendingText = (lead: any) => {
@@ -2109,6 +2116,7 @@ Se estiver tudo correto, qual é o melhor período para receber a entrega?
       .join(", ");
 
     const cleanObs = getCleanObservacoes(lead);
+    const obsLine = cleanObs ? `Especificações: ${cleanObs}\n` : "";
     const pageUrl = getProductPageUrl(lead);
 
     return `Olá Sr/a ${name}!
@@ -2120,8 +2128,7 @@ Gostaria de finalizar a sua reserva conosco?
 
 Resumo das opções selecionadas:
 Produto: ${product}
-Especificações: ${cleanObs}
-Endereço: ${address || "A informar"}
+${obsLine}Endereço: ${address || "A informar"}
 Valor Total: ${totalFormatted} Kz
 
 Pode rever as informações e concluir a sua reserva diretamente neste link:
@@ -2135,7 +2142,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
     const cleanPhone = lead.phone.replace(/\D/g, "");
     const text = getWhatsAppPendingText(lead);
     const encodedText = encodeURIComponent(text);
-    window.open(`https://wa.me/${cleanPhone}/?text=${encodedText}`, "_blank");
+    window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`, "_blank");
   };
 
   const updateLeadStatus = async (leadId: string, newStatus: string) => {
