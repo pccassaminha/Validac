@@ -348,6 +348,10 @@ const FAQ_ROUPAS = [
     a: "Pagas apenas quando o produto chega à tua porta. Se não ficares satisfeito nos primeiros 7 dias, contacta-nos e resolves sem complicação.",
   },
   {
+    q: "Fazem entregas em quais províncias?",
+    a: "Actualmente, as entregas do Secador Expresso Pro são realizadas exclusivamente na província de Luanda com entrega rápida e pagamento no acto da recepção.",
+  },
+  {
     q: "Estraga os tecidos delicados?",
     a: "O ar quente é suave e controlado. Seguro para roupa íntima, tecidos finos, sintéticos e algodão. Não amarrota nem danifica.",
   },
@@ -1212,6 +1216,7 @@ export default function App() {
     } else if (view === "sales-roupas") {
       params.set("product", "cabide-secador");
       document.title = "Secador Expresso Pro - C Store Angola";
+      setFormData((prev) => ({ ...prev, province: "Luanda", customProvince: "" }));
     } else if (view === "sales-roteador") {
       params.set("product", "roteador-5g");
       document.title = "Roteador 5G Ultra Desbloqueado - C Store Angola";
@@ -1596,9 +1601,11 @@ export default function App() {
       phone: formData.phone,
       address: formData.area || "", // Bairro/Zona/Município mapping
       province:
-        formData.province === "Outra"
-          ? formData.customProvince
-          : formData.province,
+        view === "sales-roupas"
+          ? "Luanda"
+          : formData.province === "Outra"
+            ? formData.customProvince
+            : formData.province,
       area: formData.area || "", // Bairro/Zona
       deliveryDate: formData.deliveryDate || "",
       deliveryPeriod: formData.deliveryPeriod || "Manhã (08:00 às 12:00)",
@@ -1622,7 +1629,12 @@ export default function App() {
       name: formData.name,
       phone: formData.phone,
       address: formData.area || "",
-      province: formData.province === "Outra" ? formData.customProvince : formData.province,
+      province:
+        view === "sales-roupas"
+          ? "Luanda"
+          : formData.province === "Outra"
+            ? formData.customProvince
+            : formData.province,
       area: formData.area || "",
       quantity: formData.quantity,
       deliveryDate: formData.deliveryDate || "",
@@ -2232,17 +2244,17 @@ Se estiver tudo correto, qual é o melhor período para receber a entrega?
 
     const addressFull = [data.area, data.province].filter(Boolean).join(", ") || "Luanda";
 
-    const message = `Olá C Store Angola! 👋
+    const message = `Olá C Store Angola!
 Acabei de efetuar o pedido do *Secador Expresso Pro*.
 
-📋 *DADOS DO PEDIDO:*
-👤 *Nome:* ${data.name || "Cliente"}
-📱 *WhatsApp / Contacto:* ${data.phone || "Não informado"}
-📍 *Endereço / Província:* ${addressFull}
-📦 *Produto:* Secador Expresso Pro (${data.quantity || 1}x Unidade${(data.quantity || 1) > 1 ? "s" : ""})
-💰 *Total a Pagar:* ${totalFormatted} Kz (na entrega)
-📅 *Data Prevista de Entrega:* ${formattedDate}
-⏰ *Período de Entrega:* ${data.deliveryPeriod || "Manhã (08:00 às 12:00)"}
+*DADOS DO PEDIDO:*
+*Nome:* ${data.name || "Cliente"}
+*WhatsApp / Contacto:* ${data.phone || "Não informado"}
+*Endereço / Província:* ${addressFull}
+*Produto:* Secador Expresso Pro (${data.quantity || 1}x Unidade${(data.quantity || 1) > 1 ? "s" : ""})
+*Total a Pagar:* ${totalFormatted} Kz (na entrega)
+*Data Prevista de Entrega:* ${formattedDate}
+*Período de Entrega:* ${data.deliveryPeriod || "Manhã (08:00 às 12:00)"}
 
 Por favor, confirmem o envio do meu pedido. Obrigado!`;
 
@@ -2286,16 +2298,16 @@ Por favor, confirmem o envio do meu pedido. Obrigado!`;
     const period = lead?.deliveryPeriod || "Manhã (08:00 às 12:00)";
     const qty = Number(lead?.quantity) || Number(lead?.qtd) || 1;
 
-    return `Olá Sr/a ${name}! 👋
+    return `Olá Sr/a ${name}!
 Aqui é da C Store Angola!
 
-Recebemos o seu pedido de *${product}* (${qty}x Unidade${qty > 1 ? "s" : ""}) com *entrega imediata*! 🚀
+Recebemos o seu pedido de *${product}* (${qty}x Unidade${qty > 1 ? "s" : ""}) com *entrega imediata*!
 
-📋 *Resumo do seu Pedido:*
-📍 *Endereço:* ${address}
-📅 *Data Prevista de Entrega:* ${formattedDate}
-⏰ *Período de Entrega:* ${period}
-💰 *Total a Pagar:* ${totalFormatted} Kz (pagamento no ato da entrega)
+*RESUMO DO SEU PEDIDO:*
+*Endereço:* ${address}
+*Data Prevista de Entrega:* ${formattedDate}
+*Período de Entrega:* ${period}
+*Total a Pagar:* ${totalFormatted} Kz (pagamento no ato da entrega)
 
 Por favor, responda a esta mensagem com *"CONFIRMADO"* para que o nosso estafeta dê seguimento ao envio da sua encomenda. Obrigado!`;
   };
@@ -4173,9 +4185,9 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
 
                   <div className="space-y-4 mb-12">
                     {[
-                      "Entrega Grátis em Luanda",
-                      "Entrega noutra província Sob-Consulta",
-                      "Pagas no Momento da Entrega",
+                      "Entregas Exclusivas em Luanda",
+                      "Pronta Entrega com Pagamento no Acto da Entrega",
+                      "Entrega Rápida e com Período Agendado",
                       "Garantia de Satisfação total",
                       "Suporte via WhatsApp 24/7",
                     ].map((item, i) => (
@@ -4292,47 +4304,29 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
-                        Província
-                      </label>
-                      <div className="relative">
-                        <select
-                          value={formData.province}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              province: e.target.value,
-                            })
-                          }
-                          className="w-full px-6 py-4 bg-slate-50 rounded-2xl border border-slate-200 focus:bg-white focus:ring-4 focus:ring-sky-100 focus:border-sky-500 outline-none transition-all appearance-none font-bold text-slate-700"
-                        >
-                          <option value="Luanda">Luanda</option>
-                          <option value="Huambo">Huambo</option>
-                          <option value="Benguela">Benguela</option>
-                          <option value="Outra">Outra</option>
-                        </select>
-                        <ChevronDown
-                          size={18}
-                          className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                        />
+                      <div className="flex items-center justify-between mb-2 px-1">
+                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                          Província
+                        </label>
+                        <span className="text-[10px] font-black text-sky-800 bg-sky-100 px-2.5 py-0.5 rounded-full border border-sky-300 flex items-center gap-1">
+                          📍 Apenas Luanda
+                        </span>
                       </div>
-                      {formData.province === "Outra" && (
-                        <div className="mt-4">
-                          <input
-                            type="text"
-                            required
-                            value={formData.customProvince}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                customProvince: e.target.value,
-                              })
-                            }
-                            className="w-full px-6 py-4 bg-slate-50 rounded-2xl border border-slate-200 focus:bg-white focus:ring-4 focus:ring-sky-100 focus:border-sky-500 outline-none transition-all placeholder:text-slate-300 font-bold"
-                            placeholder="Escreva a sua província..."
-                          />
+                      <div className="relative">
+                        <input
+                          type="text"
+                          readOnly
+                          value="Luanda (Entregas Exclusivas)"
+                          className="w-full px-6 py-4 bg-slate-100/90 rounded-2xl border border-slate-200 focus:outline-none font-black text-slate-700 cursor-not-allowed select-none"
+                        />
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[11px] font-black px-2.5 py-1 rounded-lg border border-emerald-300 shadow-xs">
+                          <CheckCircle size={12} className="text-emerald-600" />
+                          <span>Luanda</span>
                         </div>
-                      )}
+                      </div>
+                      <p className="text-[11px] text-slate-500 font-medium mt-1.5 px-1">
+                        🚚 Entregas rápidas e pagamento em mãos disponíveis <strong>exclusivamente para a província de Luanda</strong>.
+                      </p>
                     </div>
                     <div className="sm:col-span-2">
                       <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
@@ -8533,7 +8527,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                           className="w-full flex justify-center items-center gap-3 bg-[#25D366] hover:bg-[#128C7E] text-white font-black py-4 px-4 rounded-xl transition-transform active:scale-[0.98] shadow-lg shadow-emerald-500/20 mb-3"
                         >
                           <MessageCircle size={22} />
-                          📲 PARTILHAR NO WHATSAPP
+                          <span>PARTILHAR NO WHATSAPP</span>
                         </a>
                         <a
                           href="https://www.cstoreao.shop/"

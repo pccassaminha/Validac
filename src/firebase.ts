@@ -1,6 +1,5 @@
 import { initializeApp } from "firebase/app";
 import { 
-  initializeFirestore,
   getFirestore, 
   collection, 
   addDoc, 
@@ -10,8 +9,7 @@ import {
   doc, 
   Timestamp, 
   orderBy, 
-  query,
-  getDocFromServer
+  query
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import firebaseConfig from "../firebase-applet-config.json";
@@ -19,36 +17,10 @@ import firebaseConfig from "../firebase-applet-config.json";
 export { firebaseConfig };
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firestore with auto-detect long polling for resilient connections in iframe / proxy environments
-export const db = initializeFirestore(
-  app,
-  {
-    experimentalAutoDetectLongPolling: true,
-  },
-  firebaseConfig.firestoreDatabaseId
-);
+// Initialize Firestore with database ID from config
+export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
 export const auth = getAuth(app);
-
-// Test Firestore connection gracefully
-async function testConnection() {
-  try {
-    // Give Firebase WebChannel a moment to initialize before testing
-    setTimeout(async () => {
-      try {
-        await getDocFromServer(doc(db, 'test', 'connection'));
-      } catch (error) {
-        // Silently handle transient connection errors or offline state
-        if (error instanceof Error && (error.message.includes('offline') || error.message.includes('unavailable'))) {
-          console.info("Firestore connected (offline/cache fallback active).");
-        }
-      }
-    }, 1500);
-  } catch (e) {
-    // Ignore
-  }
-}
-testConnection();
 
 export enum OperationType {
   CREATE = 'create',
