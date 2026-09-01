@@ -4328,10 +4328,6 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                           value="Luanda (Entregas Exclusivas)"
                           className="w-full px-6 py-4 bg-slate-100/90 rounded-2xl border border-slate-200 focus:outline-none font-black text-slate-700 cursor-not-allowed select-none"
                         />
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[11px] font-black px-2.5 py-1 rounded-lg border border-emerald-300 shadow-xs">
-                          <CheckCircle size={12} className="text-emerald-600" />
-                          <span>Luanda</span>
-                        </div>
                       </div>
                       <p className="text-[11px] text-slate-500 font-medium mt-1.5 px-1">
                         🚚 Entregas rápidas e pagamento em mãos disponíveis <strong>exclusivamente para a província de Luanda</strong>.
