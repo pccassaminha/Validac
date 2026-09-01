@@ -67,6 +67,9 @@ import {
   CheckSquare,
   Calculator,
   FileSpreadsheet,
+  PackageCheck,
+  Rocket,
+  Calendar,
 } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -303,11 +306,9 @@ const IMAGES = [
 ];
 
 const IMAGES_ROUPAS = [
-  "https://i.postimg.cc/RCd8qXgb/main-image-1.webp",
-  "https://i.postimg.cc/8PCYvMYq/main-image-5.webp",
-  "https://i.postimg.cc/Prq7DY72/main-image-2.webp",
-  "https://i.postimg.cc/c4Jz3wzF/main-image-3.webp",
-  "https://i.postimg.cc/BQvzFHzk/main-image-4.webp",
+  "https://i.postimg.cc/nhQGXjQ9/05.png",
+  "https://i.postimg.cc/K8gD1kgL/06.png",
+  "https://i.postimg.cc/9QqYDRq4/Cria-4.png",
 ];
 
 type ModalState =
@@ -574,6 +575,12 @@ export default function App() {
     >[];
     alertMessage?: string;
   }>({});
+  const getTomorrowDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split("T")[0];
+  };
+
   const [dangerInputValue, setDangerInputValue] = useState("");
   const [formData, setFormData] = useState({
     name: "",
@@ -584,6 +591,8 @@ export default function App() {
     customProvince: "",
     observacoes: "",
     quantity: 1,
+    deliveryDate: getTomorrowDate(),
+    deliveryPeriod: "Manhã (08:00 às 12:00)",
   });
 
   useEffect(() => {
@@ -627,7 +636,22 @@ export default function App() {
   });
   const [editingGoalProductId, setEditingGoalProductId] = useState<string | null>(null);
   const [tempGoalInput, setTempGoalInput] = useState<number>(50);
-  const [pagesFilter, setPagesFilter] = useState<"all" | "active" | "inactive" | "validated" | "testing">("all");
+  const [pagesFilter, setPagesFilter] = useState<"all" | "active" | "inactive" | "validated" | "testing" | "stock">("all");
+
+  // Product Evolution Stages ("testing" = Pré-venda / Validação, "stock" = Encomendas em Stock / Entrega Imediata)
+  const [productStages, setProductStages] = useState<Record<string, "testing" | "stock">>(() => {
+    const saved = localStorage.getItem("validaC_product_stages");
+    return saved
+      ? JSON.parse(saved)
+      : {
+          "cabide-secador": "stock",
+          "cinta-colombiana": "testing",
+          "camisa-seda": "testing",
+          "base-movel-360": "testing",
+          "roteador-5g": "testing",
+          "secador-uv": "testing",
+        };
+  });
 
   // Active / Inactive Pages State
   const [activePagesStatus, setActivePagesStatus] = useState<Record<string, boolean>>(() => {
@@ -661,6 +685,14 @@ export default function App() {
       } catch (err) {
         console.log("Using cached active pages status");
       }
+      try {
+        const snap = await getDoc(doc(db, "settings", "product_stages"));
+        if (snap.exists()) {
+          setProductStages((prev) => ({ ...prev, ...snap.data() }));
+        }
+      } catch (err) {
+        console.log("Using cached product stages");
+      }
     };
     loadGoalsAndPagesFromFirestore();
   }, []);
@@ -674,6 +706,19 @@ export default function App() {
       await setDoc(doc(db, "settings", "active_pages"), updated, { merge: true });
     } catch (err) {
       console.log("Active page status saved locally");
+    }
+  };
+
+  const toggleProductStage = async (productId: string) => {
+    const current = (productStages[productId] === "stock" || productId === "cabide-secador") ? "stock" : "testing";
+    const next = current === "stock" ? "testing" : "stock";
+    const updated = { ...productStages, [productId]: next };
+    setProductStages(updated);
+    localStorage.setItem("validaC_product_stages", JSON.stringify(updated));
+    try {
+      await setDoc(doc(db, "settings", "product_stages"), updated, { merge: true });
+    } catch (err) {
+      console.log("Product stage saved locally");
     }
   };
 
@@ -859,10 +904,13 @@ export default function App() {
     const percent = Math.round((reservasCount / goal) * 100);
     const isValidated = reservasCount >= goal;
     const isInactive = activePagesStatus[productId] === false;
+    const isStockStage = productStages[productId] === "stock" || productId === "cabide-secador";
 
-    let statusKey: "validated" | "testing" | "inactive" = "testing";
+    let statusKey: "stock" | "validated" | "testing" | "inactive" = "testing";
     if (isInactive) {
       statusKey = "inactive";
+    } else if (isStockStage) {
+      statusKey = "stock";
     } else if (isValidated) {
       statusKey = "validated";
     } else {
@@ -877,9 +925,12 @@ export default function App() {
       percent,
       isValidated,
       isInactive,
+      isStockStage,
       statusKey,
       badgeText: isInactive
         ? "🔴 DESATIVADA"
+        : isStockStage
+        ? "📦 EM STOCK (ENCOMENDAS)"
         : isValidated
         ? "🟢 VALIDADO"
         : reservasCount > 0
@@ -887,12 +938,34 @@ export default function App() {
         : "🧪 EM TESTE",
       badgeClass: isInactive
         ? "bg-rose-600 text-white font-black"
+        : isStockStage
+        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black shadow-md shadow-blue-500/20"
         : isValidated
         ? "bg-emerald-500 text-white font-black"
         : reservasCount > 0
         ? "bg-amber-500 text-slate-950 font-black"
         : "bg-slate-500 text-white font-bold",
     };
+  };
+
+  const isProductInStockStage = (productIdOrName: string): boolean => {
+    const norm = normalizeProductName(productIdOrName);
+    const foundProd = PRODUCTS_LIST.find(
+      (p) =>
+        p.id === productIdOrName ||
+        p.title === productIdOrName ||
+        p.paramName === productIdOrName ||
+        normalizeProductName(p.title) === norm,
+    );
+    if (foundProd) {
+      return productStages[foundProd.id] === "stock" || foundProd.id === "cabide-secador";
+    }
+    return norm === "Secador Expresso Pro";
+  };
+
+  const isStockLead = (lead: any): boolean => {
+    const norm = normalizeProductName(lead?.produto || lead?.product || lead?.produtoName || lead?.rawProduto);
+    return isProductInStockStage(norm) || !!lead?.deliveryDate || !!lead?.deliveryPeriod;
   };
 
   // Admin State
@@ -952,10 +1025,11 @@ export default function App() {
   const [timeRangeFilter, setTimeRangeFilter] = useState(
     () => localStorage.getItem("validaC_timeRangeFilter") || "Tudo",
   );
-  const [adminListTab, setAdminListTab] = useState<"geral" | "arquivados">(
+  const [adminListTab, setAdminListTab] = useState<"geral" | "encomendas" | "arquivados">(
     () =>
       (localStorage.getItem("validaC_adminListTab") as
         | "geral"
+        | "encomendas"
         | "arquivados") || "geral",
   );
   const [adminCurrentPage, setAdminCurrentPage] = useState(1);
@@ -1026,7 +1100,10 @@ export default function App() {
   const [appSettings, setAppSettings] = useState<{
     fbPixel?: string;
     googleTag?: string;
-  }>({});
+    whatsappOrderPhone?: string;
+  }>({
+    whatsappOrderPhone: "921167980",
+  });
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
 
@@ -1046,13 +1123,20 @@ export default function App() {
         }
         if (settingsDoc && settingsDoc.exists()) {
           const data = settingsDoc.data();
-          setAppSettings(data);
-          localStorage.setItem("validaC_app_settings", JSON.stringify(data));
+          const merged = {
+            whatsappOrderPhone: "921167980",
+            ...data,
+          };
+          setAppSettings(merged);
+          localStorage.setItem("validaC_app_settings", JSON.stringify(merged));
         } else {
           // If doc not found, try localStorage
           const cached = localStorage.getItem("validaC_app_settings");
           if (cached) {
-            setAppSettings(JSON.parse(cached));
+            setAppSettings({
+              whatsappOrderPhone: "921167980",
+              ...JSON.parse(cached),
+            });
           }
         }
       } catch (err) {
@@ -1060,7 +1144,10 @@ export default function App() {
         const cached = localStorage.getItem("validaC_app_settings");
         if (cached) {
           try {
-            setAppSettings(JSON.parse(cached));
+            setAppSettings({
+              whatsappOrderPhone: "921167980",
+              ...JSON.parse(cached),
+            });
           } catch (e) {
             console.error("Error parsing cached settings:", e);
           }
@@ -1513,6 +1600,9 @@ export default function App() {
           ? formData.customProvince
           : formData.province,
       area: formData.area || "", // Bairro/Zona
+      deliveryDate: formData.deliveryDate || "",
+      deliveryPeriod: formData.deliveryPeriod || "Manhã (08:00 às 12:00)",
+      periodo: formData.deliveryPeriod || "Manhã (08:00 às 12:00)",
       observacoes: selectedColor && selectedSize
         ? selectedColor.includes("Unidade ")
           ? `${formData.quantity || 1} ${(formData.quantity || 1) === 1 ? "Unidade" : "Unidades"} | ${selectedColor}${formData.observacoes ? ` | Obs: ${formData.observacoes}` : ""}`
@@ -1529,6 +1619,14 @@ export default function App() {
     };
 
     setLastSubmittedLead({
+      name: formData.name,
+      phone: formData.phone,
+      address: formData.area || "",
+      province: formData.province === "Outra" ? formData.customProvince : formData.province,
+      area: formData.area || "",
+      quantity: formData.quantity,
+      deliveryDate: formData.deliveryDate || "",
+      deliveryPeriod: formData.deliveryPeriod || "Manhã (08:00 às 12:00)",
       color: selectedColor,
       size: selectedSize,
       totalPrice: computedTotal,
@@ -1618,7 +1716,10 @@ export default function App() {
       area: "",
       province: "Luanda",
       customProvince: "",
+      observacoes: "",
       quantity: 1,
+      deliveryDate: getTomorrowDate(),
+      deliveryPeriod: "Manhã (08:00 às 12:00)",
     });
   };
 
@@ -2087,9 +2188,9 @@ Link do Produto:
 ${pageUrl}
 
 Se estiver tudo correto, qual é o melhor período para receber a entrega?
-- Manhã (8h - 12h)
-- Tarde (12h - 15h)
-- Final do dia (16h - 18h)`;
+- Manhã (8:00 às 12:00)
+- Tarde (12:00 às 16:00)
+- Final do dia (16:00 às 18:00)`;
   };
 
   const formatWhatsAppPhone = (phoneRaw: string): string => {
@@ -2098,6 +2199,55 @@ Se estiver tudo correto, qual é o melhor período para receber a entrega?
       clean = `244${clean}`;
     }
     return clean;
+  };
+
+  const sendOrderToWhatsApp = (leadData?: any) => {
+    const data = leadData || {
+      name: lastSubmittedLead?.name || formData.name,
+      phone: lastSubmittedLead?.phone || formData.phone,
+      area: lastSubmittedLead?.area || formData.area,
+      province: lastSubmittedLead?.province || (formData.province === "Outra" ? formData.customProvince : formData.province),
+      quantity: lastSubmittedLead?.quantity || formData.quantity || 1,
+      deliveryDate: lastSubmittedLead?.deliveryDate || formData.deliveryDate,
+      deliveryPeriod: lastSubmittedLead?.deliveryPeriod || formData.deliveryPeriod || "Manhã (08:00 às 12:00)",
+      totalPrice: lastSubmittedLead?.totalPrice || ((lastSubmittedLead?.quantity || formData.quantity || 1) * 35000),
+      productName: lastSubmittedLead?.productName || "Secador Expresso Pro",
+    };
+
+    const targetRaw = appSettings.whatsappOrderPhone || "921167980";
+    const targetPhone = formatWhatsAppPhone(targetRaw);
+
+    let formattedDate = data.deliveryDate || "A combinar";
+    if (formattedDate && formattedDate.includes("-")) {
+      const parts = formattedDate.split("-");
+      if (parts.length === 3) {
+        formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+    }
+
+    const totalFormatted = new Intl.NumberFormat("pt-AO", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(data.totalPrice || (data.quantity || 1) * 35000);
+
+    const addressFull = [data.area, data.province].filter(Boolean).join(", ") || "Luanda";
+
+    const message = `Olá C Store Angola! 👋
+Acabei de efetuar o pedido do *Secador Expresso Pro*.
+
+📋 *DADOS DO PEDIDO:*
+👤 *Nome:* ${data.name || "Cliente"}
+📱 *WhatsApp / Contacto:* ${data.phone || "Não informado"}
+📍 *Endereço / Província:* ${addressFull}
+📦 *Produto:* Secador Expresso Pro (${data.quantity || 1}x Unidade${(data.quantity || 1) > 1 ? "s" : ""})
+💰 *Total a Pagar:* ${totalFormatted} Kz (na entrega)
+📅 *Data Prevista de Entrega:* ${formattedDate}
+⏰ *Período de Entrega:* ${data.deliveryPeriod || "Manhã (08:00 às 12:00)"}
+
+Por favor, confirmem o envio do meu pedido. Obrigado!`;
+
+    const encoded = encodeURIComponent(message);
+    window.open(`https://api.whatsapp.com/send?phone=${targetPhone}&text=${encoded}`, "_blank");
   };
 
   const handleCopyLead = (lead: any) => {
@@ -2110,6 +2260,50 @@ Se estiver tudo correto, qual é o melhor período para receber a entrega?
     if (!lead?.phone) return;
     const cleanPhone = formatWhatsAppPhone(lead.phone);
     const text = getWhatsAppReservationText(lead);
+    const encodedText = encodeURIComponent(text);
+    window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`, "_blank");
+  };
+
+  const getWhatsAppStockOrderText = (lead: any) => {
+    const name = lead?.name || "Cliente";
+    const product = normalizeProductName(lead?.produto || lead?.product || lead?.produtoName || lead?.rawProduto);
+    const totalFormatted = new Intl.NumberFormat("pt-AO", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(getLeadPrice(lead));
+
+    const address = [lead?.province || "Luanda", lead?.area || lead?.address]
+      .filter(Boolean)
+      .join(", ");
+
+    let formattedDate = lead?.deliveryDate || "A agendar";
+    if (formattedDate && formattedDate.includes("-")) {
+      const parts = formattedDate.split("-");
+      if (parts.length === 3) {
+        formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+    }
+    const period = lead?.deliveryPeriod || "Manhã (08:00 às 12:00)";
+    const qty = Number(lead?.quantity) || Number(lead?.qtd) || 1;
+
+    return `Olá Sr/a ${name}! 👋
+Aqui é da C Store Angola!
+
+Recebemos o seu pedido de *${product}* (${qty}x Unidade${qty > 1 ? "s" : ""}) com *entrega imediata*! 🚀
+
+📋 *Resumo do seu Pedido:*
+📍 *Endereço:* ${address}
+📅 *Data Prevista de Entrega:* ${formattedDate}
+⏰ *Período de Entrega:* ${period}
+💰 *Total a Pagar:* ${totalFormatted} Kz (pagamento no ato da entrega)
+
+Por favor, responda a esta mensagem com *"CONFIRMADO"* para que o nosso estafeta dê seguimento ao envio da sua encomenda. Obrigado!`;
+  };
+
+  const handleWhatsAppStockOrder = (lead: any) => {
+    if (!lead?.phone) return;
+    const cleanPhone = formatWhatsAppPhone(lead.phone);
+    const text = getWhatsAppStockOrderText(lead);
     const encodedText = encodeURIComponent(text);
     window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`, "_blank");
   };
@@ -2589,6 +2783,8 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
   const allDisplayedLeads = filteredData.filter((lead) => {
     if (adminListTab === "arquivados") {
       return lead.status === "Entregue" || lead.status === "Pago";
+    } else if (adminListTab === "encomendas") {
+      return (lead.status !== "Entregue" && lead.status !== "Pago") && isStockLead(lead);
     } else {
       return lead.status !== "Entregue" && lead.status !== "Pago";
     }
@@ -4153,6 +4349,96 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                         placeholder="Ex: Talatona, Rua 4, perto do banco..."
                       />
                     </div>
+
+                    {/* Data e Período de Entrega */}
+                    <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1 flex items-center gap-1.5">
+                          <Calendar size={13} className="text-sky-600" />
+                          Data Desejada para Entrega
+                        </label>
+                        <input
+                          type="date"
+                          required
+                          value={formData.deliveryDate}
+                          min={new Date().toISOString().split("T")[0]}
+                          onChange={(e) =>
+                            setFormData({ ...formData, deliveryDate: e.target.value })
+                          }
+                          className="w-full px-5 py-4 bg-slate-50 rounded-2xl border border-slate-200 focus:bg-white focus:ring-4 focus:ring-sky-100 focus:border-sky-500 outline-none transition-all font-bold text-slate-800 text-sm"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-1">
+                        <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1 flex items-center gap-1.5">
+                          <Clock size={13} className="text-sky-600" />
+                          Período Selecionado
+                        </label>
+                        <div className="px-5 py-4 bg-sky-50/70 border border-sky-200 rounded-2xl text-sky-950 font-bold text-sm flex items-center justify-between">
+                          <span>{formData.deliveryPeriod}</span>
+                          <span className="w-2.5 h-2.5 rounded-full bg-sky-500 animate-pulse" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+                        Escolha o Período do Dia para Receber a Entrega
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {[
+                          {
+                            id: "Manhã (08:00 às 12:00)",
+                            label: "Manhã",
+                            time: "08:00 às 12:00",
+                            icon: "☀️",
+                            desc: "Ideal para início do dia",
+                          },
+                          {
+                            id: "Tarde (12:00 às 16:00)",
+                            label: "Tarde",
+                            time: "12:00 às 16:00",
+                            icon: "⛅",
+                            desc: "Meio do dia / almoço",
+                          },
+                          {
+                            id: "Final do dia (16:00 às 18:00)",
+                            label: "Final do dia",
+                            time: "16:00 às 18:00",
+                            icon: "🌆",
+                            desc: "Fim da tarde / regresso",
+                          },
+                        ].map((period) => {
+                          const isSelected = formData.deliveryPeriod === period.id;
+                          return (
+                            <button
+                              key={period.id}
+                              type="button"
+                              onClick={() =>
+                                setFormData({ ...formData, deliveryPeriod: period.id })
+                              }
+                              className={`p-4 rounded-2xl border-2 transition-all font-bold flex flex-col items-center justify-center text-center cursor-pointer relative ${
+                                isSelected
+                                  ? "bg-sky-50 border-sky-500 text-sky-900 shadow-md shadow-sky-500/10 ring-2 ring-sky-500/20"
+                                  : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50/50"
+                              }`}
+                            >
+                              <span className="text-xl mb-1">{period.icon}</span>
+                              <span className="text-sm font-black">{period.label}</span>
+                              <span className="text-xs text-slate-500 font-semibold mt-0.5">
+                                {period.time}
+                              </span>
+                              {isSelected && (
+                                <div className="absolute top-2 right-2 text-sky-600">
+                                  <CheckCircle size={14} />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     <div className="sm:col-span-2 flex flex-col gap-4">
                       <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">
                         Quantas unidades?
@@ -4187,9 +4473,9 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                         <Loader2 className="animate-spin" size={32} />
                       ) : (
                         <>
-                          <span>EFECTUAR MINHA RESERVA AGORA</span>
+                          <span>CONFIRMAR MEU PEDIDO AGORA</span>
                           <span className="text-[10px] opacity-90 font-black uppercase tracking-[0.2em] mt-1.5">
-                            Pagas só no momento da entrega
+                            Pagas só no momento da entrega em mãos
                           </span>
                         </>
                       )}
@@ -6137,11 +6423,95 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                 </div>
               )}
 
+              {/* PRODUCT STAGE EVOLUTION BANNER (when filtering by product or for active product) */}
+              {(() => {
+                const currentFilteredProd = PRODUCTS_LIST.find(
+                  (p) =>
+                    p.title.toLowerCase() === filterProduct.toLowerCase() ||
+                    p.id === filterProduct ||
+                    filterProduct.toLowerCase().includes(p.title.toLowerCase()),
+                );
+                if (!currentFilteredProd) return null;
+                const prodInfo = getProductValidationInfo(currentFilteredProd.id);
+
+                return (
+                  <div
+                    className={`p-4 rounded-2xl mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border shadow-xl transition-all ${
+                      prodInfo.isStockStage
+                        ? "bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 border-blue-500/40"
+                        : "bg-gradient-to-r from-slate-900 via-indigo-950/80 to-slate-900 border-indigo-500/30"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <div
+                        className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 border ${
+                          prodInfo.isStockStage
+                            ? "bg-blue-500/20 text-cyan-300 border-blue-400/40 shadow-inner"
+                            : "bg-indigo-500/20 text-indigo-300 border-indigo-400/40"
+                        }`}
+                      >
+                        {prodInfo.isStockStage ? (
+                          <PackageCheck size={22} />
+                        ) : (
+                          <Rocket size={22} />
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-black text-white">
+                            {currentFilteredProd.title}
+                          </span>
+                          <span
+                            className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
+                              prodInfo.isStockStage
+                                ? "bg-blue-500/20 text-cyan-300 border-blue-400/40"
+                                : "bg-indigo-500/20 text-indigo-300 border-indigo-400/40"
+                            }`}
+                          >
+                            {prodInfo.isStockStage
+                              ? "📦 Encomendas em Stock (Entrega Imediata)"
+                              : "🧪 Teste & Validação de Pré-Venda"}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-300 mt-1 max-w-2xl">
+                          {prodInfo.isStockStage
+                            ? "Este produto evoluiu para encomendas em stock. Suas reservas tornaram-se entregas imediatas com período e data agendados."
+                            : "Este produto está na fase de teste/pré-reserva. Clique no botão ao lado para evoluir imediatamente para encomendas em stock."}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => toggleProductStage(currentFilteredProd.id)}
+                        className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shadow-md active:scale-95 whitespace-nowrap ${
+                          prodInfo.isStockStage
+                            ? "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
+                            : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-500/25"
+                        }`}
+                      >
+                        {prodInfo.isStockStage ? (
+                          <>
+                            <RefreshCw size={13} />
+                            <span>Reverter para Modo Teste</span>
+                          </>
+                        ) : (
+                          <>
+                            <Rocket size={14} />
+                            <span>Evoluir para Encomendas em Stock</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* SECTIONS / SESSÕES DE LEADS */}
-              <div className="flex bg-slate-900 border border-slate-800 p-1.5 rounded-2xl mb-6 gap-1.5 w-full sm:w-max shadow-xl">
+              <div className="flex bg-slate-900 border border-slate-800 p-1.5 rounded-2xl mb-6 gap-1.5 w-full sm:w-max shadow-xl flex-wrap">
                 <button
                   onClick={() => setAdminListTab("geral")}
-                  className={`px-5 py-2.5 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  className={`px-4 py-2.5 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
                     adminListTab === "geral"
                       ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/15"
                       : "text-slate-400 hover:text-white hover:bg-slate-800"
@@ -6159,8 +6529,30 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                   </span>
                 </button>
                 <button
+                  onClick={() => setAdminListTab("encomendas")}
+                  className={`px-4 py-2.5 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    adminListTab === "encomendas"
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25"
+                      : "text-blue-400 hover:text-white hover:bg-slate-800"
+                  }`}
+                >
+                  <PackageCheck size={16} />
+                  <span>
+                    📦 Zona de Encomendas Stock (
+                    {
+                      filteredData.filter(
+                        (d) =>
+                          d.status !== "Entregue" &&
+                          d.status !== "Pago" &&
+                          isStockLead(d),
+                      ).length
+                    }
+                    )
+                  </span>
+                </button>
+                <button
                   onClick={() => setAdminListTab("arquivados")}
-                  className={`px-5 py-2.5 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  className={`px-4 py-2.5 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
                     adminListTab === "arquivados"
                       ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/15"
                       : "text-slate-400 hover:text-white hover:bg-slate-800"
@@ -6361,11 +6753,26 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                               <td
                                 className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? "text-slate-300" : "text-slate-655"}`}
                               >
-                                <div className="font-bold">
-                                  {formatPageNameWithCensorship(
-                                    lead.produto || "Secador Inteligente UV",
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <div className="font-bold">
+                                    {formatPageNameWithCensorship(
+                                      lead.produto || "Secador Inteligente UV",
+                                    )}
+                                  </div>
+                                  {isStockLead(lead) && (
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                                      <PackageCheck size={11} /> Stock
+                                    </span>
                                   )}
                                 </div>
+                                {(lead.deliveryDate || lead.deliveryPeriod) && (
+                                  <div className="text-[11px] font-semibold text-emerald-400 mt-0.5 flex items-center gap-1">
+                                    <span>
+                                      📅 {lead.deliveryDate ? (lead.deliveryDate.includes("-") ? lead.deliveryDate.split("-").reverse().join("/") : lead.deliveryDate) : "A combinar"}
+                                      {lead.deliveryPeriod ? ` • ${lead.deliveryPeriod.split(" (")[0]}` : ""}
+                                    </span>
+                                  </div>
+                                )}
                                 {lead.observacoes && (
                                   <div
                                     className={`text-[11px] font-medium mt-0.5 max-w-[240px] truncate ${
@@ -6544,6 +6951,27 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                                           />
                                           <span>Copiar Info</span>
                                         </button>
+
+                                        {isStockLead(lead) && (
+                                          <button
+                                            onClick={() => {
+                                              setActiveDropdownLeadId(null);
+                                              handleWhatsAppStockOrder(lead);
+                                            }}
+                                            className={`flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-xs font-semibold transition-colors ${
+                                              isDark
+                                                ? "hover:bg-slate-900 hover:text-blue-400"
+                                                : "hover:bg-blue-50 hover:text-blue-700"
+                                            }`}
+                                            title="Enviar mensagem de confirmação de encomenda em stock (entrega imediata)"
+                                          >
+                                            <PackageCheck
+                                              size={14}
+                                              className="text-blue-500 shrink-0"
+                                            />
+                                            <span>Confir. Encomenda</span>
+                                          </button>
+                                        )}
 
                                         <button
                                           onClick={() => {
@@ -6840,10 +7268,10 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                       </div>
                       <div>
                         <h3 className="text-lg font-bold text-slate-900">
-                          Configurações de Tracking
+                          Configurações Globais & Tracking
                         </h3>
                         <p className="text-xs text-slate-500">
-                          Configure o Meta Pixel e Google Tag para todas as suas páginas
+                          WhatsApp de Pedidos, Meta Pixel e Google Tag
                         </p>
                       </div>
                     </div>
@@ -6856,6 +7284,29 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                   </div>
 
                   <div className="p-6 space-y-5">
+                    {/* WhatsApp Number Configuration */}
+                    <div className="bg-emerald-50/70 border border-emerald-200/90 rounded-2xl p-4">
+                      <label className="block text-sm font-bold text-emerald-950 mb-1.5 flex items-center gap-2">
+                        <MessageSquare size={16} className="text-emerald-600" />
+                        Número WhatsApp de Receção de Pedidos (Loja)
+                      </label>
+                      <input
+                        type="text"
+                        value={appSettings.whatsappOrderPhone || ""}
+                        onChange={(e) =>
+                          setAppSettings((prev) => ({
+                            ...prev,
+                            whatsappOrderPhone: e.target.value,
+                          }))
+                        }
+                        placeholder="Ex: 921167980"
+                        className="w-full bg-white border border-emerald-300 focus:border-emerald-500 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition font-bold text-slate-800"
+                      />
+                      <p className="mt-1.5 text-[11px] text-emerald-800 flex items-center gap-1">
+                        <Info size={13} className="shrink-0" /> Quando o cliente finalizar o pedido do Secador Expresso Pro e clicar em "Finalizar no WhatsApp", os dados serão enviados diretamente para este número. (Padrão: 921167980).
+                      </p>
+                    </div>
+
                     <div>
                       <label className="block text-sm font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
                         Meta Pixel ID (Facebook)
@@ -6913,8 +7364,9 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                         setIsSavingSettings(true);
                         try {
                           await setDoc(doc(db, "settings", "global"), appSettings);
+                          localStorage.setItem("validaC_app_settings", JSON.stringify(appSettings));
                           setIsTrackingModalOpen(false);
-                          alert("Configurações de tracking salvas com sucesso!");
+                          alert("Configurações salvas com sucesso!");
                         } catch (err) {
                           alert("Erro ao salvar configurações.");
                         } finally {
@@ -6999,6 +7451,16 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                 >
                   🧪 Em Teste ({PRODUCTS_LIST.filter((p) => getProductValidationInfo(p.id).statusKey === "testing").length})
                 </button>
+                <button
+                  onClick={() => setPagesFilter("stock")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
+                    pagesFilter === "stock"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
+                  }`}
+                >
+                  📦 Em Stock ({PRODUCTS_LIST.filter((p) => getProductValidationInfo(p.id).isStockStage).length})
+                </button>
               </div>
             </div>
 
@@ -7068,6 +7530,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
               if (pagesFilter === "inactive") return !isActive;
               if (pagesFilter === "validated") return info.isValidated;
               if (pagesFilter === "testing") return info.statusKey === "testing";
+              if (pagesFilter === "stock") return info.isStockStage;
               return true;
             }).map((prod) => {
               const info = getProductValidationInfo(prod.id);
@@ -7078,7 +7541,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                 <div
                   key={prod.id}
                   className={`bg-white rounded-2xl shadow-sm border overflow-hidden flex flex-col hover:shadow-md transition ${
-                    isActive ? "border-slate-200" : "border-rose-200/80 bg-slate-50/50 opacity-90"
+                    isActive ? (info.isStockStage ? "border-blue-300 ring-1 ring-blue-200" : "border-slate-200") : "border-rose-200/80 bg-slate-50/50 opacity-90"
                   }`}
                 >
                   <div className="aspect-video bg-slate-100 relative group overflow-hidden">
@@ -7094,6 +7557,8 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                       className={`absolute top-3 left-3 text-[10px] uppercase font-black px-2.5 py-1 rounded-full shadow-md backdrop-blur-md border ${
                         info.isInactive
                           ? "bg-rose-600/90 text-white border-rose-400"
+                          : info.isStockStage
+                          ? "bg-blue-600/90 text-white border-blue-400"
                           : info.isValidated
                           ? "bg-emerald-600/90 text-white border-emerald-400"
                           : info.reservasCount > 0
@@ -7195,6 +7660,26 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                           </div>
                         )}
                       </div>
+                    </div>
+
+                    {/* Evolution / Stage Selector */}
+                    <div className="pt-2 pb-1 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
+                        Estágio: <strong className={info.isStockStage ? "text-blue-600 font-black" : "text-amber-600 font-black"}>{info.isStockStage ? "📦 Stock / Imediato" : "🧪 Teste / Reserva"}</strong>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => toggleProductStage(prod.id)}
+                        className={`text-[11px] font-black px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1 cursor-pointer shadow-xs ${
+                          info.isStockStage
+                            ? "bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                            : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-blue-500 shadow-blue-500/20"
+                        }`}
+                        title={info.isStockStage ? "Clique para voltar a modo Validação/Reserva" : "Clique para promover para Encomendas em Stock (Entrega Imediata)"}
+                      >
+                        <Sparkles size={11} />
+                        {info.isStockStage ? "Voltar a Teste" : "Mover p/ Stock 🚀"}
+                      </button>
                     </div>
 
                     <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
@@ -7411,7 +7896,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2">
                     <div className="flex items-center gap-2 font-bold text-slate-900 border-b border-slate-200/80 pb-2 text-xs uppercase tracking-wider text-indigo-600">
                       <ShoppingBag size={15} />
-                      <span>Detalhes da Reserva</span>
+                      <span>{view === "sales-roupas" ? "Detalhes do Pedido" : "Detalhes da Reserva"}</span>
                     </div>
                     <div className="space-y-1.5 text-xs sm:text-sm">
                       <div className="flex justify-between">
@@ -7434,6 +7919,24 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                         <span className="text-slate-500 font-medium">Quantidade:</span>
                         <span className="font-bold text-slate-800">{formData.quantity}x Unidade(s)</span>
                       </div>
+                      {view === "sales-roupas" && (
+                        <>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500 font-medium">Data de Entrega:</span>
+                            <span className="font-bold text-slate-800">
+                              {formData.deliveryDate
+                                ? formData.deliveryDate.split("-").reverse().join("/")
+                                : "A agendar"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500 font-medium">Período:</span>
+                            <span className="font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-lg border border-sky-200 text-xs">
+                              {formData.deliveryPeriod || "Manhã (08:00 às 12:00)"}
+                            </span>
+                          </div>
+                        </>
+                      )}
                       {(lastSubmittedLead?.color || lastSubmittedLead?.size) && (
                         <>
                           {lastSubmittedLead?.color && (
@@ -7470,7 +7973,13 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                   {/* Botões de Ação da Etapa 1 */}
                   <div className="space-y-2.5 pt-2">
                     <button
-                      onClick={() => setModalState("step2")}
+                      onClick={() => {
+                        if (view === "sales-roupas") {
+                          processReservation(true);
+                        } else {
+                          setModalState("step2");
+                        }
+                      }}
                       className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 px-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98] text-sm flex justify-center items-center gap-2"
                     >
                       <CheckCircle size={20} />
@@ -7485,7 +7994,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                       className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 px-4 rounded-xl transition-all active:scale-[0.98] text-xs flex justify-center items-center gap-1.5 border border-slate-200"
                     >
                       <Pencil size={15} />
-                      EDITAR DETALHES DA RESERVA
+                      {view === "sales-roupas" ? "EDITAR DADOS DO PEDIDO" : "EDITAR DETALHES DA RESERVA"}
                     </button>
                   </div>
                 </div>
@@ -7843,7 +8352,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                 <div className="bg-emerald-500 p-8 text-center text-white">
                   <CheckCircle className="w-16 h-16 mx-auto mb-4 text-emerald-100" />
                   <h3 className="text-3xl font-black tracking-tight">
-                    🎉 Reserva Garantida!
+                    {view === "sales-roupas" ? "🎉 Pedido Registado!" : "🎉 Reserva Garantida!"}
                   </h3>
                 </div>
                 <div className="p-8 text-center text-slate-700">
@@ -7854,13 +8363,65 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                      </span>
                      !
                   </p>
-                  <p className="text-slate-600 mb-6 leading-relaxed">
-                    A tua unidade de{" "}
-                    <strong>
-                      {view === "sales-cinta-colombiana"
-                        ? `Combo ${formData.quantity}x Cinta Modeladora Colombiana`
-                        : view === "sales-roupas"
-                          ? "Secador Expresso Pro"
+
+                  {view === "sales-roupas" ? (
+                    <div className="space-y-4 mb-6">
+                      <p className="text-slate-700 font-bold text-base leading-relaxed">
+                        O seu pedido foi registrado com sucesso e entregaremos na data agendada.
+                      </p>
+
+                      <div className="bg-emerald-50/80 text-slate-800 p-5 rounded-2xl text-sm border border-emerald-200 text-left space-y-3 shadow-sm">
+                        <div className="flex items-center gap-2 font-black text-emerald-950 text-sm border-b border-emerald-200 pb-2">
+                          <CheckCircle size={17} className="text-emerald-600 shrink-0" />
+                          <span>Resumo da Entrega Agendada</span>
+                        </div>
+                        <div className="space-y-2 text-xs sm:text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-slate-500 font-medium">Produto:</span>
+                            <span className="font-bold text-slate-900">Secador Expresso Pro</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500 font-medium">Quantidade:</span>
+                            <span className="font-bold text-slate-900">{formData.quantity}x Unidade(s)</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500 font-medium">Data Agendada:</span>
+                            <span className="font-bold text-slate-900">
+                              {formData.deliveryDate
+                                ? formData.deliveryDate.split("-").reverse().join("/")
+                                : "A agendar"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-500 font-medium">Período:</span>
+                            <span className="font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md text-xs">
+                              {formData.deliveryPeriod || "Manhã (08:00 às 12:00)"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-start gap-2">
+                            <span className="text-slate-500 font-medium shrink-0">Local:</span>
+                            <span className="font-bold text-slate-800 text-right">
+                              {formData.area ? `${formData.area}, ` : ""}{formData.province === "Outra" ? formData.customProvince : formData.province}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center pt-2 border-t border-emerald-200 font-bold">
+                            <span className="text-slate-700">Total a pagar:</span>
+                            <span className="font-black text-emerald-700 text-base">
+                              {new Intl.NumberFormat("pt-AO").format(formData.quantity * 35000)} Kz
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-[11px] font-semibold text-emerald-800 bg-emerald-100/60 p-2 rounded-xl text-center">
+                          💡 Pagamento 100% seguro em mãos no ato da entrega.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-slate-600 mb-6 leading-relaxed">
+                      A tua unidade de{" "}
+                      <strong>
+                        {view === "sales-cinta-colombiana"
+                          ? `Combo ${formData.quantity}x Cinta Modeladora Colombiana`
                           : view === "sales-roteador"
                             ? "ZTE 5G Ultra"
                             : view === "sales-base-movel"
@@ -7868,13 +8429,11 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                               : view === "sales-camisa-seda"
                                 ? `Combo ${formData.quantity}x Camisa de Seda Gelada`
                                 : "Secador UV"}
-                    </strong>{" "}
-                    está reservada ao preço de{" "}
-                    <strong>
-                      {view === "sales-cinta-colombiana"
-                        ? (formData.quantity === 1 ? "45.000 Kz" : formData.quantity === 2 ? "80.000 Kz" : formData.quantity === 3 ? "110.000 Kz" : "45.000 Kz")
-                        : view === "sales-roupas"
-                          ? "35.000 Kz"
+                      </strong>{" "}
+                      está reservada ao preço de{" "}
+                      <strong>
+                        {view === "sales-cinta-colombiana"
+                          ? (formData.quantity === 1 ? "45.000 Kz" : formData.quantity === 2 ? "80.000 Kz" : formData.quantity === 3 ? "110.000 Kz" : "45.000 Kz")
                           : view === "sales-roteador"
                             ? "240.000 Kz"
                             : view === "sales-base-movel"
@@ -7882,9 +8441,11 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                               : view === "sales-camisa-seda"
                                 ? (formData.quantity === 1 ? "35.000 Kz" : formData.quantity === 2 ? "60.000 Kz" : formData.quantity === 3 ? "86.000 Kz" : formData.quantity === 5 ? "140.000 Kz" : "35.000 Kz")
                                 : "25.000 Kz"}
-                    </strong>
-                    .
-                  </p>
+                      </strong>
+                      .
+                    </p>
+                  )}
+
                   {view === "sales-cinta-colombiana" ? (
                     <div className="bg-emerald-50 text-emerald-900 p-5 rounded-2xl text-sm mb-8 border border-emerald-200 text-left space-y-2.5 shadow-sm">
                       <div className="flex items-center gap-2 font-black text-emerald-950 text-base">
@@ -7917,7 +8478,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                         Receberás uma mensagem no WhatsApp quando o lote chegar — pagas só no momento da entrega.
                       </p>
                     </div>
-                  ) : (
+                  ) : view === "sales-roupas" ? null : (
                     <div className="bg-emerald-50 text-emerald-900 p-5 rounded-2xl text-sm mb-8 border border-emerald-200 text-left space-y-2.5 shadow-sm">
                       <div className="flex items-center gap-2 font-black text-emerald-950 text-base">
                         <Timer size={20} className="text-emerald-600 shrink-0" />
@@ -7932,32 +8493,59 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                     </div>
                   )}
 
-                  <div className="pt-4 border-t border-slate-100">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
-                      Enquanto esperas, partilha com um amigo 👇
-                    </p>
-                    <a
-                      href={
-                        view === "sales-camisa-seda"
-                          ? `https://wa.me/?text=Olha%20esta%20camisa%20de%20seda%20gelada%20que%20acabei%20de%20reservar!%20%0A%0A${window.location.href}`
-                          : `https://wa.me/?text=Olha%20este%20secador%20que%20acabei%20de%20reservar!%20%0A%0A${window.location.href}`
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full flex justify-center items-center gap-3 bg-[#25D366] hover:bg-[#128C7E] text-white font-black py-4 px-4 rounded-xl transition-transform active:scale-[0.98] shadow-lg shadow-emerald-500/20 mb-3"
-                    >
-                      <MessageCircle size={22} />
-                      📲 PARTILHAR NO WHATSAPP
-                    </a>
-                    <a
-                      href="https://www.cstoreao.shop/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full flex justify-center items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 px-4 rounded-xl transition-transform active:scale-[0.98] border border-slate-200"
-                    >
-                      <Store size={20} />
-                      Visitar Loja C Store Angola
-                    </a>
+                  <div className="pt-2 border-t border-slate-100">
+                    {view === "sales-roupas" ? (
+                      <div className="space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => sendOrderToWhatsApp()}
+                          className="w-full flex justify-center items-center gap-3 bg-[#25D366] hover:bg-[#128C7E] text-white font-black py-4 px-4 rounded-2xl transition-all transform active:scale-[0.98] shadow-xl shadow-emerald-500/25 cursor-pointer text-base"
+                        >
+                          <MessageCircle size={24} />
+                          <span>FINALIZAR NO WHATSAPP</span>
+                        </button>
+                        <p className="text-[11px] text-slate-500 font-medium">
+                          Clique no botão acima para enviar os detalhes da sua entrega diretamente para o nosso atendimento.
+                        </p>
+                        <a
+                          href="https://www.cstoreao.shop/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full flex justify-center items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 px-4 rounded-xl transition-all active:scale-[0.98] border border-slate-200 text-xs"
+                        >
+                          <Store size={18} />
+                          Visitar Loja Oficial C Store Angola
+                        </a>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+                          Enquanto esperas, partilha com um amigo 👇
+                        </p>
+                        <a
+                          href={
+                            view === "sales-camisa-seda"
+                              ? `https://wa.me/?text=Olha%20esta%20camisa%20de%20seda%20gelada%20que%20acabei%20de%20reservar!%20%0A%0A${window.location.href}`
+                              : `https://wa.me/?text=Olha%20este%20secador%20que%20acabei%20de%20reservar!%20%0A%0A${window.location.href}`
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full flex justify-center items-center gap-3 bg-[#25D366] hover:bg-[#128C7E] text-white font-black py-4 px-4 rounded-xl transition-transform active:scale-[0.98] shadow-lg shadow-emerald-500/20 mb-3"
+                        >
+                          <MessageCircle size={22} />
+                          📲 PARTILHAR NO WHATSAPP
+                        </a>
+                        <a
+                          href="https://www.cstoreao.shop/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full flex justify-center items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 px-4 rounded-xl transition-transform active:scale-[0.98] border border-slate-200"
+                        >
+                          <Store size={20} />
+                          Visitar Loja C Store Angola
+                        </a>
+                      </>
+                    )}
                   </div>
                 </div>
               </motion.div>
