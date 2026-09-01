@@ -46,6 +46,8 @@ import {
   FolderOpen,
   Monitor,
   Smartphone,
+  Phone,
+  MapPin,
   Tablet,
   Bot,
   Upload,
@@ -110,6 +112,8 @@ import CamisaSedaView from "./components/CamisaSedaView";
 import { CintaColombianaView } from "./components/CintaColombianaView";
 import { CardCalculatorView } from "./components/CardCalculatorView";
 import { AdminOrdersView } from "./components/AdminOrdersView";
+import { AdminSubNav } from "./components/AdminSubNav";
+import { PWAInstallButton } from "./components/PWAInstallButton";
 
 // ==========================================
 // MÁQUINA DE GROWTH: Configuração de Pixels
@@ -503,6 +507,9 @@ function AccordionItem({
 export default function App() {
   const [view, setView] = useState<string>(() => {
     const pathname = window.location.pathname.toLowerCase();
+    if (pathname === "/admin" || pathname === "/admin/") {
+      return "admin";
+    }
     if (pathname === "/calculadora" || pathname === "/calculadora/") {
       return "admin";
     }
@@ -1185,7 +1192,9 @@ export default function App() {
   useEffect(() => {
     const handlePopState = () => {
       const pathname = window.location.pathname.toLowerCase();
-      if (pathname === "/calculadora" || pathname === "/calculadora/") {
+      if (pathname === "/admin" || pathname === "/admin/") {
+        setView("admin");
+      } else if (pathname === "/calculadora" || pathname === "/calculadora/") {
         setView("admin");
         setAdminSubView("calculadora");
       }
@@ -1203,7 +1212,16 @@ export default function App() {
         window.history.pushState({}, "", "/calculadora");
       }
       return;
-    } else if (window.location.pathname === "/calculadora" && (view !== "admin" || adminSubView !== "calculadora")) {
+    } else if (view === "admin") {
+      document.title = "Administração - Valida C";
+      if (window.location.pathname !== "/admin") {
+        window.history.pushState({}, "", "/admin");
+      }
+      return;
+    } else if (
+      (window.location.pathname === "/calculadora" || window.location.pathname === "/admin") &&
+      view !== "admin"
+    ) {
       window.history.pushState({}, "", "/");
     }
 
@@ -3038,6 +3056,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
             >
               {isAuthenticated && (
                 <>
+                  <PWAInstallButton />
                   <button
                     onClick={() => window.location.reload()}
                     className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white rounded-full transition-all flex items-center justify-center gap-2 cursor-pointer text-xs font-bold shadow-sm"
@@ -6082,75 +6101,26 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                 >
                   <ArrowLeft size={16} /> Voltar
                 </button>
-                <div className="flex justify-between items-center flex-wrap gap-4">
+                <AdminSubNav
+                  currentSubView={adminSubView}
+                  onNavigateSubView={(subView) => setAdminSubView(subView)}
+                  hidePhones={hidePhones}
+                  onToggleHidePhones={() => setHidePhones(!hidePhones)}
+                  onOpenExport={() => setIsExportModalOpen(true)}
+                  leadsCount={adminData.length}
+                />
+                <div className="flex justify-between items-center flex-wrap gap-4 mb-4">
                   <div>
                     <h1
-                      className={`text-3xl font-bold ${isDark ? "text-white" : "text-slate-900"}`}
+                      className={`text-2xl sm:text-3xl font-bold ${isDark ? "text-white" : "text-slate-900"}`}
                     >
                       Painel de Leads
                     </h1>
                     <p
-                      className={`mt-1 ${isDark ? "text-slate-400" : "text-slate-500"}`}
+                      className={`mt-1 text-xs sm:text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}
                     >
                       Gestão de Reservas
                     </p>
-                  </div>
-                  <div className="flex gap-3 mt-4 sm:mt-0">
-                    <button
-                      onClick={() => setHidePhones(!hidePhones)}
-                      className={`text-sm px-4 py-2 flex items-center gap-2 rounded-lg font-bold transition border cursor-pointer ${
-                        hidePhones
-                          ? isDark
-                            ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/30"
-                            : "bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200"
-                          : isDark
-                            ? "bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-850 shadow-2xl"
-                            : "bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200 shadow-sm"
-                      }`}
-                      title={
-                        hidePhones
-                          ? "Mostrar Números de WhatsApp e Páginas"
-                          : "Censurar Números de WhatsApp e Páginas"
-                      }
-                    >
-                      {hidePhones ? (
-                        <>
-                          <Eye size={16} /> Mostrar Dados
-                        </>
-                      ) : (
-                        <>
-                          <EyeOff size={16} /> Censurar Dados
-                        </>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setAdminSubView("encomendas")}
-                      className={`text-sm px-4 py-2 flex items-center gap-2 rounded-lg font-bold transition border cursor-pointer ${
-                        isDark
-                          ? "bg-blue-600 hover:bg-blue-500 text-white border-blue-500/50 shadow-lg shadow-blue-500/20"
-                          : "bg-blue-600 hover:bg-blue-700 text-white border-blue-700 shadow-md"
-                      }`}
-                      title="Ir para a Gestão de Encomendas"
-                    >
-                      <PackageCheck size={16} /> Encomendas
-                    </button>
-                    <button
-                      onClick={() => setAdminSubView("calculadora")}
-                      className={`text-sm px-4 py-2 flex items-center gap-2 rounded-lg font-bold transition border cursor-pointer ${
-                        isDark
-                          ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/30"
-                          : "bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200"
-                      }`}
-                      title="Calculadora de Saldos de Cartões e Câmbio"
-                    >
-                      <Calculator size={16} /> Calculadora de Saldos
-                    </button>
-                    <button
-                      onClick={() => setIsExportModalOpen(true)}
-                      className={`text-sm px-4 py-2 flex items-center gap-2 rounded-lg font-bold transition border cursor-pointer ${isDark ? "bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-850 shadow-2xl" : "bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200 shadow-sm"}`}
-                    >
-                      <Download size={16} /> Export
-                    </button>
                   </div>
                 </div>
               </div>
@@ -6629,7 +6599,179 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                   </div>
                 ) : (
                   <>
-                    <div className="overflow-x-auto min-h-[400px] pb-56">
+                    {/* MOBILE CARDS VIEW (For Phone Access) */}
+                    <div className="block md:hidden divide-y divide-slate-800">
+                      {displayedLeads.map((lead, i) => {
+                        const isSelected = selectedLeadIds.includes(lead.id);
+                        const level = typeof lead.verificationLevel === "number"
+                          ? lead.verificationLevel
+                          : (lead.doubleCheck || lead.verified2x)
+                            ? 2
+                            : (lead.singleCheck || lead.verified1x)
+                              ? 1
+                              : 0;
+
+                        return (
+                          <div
+                            key={lead.id || i}
+                            className={`p-4 transition-colors space-y-3 ${
+                              isSelected
+                                ? isDark
+                                  ? "bg-indigo-950/40 border-l-4 border-l-indigo-500"
+                                  : "bg-indigo-50/60 border-l-4 border-l-indigo-500"
+                                : isDark
+                                  ? "bg-slate-900"
+                                  : "bg-white"
+                            }`}
+                          >
+                            {/* Top Header */}
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  className="w-5 h-5 rounded border-slate-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                  checked={isSelected}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedLeadIds([...selectedLeadIds, lead.id]);
+                                    } else {
+                                      setSelectedLeadIds(selectedLeadIds.filter((id) => id !== lead.id));
+                                    }
+                                  }}
+                                />
+                                <span className="text-xs text-slate-400 font-medium">
+                                  📅 {lead.timestamp ? new Date(lead.timestamp).toLocaleDateString() : "N/A"}
+                                </span>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleLeadDoubleCheck(lead.id, level);
+                                }}
+                                className={`px-2 py-1 rounded-lg border text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                                  level === 2
+                                    ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+                                    : level === 1
+                                      ? "bg-amber-500/20 text-amber-400 border-amber-500/40"
+                                      : "bg-slate-800 text-slate-400 border-slate-700"
+                                }`}
+                              >
+                                {level === 2 ? (
+                                  <><CheckCheck size={14} /> 2x</>
+                                ) : level === 1 ? (
+                                  <><Check size={14} /> 1x</>
+                                ) : (
+                                  <><Check size={14} className="opacity-40" /> 0x</>
+                                )}
+                              </button>
+                            </div>
+
+                            {/* Lead Info */}
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="space-y-1">
+                                <h3 className={`font-bold text-base leading-snug ${isDark ? "text-white" : "text-slate-900"}`}>
+                                  {lead.name}
+                                </h3>
+                                <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
+                                  <Phone size={13} className="text-slate-400 shrink-0" />
+                                  <a href={`tel:${lead.phone}`} className="hover:underline text-indigo-400 font-bold">
+                                    {formatPhoneWithCensorship(lead.phone)}
+                                  </a>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                                  <MapPin size={13} className="text-rose-400 shrink-0" />
+                                  <span>{lead.province || "Luanda"}</span>
+                                </div>
+                              </div>
+
+                              <div className="text-right shrink-0">
+                                <span className="text-xs font-extrabold px-2 py-1 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-lg inline-block">
+                                  Qtd: {lead.quantity || 1}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Product & Delivery info */}
+                            <div className={`p-2.5 rounded-xl border text-xs ${isDark ? "bg-slate-950/60 border-slate-800/80 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-700"}`}>
+                              <div className="font-bold flex items-center gap-1.5 flex-wrap">
+                                <span>📦 {formatPageNameWithCensorship(lead.produto || "Secador Inteligente UV")}</span>
+                                {isStockLead(lead) && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                                    <PackageCheck size={11} /> Stock
+                                  </span>
+                                )}
+                              </div>
+                              {(lead.deliveryDate || lead.deliveryPeriod) && (
+                                <div className="text-[11px] font-semibold text-emerald-400 mt-1 flex items-center gap-1">
+                                  📅 {lead.deliveryDate ? (lead.deliveryDate.includes("-") ? lead.deliveryDate.split("-").reverse().join("/") : lead.deliveryDate) : "A combinar"}
+                                  {lead.deliveryPeriod ? ` • ${lead.deliveryPeriod.split(" (")[0]}` : ""}
+                                </div>
+                              )}
+                              {lead.observacoes && (
+                                <div className="text-[11px] text-slate-400 mt-1 italic">
+                                  "{getCleanObservacoes(lead)}"
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Status Dropdown */}
+                            <div>
+                              <select
+                                value={lead.status}
+                                onChange={(e) => updateLeadStatus(lead.id, e.target.value)}
+                                className={`w-full text-xs font-bold rounded-xl px-3 py-2 border focus:outline-none cursor-pointer ${
+                                  lead.status?.includes("Reservado")
+                                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                                    : lead.status === "Rejeitado"
+                                      ? "bg-red-500/20 text-red-300 border-red-500/40"
+                                      : lead.status === "Entregue"
+                                        ? "bg-blue-500/20 text-blue-300 border-blue-500/40"
+                                        : lead.status === "Cancelado"
+                                          ? "bg-slate-800 text-slate-400 border-slate-700"
+                                          : lead.status === "Tentativa Falhada"
+                                            ? "bg-orange-500/20 text-orange-300 border-orange-500/40"
+                                            : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                                }`}
+                              >
+                                <option value="Pendente" className="bg-slate-900 text-slate-200">⏳ Pendente</option>
+                                <option value="Reservado" className="bg-slate-900 text-emerald-300">✅ Reservado</option>
+                                <option value="Rejeitado" className="bg-slate-900 text-red-300">❌ Rejeitado</option>
+                                <option value="Entregue" className="bg-slate-900 text-blue-300">📦 Entregue</option>
+                                <option value="Tentativa Falhada" className="bg-slate-900 text-orange-300">⚠️ Tentativa Falhada</option>
+                                <option value="Cancelado" className="bg-slate-900 text-slate-400">🚫 Cancelado</option>
+                              </select>
+                            </div>
+
+                             {/* Action Buttons */}
+                            <div className="grid grid-cols-2 gap-2 pt-1">
+                              <button
+                                onClick={() => {
+                                  setSelectedLeadForPreview(lead);
+                                  setModalState("lead-preview");
+                                }}
+                                className="flex items-center justify-center gap-1.5 p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer text-xs font-bold"
+                              >
+                                <Eye size={15} /> Detalhes
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setLeadToDelete(lead);
+                                  setModalState("delete-lead-confirm");
+                                }}
+                                className="flex items-center justify-center gap-1.5 p-2 rounded-xl bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-800/40 transition cursor-pointer text-xs font-bold"
+                              >
+                                <Trash2 size={15} /> Eliminar
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* DESKTOP TABLE VIEW */}
+                    <div className="hidden md:block overflow-x-auto min-h-[400px] pb-56">
                       <table
                         className={`min-w-full divide-y ${isDark ? "divide-slate-800" : "divide-slate-100"}`}
                       >

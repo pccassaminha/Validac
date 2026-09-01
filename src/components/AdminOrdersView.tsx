@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { AdminSubNav } from "./AdminSubNav";
 import {
   PackageCheck,
   FileText,
@@ -287,55 +288,13 @@ Período: ${period}${obs ? `\nObs: ${obs}` : ""}`;
       )}
 
       {/* TOP NAVIGATION TAB BAR */}
-      <div className="flex bg-slate-900 border border-slate-800 p-1.5 rounded-2xl gap-1.5 w-full shadow-xl flex-wrap justify-between items-center">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <button
-            onClick={() => onNavigateSubView("leads")}
-            className="px-4 py-2.5 font-bold text-sm rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-400 hover:text-white hover:bg-slate-800"
-          >
-            <FileText size={16} />
-            <span>📄 Painel de Leads (Testes)</span>
-          </button>
-          <button
-            onClick={() => onNavigateSubView("encomendas")}
-            className="px-4 py-2.5 font-bold text-sm rounded-xl transition-all flex items-center gap-2 cursor-pointer bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25"
-          >
-            <PackageCheck size={16} />
-            <span>
-              📦 Gestão de Encomendas (
-              <span className="text-cyan-200">{metrics.totalCount}</span>)
-            </span>
-          </button>
-          <button
-            onClick={() => onNavigateSubView("financeiro")}
-            className="px-4 py-2.5 font-bold text-sm rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-400 hover:text-white hover:bg-slate-800"
-          >
-            <Store size={16} />
-            <span>📊 Painel Financeiro</span>
-          </button>
-          <button
-            onClick={() => onNavigateSubView("calculadora")}
-            className="px-4 py-2.5 font-bold text-sm rounded-xl transition-all flex items-center gap-2 cursor-pointer text-amber-400 hover:text-amber-300 hover:bg-slate-800"
-          >
-            <Calculator size={16} />
-            <span>🧮 Calculadora de Saldos</span>
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2 pr-2">
-          <button
-            onClick={() => setHidePhones((prev) => !prev)}
-            className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 border cursor-pointer ${
-              hidePhones
-                ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                : "bg-slate-800 text-slate-300 border-slate-700 hover:text-white"
-            }`}
-          >
-            {hidePhones ? <EyeOff size={14} /> : <Eye size={14} />}
-            <span>{hidePhones ? "Telefones Ocultos" : "Mostrar Telefones"}</span>
-          </button>
-        </div>
-      </div>
+      <AdminSubNav
+        currentSubView="encomendas"
+        onNavigateSubView={onNavigateSubView}
+        hidePhones={hidePhones}
+        onToggleHidePhones={() => setHidePhones((prev) => !prev)}
+        ordersCount={metrics.totalCount}
+      />
 
       {/* SECTION HEADER & TITLE */}
       <div className="flex justify-between items-center flex-wrap gap-4">
@@ -615,8 +574,185 @@ Período: ${period}${obs ? `\nObs: ${obs}` : ""}`;
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto min-h-[400px] pb-48">
-            <table className="min-w-full divide-y divide-slate-800">
+          <>
+            {/* MOBILE CARDS VIEW (For Phone Access) */}
+            <div className="block md:hidden divide-y divide-slate-800">
+              {paginatedOrders.map((order) => {
+                const isSelected = selectedLeadIds.includes(order.id);
+                const totalPrice = getLeadPrice(order);
+                const cleanObs = getCleanObservacoes(order);
+
+                return (
+                  <div
+                    key={order.id}
+                    className={`p-4 transition-colors space-y-3 ${
+                      isSelected
+                        ? "bg-indigo-950/40 border-l-4 border-l-indigo-500"
+                        : "bg-slate-900"
+                    }`}
+                  >
+                    {/* Top Header: Checkbox + Delivery Date/Time + Verification */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          className="w-5 h-5 rounded border-slate-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedLeadIds([...selectedLeadIds, order.id]);
+                            } else {
+                              setSelectedLeadIds(selectedLeadIds.filter((id) => id !== order.id));
+                            }
+                          }}
+                        />
+                        {order.deliveryDate ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/20 text-cyan-300 font-bold text-xs">
+                            <Calendar size={12} />
+                            {order.deliveryDate.includes("-") ? order.deliveryDate.split("-").reverse().join("/") : order.deliveryDate}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-400 font-medium">📅 A Combinar</span>
+                        )}
+                        {order.deliveryPeriod && (
+                          <span className="text-[11px] text-slate-400 font-semibold">
+                            • {order.deliveryPeriod.split(" (")[0]}
+                          </span>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => toggleLeadDoubleCheck(order.id)}
+                        className={`px-2 py-1 rounded-lg border text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                          order.verificationLevel === 2 || order.doubleCheck || order.verified2x
+                            ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+                            : order.verificationLevel === 1 || order.verified1x
+                              ? "bg-amber-500/20 text-amber-400 border-amber-500/40"
+                              : "bg-slate-800 text-slate-400 border-slate-700"
+                        }`}
+                      >
+                        {order.verificationLevel === 2 || order.doubleCheck || order.verified2x ? (
+                          <><CheckCheck size={14} /> 2x</>
+                        ) : order.verificationLevel === 1 || order.verified1x ? (
+                          <><Check size={14} /> 1x</>
+                        ) : (
+                          <><Check size={14} className="opacity-40" /> 0x</>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Customer Info & Price */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-1">
+                        <h3 className="font-bold text-white text-base leading-snug">
+                          {order.name || "Cliente Sem Nome"}
+                        </h3>
+                        <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
+                          <Phone size={13} className="text-slate-400 shrink-0" />
+                          <a href={`tel:${order.phone}`} className="hover:underline text-indigo-300">
+                            {formatPhoneWithCensorship(order.phone)}
+                          </a>
+                        </div>
+                        <div className="flex items-start gap-1.5 text-xs text-slate-300">
+                          <MapPin size={13} className="text-rose-400 shrink-0 mt-0.5" />
+                          <span>{order.area || order.address || "Endereço não informado"} ({order.province || "Luanda"})</span>
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <div className="text-base font-black text-emerald-400">
+                          {formatKz(totalPrice)}
+                        </div>
+                        <span className="text-[10px] text-slate-400 block font-extrabold">Qtd: {order.quantity || 1}</span>
+                      </div>
+                    </div>
+
+                    {/* Product Name & Notes */}
+                    <div className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 text-xs text-slate-300">
+                      <div className="font-bold text-white">
+                        📦 {formatPageNameWithCensorship(order.produto || order.product || "Secador Expresso Pro")}
+                      </div>
+                      {cleanObs && (
+                        <p className="text-[11px] text-slate-400 mt-1 italic">"{cleanObs}"</p>
+                      )}
+                    </div>
+
+                    {/* Status Dropdown */}
+                    <div>
+                      <select
+                        value={order.status || "Pendente"}
+                        onChange={(e) => updateLeadStatus(order.id, e.target.value)}
+                        className={`w-full text-xs font-black rounded-xl px-3 py-2 border focus:outline-none cursor-pointer ${
+                          order.status?.includes("Reservado")
+                            ? "bg-blue-500/20 text-cyan-300 border-blue-500/40"
+                            : order.status === "A Caminho" || order.status === "Em Trânsito"
+                              ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                              : order.status === "Entregue"
+                                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                                : order.status === "Pago"
+                                  ? "bg-green-500/20 text-green-300 border-green-500/40"
+                                  : order.status === "Cancelado" || order.status === "Rejeitado" || order.status === "Tentativa Falhada"
+                                    ? "bg-red-500/20 text-red-300 border-red-500/40"
+                                    : "bg-slate-800 text-slate-300 border-slate-700"
+                        }`}
+                      >
+                        <option value="Pendente" className="bg-slate-900 text-slate-200">⏳ Pendente / A Preparar</option>
+                        <option value="Reservado" className="bg-slate-900 text-cyan-300">📅 Reservado / Agendado</option>
+                        <option value="A Caminho" className="bg-slate-900 text-amber-300">🚚 A Caminho / Em Rota</option>
+                        <option value="Entregue" className="bg-slate-900 text-emerald-300">✅ Entregue</option>
+                        <option value="Pago" className="bg-slate-900 text-green-300">💰 Pago</option>
+                        <option value="Tentativa Falhada" className="bg-slate-900 text-amber-400">⚠️ Tentativa Falhada</option>
+                        <option value="Cancelado" className="bg-slate-900 text-red-400">❌ Cancelado</option>
+                      </select>
+                    </div>
+
+                    {/* Quick Action Buttons Grid */}
+                    <div className="grid grid-cols-4 gap-2 pt-1">
+                      <button
+                        onClick={() => copyForEstafeta(order)}
+                        className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer text-[10px] font-bold gap-1"
+                        title="Copiar dados para Estafeta"
+                      >
+                        <Copy size={16} className="text-indigo-400" />
+                        <span>Copiar</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleWhatsAppStockOrder(order)}
+                        className="flex flex-col items-center justify-center p-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 transition cursor-pointer text-[10px] font-bold gap-1"
+                        title="Enviar WhatsApp"
+                      >
+                        <MessageCircle size={16} />
+                        <span>WhatsApp</span>
+                      </button>
+
+                      <button
+                        onClick={() => openLeadDetailModal(order)}
+                        className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer text-[10px] font-bold gap-1"
+                        title="Ver Detalhes"
+                      >
+                        <Eye size={16} />
+                        <span>Detalhes</span>
+                      </button>
+
+                      <button
+                        onClick={() => onDeleteLead(order)}
+                        className="flex flex-col items-center justify-center p-2 rounded-xl bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-800/40 transition cursor-pointer text-[10px] font-bold gap-1"
+                        title="Eliminar"
+                      >
+                        <Trash2 size={16} />
+                        <span>Eliminar</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* DESKTOP TABLE VIEW */}
+            <div className="hidden md:block overflow-x-auto min-h-[400px] pb-48">
+              <table className="min-w-full divide-y divide-slate-800">
               <thead className="bg-slate-950 text-slate-400 text-left text-xs font-bold uppercase tracking-wider">
                 <tr>
                   <th className="px-4 py-4 w-10 text-center">
@@ -890,6 +1026,7 @@ Período: ${period}${obs ? `\nObs: ${obs}` : ""}`;
               </tbody>
             </table>
           </div>
+        </>
         )}
 
         {/* Pagination Bar */}
