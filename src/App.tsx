@@ -109,6 +109,7 @@ import HomeView from "./HomeView";
 import CamisaSedaView from "./components/CamisaSedaView";
 import { CintaColombianaView } from "./components/CintaColombianaView";
 import { CardCalculatorView } from "./components/CardCalculatorView";
+import { AdminOrdersView } from "./components/AdminOrdersView";
 
 // ==========================================
 // MÁQUINA DE GROWTH: Configuração de Pixels
@@ -1029,16 +1030,16 @@ export default function App() {
   const [timeRangeFilter, setTimeRangeFilter] = useState(
     () => localStorage.getItem("validaC_timeRangeFilter") || "Tudo",
   );
-  const [adminListTab, setAdminListTab] = useState<"geral" | "encomendas" | "arquivados">(
+  const [adminListTab, setAdminListTab] = useState<"geral" | "arquivados">(
     () =>
       (localStorage.getItem("validaC_adminListTab") as
         | "geral"
-        | "encomendas"
         | "arquivados") || "geral",
   );
   const [adminCurrentPage, setAdminCurrentPage] = useState(1);
-  const [adminSubView, setAdminSubView] = useState<"leads" | "financeiro" | "calculadora">(
-    () => {
+  const [adminSubView, setAdminSubView] = useState<
+    "leads" | "encomendas" | "financeiro" | "calculadora"
+  >(() => {
       const pathname = window.location.pathname.toLowerCase();
       if (pathname === "/calculadora" || pathname === "/calculadora/") {
         return "calculadora";
@@ -2795,8 +2796,6 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
   const allDisplayedLeads = filteredData.filter((lead) => {
     if (adminListTab === "arquivados") {
       return lead.status === "Entregue" || lead.status === "Pago";
-    } else if (adminListTab === "encomendas") {
-      return (lead.status !== "Entregue" && lead.status !== "Pago") && isStockLead(lead);
     } else {
       return lead.status !== "Entregue" && lead.status !== "Pago";
     }
@@ -3131,6 +3130,16 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                                 className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-xl transition-colors text-left"
                               >
                                 <FileText size={16} /> Painel de Leads
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setIsDropdownOpen(false);
+                                  setView("admin");
+                                  setAdminSubView("encomendas");
+                                }}
+                                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-xl transition-colors text-left"
+                              >
+                                <PackageCheck size={16} /> Gestão de Encomendas
                               </button>
                               <button
                                 onClick={() => {
@@ -5656,6 +5665,37 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
               isDark={isDark}
               onBack={() => setAdminSubView("leads")}
             />
+          ) : adminSubView === "encomendas" ? (
+            <AdminOrdersView
+              isDark={isDark}
+              adminData={adminData}
+              onNavigateSubView={(subView) => setAdminSubView(subView)}
+              updateLeadStatus={updateLeadStatus}
+              onDeleteLead={(lead) => {
+                setLeadToDelete(lead);
+                setModalState("delete-lead-confirm");
+              }}
+              formatKz={formatKz}
+              formatPhoneWithCensorship={formatPhoneWithCensorship}
+              formatPageNameWithCensorship={formatPageNameWithCensorship}
+              isStockLead={isStockLead}
+              getCleanObservacoes={getCleanObservacoes}
+              getLeadPrice={getLeadPrice}
+              normalizeProductName={normalizeProductName}
+              hidePhones={hidePhones}
+              setHidePhones={setHidePhones}
+              handleWhatsAppStockOrder={handleWhatsAppStockOrder}
+              openLeadDetailModal={(lead) => {
+                setSelectedLeadForPreview(lead);
+                setModalState("lead-preview");
+              }}
+              toggleLeadDoubleCheck={toggleLeadDoubleCheck}
+              selectedLeadIds={selectedLeadIds}
+              setSelectedLeadIds={setSelectedLeadIds}
+              isSelectionModeActive={isSelectionModeActive}
+              setIsSelectionModeActive={setIsSelectionModeActive}
+              setModalState={setModalState}
+            />
           ) : adminSubView === "financeiro" ? (
             <div className="animate-fadeIn">
               <div className="mb-4">
@@ -6088,6 +6128,17 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                       )}
                     </button>
                     <button
+                      onClick={() => setAdminSubView("encomendas")}
+                      className={`text-sm px-4 py-2 flex items-center gap-2 rounded-lg font-bold transition border cursor-pointer ${
+                        isDark
+                          ? "bg-blue-600 hover:bg-blue-500 text-white border-blue-500/50 shadow-lg shadow-blue-500/20"
+                          : "bg-blue-600 hover:bg-blue-700 text-white border-blue-700 shadow-md"
+                      }`}
+                      title="Ir para a Gestão de Encomendas"
+                    >
+                      <PackageCheck size={16} /> Encomendas
+                    </button>
+                    <button
                       onClick={() => setAdminSubView("calculadora")}
                       className={`text-sm px-4 py-2 flex items-center gap-2 rounded-lg font-bold transition border cursor-pointer ${
                         isDark
@@ -6517,28 +6568,6 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                     {
                       filteredData.filter(
                         (d) => d.status !== "Entregue" && d.status !== "Pago",
-                      ).length
-                    }
-                    )
-                  </span>
-                </button>
-                <button
-                  onClick={() => setAdminListTab("encomendas")}
-                  className={`px-4 py-2.5 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                    adminListTab === "encomendas"
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25"
-                      : "text-blue-400 hover:text-white hover:bg-slate-800"
-                  }`}
-                >
-                  <PackageCheck size={16} />
-                  <span>
-                    📦 Zona de Encomendas Stock (
-                    {
-                      filteredData.filter(
-                        (d) =>
-                          d.status !== "Entregue" &&
-                          d.status !== "Pago" &&
-                          isStockLead(d),
                       ).length
                     }
                     )
