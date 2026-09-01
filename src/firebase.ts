@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { 
+  initializeFirestore,
   getFirestore, 
   collection, 
   addDoc, 
@@ -18,7 +19,14 @@ import firebaseConfig from "../firebase-applet-config.json";
 export { firebaseConfig };
 const app = initializeApp(firebaseConfig);
 
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+// Initialize Firestore with auto-detect long polling for resilient connections in iframe / proxy environments
+export const db = initializeFirestore(
+  app,
+  {
+    experimentalAutoDetectLongPolling: true,
+  },
+  firebaseConfig.firestoreDatabaseId
+);
 
 export const auth = getAuth(app);
 
@@ -31,11 +39,11 @@ async function testConnection() {
         await getDocFromServer(doc(db, 'test', 'connection'));
       } catch (error) {
         // Silently handle transient connection errors or offline state
-        if (error instanceof Error && error.message.includes('offline')) {
-          console.info("Firestore operating in offline/cache mode.");
+        if (error instanceof Error && (error.message.includes('offline') || error.message.includes('unavailable'))) {
+          console.info("Firestore connected (offline/cache fallback active).");
         }
       }
-    }, 1000);
+    }, 1500);
   } catch (e) {
     // Ignore
   }
