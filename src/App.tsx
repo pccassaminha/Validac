@@ -113,6 +113,7 @@ import { CintaColombianaView } from "./components/CintaColombianaView";
 import { CardCalculatorView } from "./components/CardCalculatorView";
 import { AdminOrdersView } from "./components/AdminOrdersView";
 import { AdminSubNav } from "./components/AdminSubNav";
+import { WhatsAppActionModal, WhatsAppModalData } from "./components/WhatsAppActionModal";
 import { PWAInstallButton } from "./components/PWAInstallButton";
 
 // ==========================================
@@ -576,6 +577,8 @@ export default function App() {
   const [isPageFilterDropdownOpen, setIsPageFilterDropdownOpen] = useState(false);
   const [selectedLeadForPreview, setSelectedLeadForPreview] =
     useState<any>(null);
+  const [whatsAppModalData, setWhatsAppModalData] =
+    useState<WhatsAppModalData | null>(null);
   const [isCheckoutVisible, setIsCheckoutVisible] = useState(false);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
   const [dangerActionContext, setDangerActionContext] = useState<{
@@ -2291,8 +2294,15 @@ Por favor, confirmem o envio do meu pedido. Obrigado!`;
     if (!lead?.phone) return;
     const cleanPhone = formatWhatsAppPhone(lead.phone);
     const text = getWhatsAppReservationText(lead);
-    const encodedText = encodeURIComponent(text);
-    window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`, "_blank");
+    setWhatsAppModalData({
+      isOpen: true,
+      lead,
+      title: "Confirmar Reserva",
+      type: "reserva",
+      messageText: text,
+      recipientPhone: cleanPhone,
+      recipientName: lead.name || "Cliente",
+    });
   };
 
   const getWhatsAppStockOrderText = (lead: any) => {
@@ -2335,16 +2345,30 @@ Por favor, responda a esta mensagem com *"CONFIRMADO"* para que o nosso estafeta
     if (!lead?.phone) return;
     const cleanPhone = formatWhatsAppPhone(lead.phone);
     const text = getWhatsAppStockOrderText(lead);
-    const encodedText = encodeURIComponent(text);
-    window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`, "_blank");
+    setWhatsAppModalData({
+      isOpen: true,
+      lead,
+      title: "Confirmar Encomenda em Stock",
+      type: "stock",
+      messageText: text,
+      recipientPhone: cleanPhone,
+      recipientName: lead.name || "Cliente",
+    });
   };
 
   const handleWhatsAppDelivery = (lead: any) => {
     if (!lead?.phone) return;
     const cleanPhone = formatWhatsAppPhone(lead.phone);
     const text = getWhatsAppDeliveryText(lead);
-    const encodedText = encodeURIComponent(text);
-    window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`, "_blank");
+    setWhatsAppModalData({
+      isOpen: true,
+      lead,
+      title: "Confirmar Entrega",
+      type: "entrega",
+      messageText: text,
+      recipientPhone: cleanPhone,
+      recipientName: lead.name || "Cliente",
+    });
   };
 
   const getWhatsAppPendingText = (lead: any) => {
@@ -2385,8 +2409,15 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
     if (!lead?.phone) return;
     const cleanPhone = formatWhatsAppPhone(lead.phone);
     const text = getWhatsAppPendingText(lead);
-    const encodedText = encodeURIComponent(text);
-    window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`, "_blank");
+    setWhatsAppModalData({
+      isOpen: true,
+      lead,
+      title: "Recuperar Lead Pendente",
+      type: "pendente",
+      messageText: text,
+      recipientPhone: cleanPhone,
+      recipientName: lead.name || "Cliente",
+    });
   };
 
   const updateLeadStatus = async (leadId: string, newStatus: string) => {
@@ -6745,7 +6776,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                             </div>
 
                              {/* Action Buttons */}
-                            <div className="grid grid-cols-2 gap-2 pt-1">
+                            <div className="grid grid-cols-3 gap-2 pt-1">
                               <button
                                 onClick={() => {
                                   setSelectedLeadForPreview(lead);
@@ -6753,7 +6784,20 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                                 }}
                                 className="flex items-center justify-center gap-1.5 p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer text-xs font-bold"
                               >
-                                <Eye size={15} /> Detalhes
+                                <Eye size={14} /> Detalhes
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (isStockLead(lead)) {
+                                    handleWhatsAppStockOrder(lead);
+                                  } else {
+                                    handleWhatsAppReservation(lead);
+                                  }
+                                }}
+                                className="flex items-center justify-center gap-1.5 p-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/40 transition cursor-pointer text-xs font-bold"
+                                title="Opções de mensagem WhatsApp"
+                              >
+                                <MessageSquare size={14} /> WhatsApp
                               </button>
                               <button
                                 onClick={() => {
@@ -6762,7 +6806,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                                 }}
                                 className="flex items-center justify-center gap-1.5 p-2 rounded-xl bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-800/40 transition cursor-pointer text-xs font-bold"
                               >
-                                <Trash2 size={15} /> Eliminar
+                                <Trash2 size={14} /> Eliminar
                               </button>
                             </div>
                           </div>
@@ -9482,14 +9526,25 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                         <Copy size={15} /> Copiar
                       </button>
 
-                      <button
-                        onClick={() => handleWhatsAppReservation(selectedLeadForPreview)}
-                        className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 font-bold text-xs rounded-xl transition cursor-pointer shadow-xs"
-                        title="Confirmar detalhes da reserva no WhatsApp"
-                      >
-                        <MessageSquare size={15} className="text-emerald-600 shrink-0" />
-                        <span>Reconfir. Reserva</span>
-                      </button>
+                      {isStockLead(selectedLeadForPreview) ? (
+                        <button
+                          onClick={() => handleWhatsAppStockOrder(selectedLeadForPreview)}
+                          className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200/80 font-bold text-xs rounded-xl transition cursor-pointer shadow-xs"
+                          title="Confirmar encomenda em stock com envio imediato no WhatsApp"
+                        >
+                          <PackageCheck size={15} className="text-blue-600 shrink-0" />
+                          <span>Confir. Encomenda</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleWhatsAppReservation(selectedLeadForPreview)}
+                          className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 font-bold text-xs rounded-xl transition cursor-pointer shadow-xs"
+                          title="Confirmar detalhes da reserva no WhatsApp"
+                        >
+                          <MessageSquare size={15} className="text-emerald-600 shrink-0" />
+                          <span>Reconfir. Reserva</span>
+                        </button>
+                      )}
 
                       <button
                         onClick={() => handleWhatsAppDelivery(selectedLeadForPreview)}
@@ -9526,6 +9581,13 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* WHATSAPP ACTION DISPATCH MODAL (POPUP TO CHOOSE COPY OR DIRECT SEND) */}
+      <WhatsAppActionModal
+        data={whatsAppModalData}
+        onClose={() => setWhatsAppModalData(null)}
+        isDark={isDark}
+      />
 
       {/* EXPORT OPTIONS MODAL PROMPT */}
       {isExportModalOpen && (
