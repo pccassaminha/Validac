@@ -1,14 +1,24 @@
 import React from "react";
-import { FileText, PackageCheck, Store, Calculator, Eye, EyeOff, Download } from "lucide-react";
+import {
+  FileText,
+  Sparkles,
+  Share2,
+  Calculator,
+  Eye,
+  EyeOff,
+  Download,
+  Users
+} from "lucide-react";
+
+export type AdminSubViewType = "leads" | "prospeccao" | "meta" | "calculadora";
 
 interface AdminSubNavProps {
-  currentSubView: "leads" | "encomendas" | "financeiro" | "calculadora";
-  onNavigateSubView: (subView: "leads" | "encomendas" | "financeiro" | "calculadora") => void;
+  currentSubView: AdminSubViewType;
+  onNavigateSubView: (subView: AdminSubViewType) => void;
   hidePhones?: boolean;
   onToggleHidePhones?: () => void;
   onOpenExport?: () => void;
   leadsCount?: number;
-  ordersCount?: number;
 }
 
 export const AdminSubNav: React.FC<AdminSubNavProps> = ({
@@ -18,13 +28,13 @@ export const AdminSubNav: React.FC<AdminSubNavProps> = ({
   onToggleHidePhones,
   onOpenExport,
   leadsCount,
-  ordersCount,
 }) => {
   return (
     <div className="bg-slate-900/95 border border-slate-800 rounded-2xl p-2 mb-6 shadow-xl sticky top-16 z-30 backdrop-blur-md">
       <div className="flex items-center justify-between gap-2 overflow-x-auto scrollbar-none">
-        {/* Sub-view navigation tabs */}
+        {/* Modern CRM Navigation Tabs */}
         <div className="flex items-center gap-1.5 shrink-0">
+          {/* 1. Validação de Leads */}
           <button
             onClick={() => onNavigateSubView("leads")}
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
@@ -34,7 +44,7 @@ export const AdminSubNav: React.FC<AdminSubNavProps> = ({
             }`}
           >
             <FileText size={15} />
-            <span>Leads</span>
+            <span>Validação de Leads</span>
             {typeof leadsCount === "number" && (
               <span
                 className={`px-1.5 py-0.5 rounded-full text-[10px] ${
@@ -46,39 +56,36 @@ export const AdminSubNav: React.FC<AdminSubNavProps> = ({
             )}
           </button>
 
+          {/* 2. Prospecção Inteligente IA */}
           <button
-            onClick={() => onNavigateSubView("encomendas")}
+            onClick={() => onNavigateSubView("prospeccao")}
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-              currentSubView === "encomendas"
+              currentSubView === "prospeccao"
+                ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
+                : "text-slate-400 hover:text-white hover:bg-slate-800/80"
+            }`}
+          >
+            <Sparkles size={15} className="text-amber-300" />
+            <span>Prospecção com IA</span>
+            <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-purple-500/30 text-purple-200 border border-purple-400/30">
+              NOVO
+            </span>
+          </button>
+
+          {/* 3. Conexão Meta Oficial */}
+          <button
+            onClick={() => onNavigateSubView("meta")}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+              currentSubView === "meta"
                 ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
                 : "text-slate-400 hover:text-white hover:bg-slate-800/80"
             }`}
           >
-            <PackageCheck size={15} />
-            <span>Encomendas</span>
-            {typeof ordersCount === "number" && (
-              <span
-                className={`px-1.5 py-0.5 rounded-full text-[10px] ${
-                  currentSubView === "encomendas" ? "bg-blue-700 text-blue-100" : "bg-slate-800 text-slate-400"
-                }`}
-              >
-                {ordersCount}
-              </span>
-            )}
+            <Share2 size={15} />
+            <span>Conexão Meta (Oficial)</span>
           </button>
 
-          <button
-            onClick={() => onNavigateSubView("financeiro")}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-              currentSubView === "financeiro"
-                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
-                : "text-slate-400 hover:text-white hover:bg-slate-800/80"
-            }`}
-          >
-            <Store size={15} />
-            <span>Financeiro</span>
-          </button>
-
+          {/* 4. Calculadora */}
           <button
             onClick={() => onNavigateSubView("calculadora")}
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
@@ -113,7 +120,7 @@ export const AdminSubNav: React.FC<AdminSubNavProps> = ({
             <button
               onClick={onOpenExport}
               className="p-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:text-white transition cursor-pointer flex items-center gap-1.5"
-              title="Exportar dados"
+              title="Exportar dados (PDF & CSV Meta)"
             >
               <Download size={15} />
               <span className="hidden sm:inline">Export</span>

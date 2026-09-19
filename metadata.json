@@ -1,6 +1,6 @@
 {
-  "name": "C Store Angola - Secador Inteligente",
-  "description": "Sistema de gestão de reservas e vendas para secadores de calçado UV e secadores expresso pro em Angola.",
+  "name": "Valida C",
+  "description": "CRM moderno de validação de leads, qualificação comercial, prospecção inteligente com IA e integração oficial Meta.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

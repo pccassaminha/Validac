@@ -22,19 +22,21 @@ export const WhatsAppActionModal: React.FC<WhatsAppActionModalProps> = ({
   onClose,
   isDark = true,
 }) => {
-  if (!data || !data.isOpen) return null;
-
-  const [message, setMessage] = useState(data.messageText);
+  const [message, setMessage] = useState(data?.messageText || "");
   const [isEditing, setIsEditing] = useState(false);
   const [copiedMessage, setCopiedMessage] = useState(false);
   const [copiedPhone, setCopiedPhone] = useState(false);
 
   useEffect(() => {
-    setMessage(data.messageText);
-    setIsEditing(false);
-    setCopiedMessage(false);
-    setCopiedPhone(false);
+    if (data && data.isOpen) {
+      setMessage(data.messageText || "");
+      setIsEditing(false);
+      setCopiedMessage(false);
+      setCopiedPhone(false);
+    }
   }, [data]);
+
+  if (!data || !data.isOpen) return null;
 
   const handleCopyMessage = async () => {
     try {

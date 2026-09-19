@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Check,
   CheckCheck,
@@ -53,6 +53,7 @@ import {
   Upload,
   Edit,
   Sparkles,
+  Share2,
   Dumbbell,
   Zap,
   RefreshCw,
@@ -111,8 +112,13 @@ import HomeView from "./HomeView";
 import CamisaSedaView from "./components/CamisaSedaView";
 import { CintaColombianaView } from "./components/CintaColombianaView";
 import { CardCalculatorView } from "./components/CardCalculatorView";
-import { AdminOrdersView } from "./components/AdminOrdersView";
-import { AdminSubNav } from "./components/AdminSubNav";
+import { AdminSubNav, AdminSubViewType } from "./components/AdminSubNav";
+import { CrmPipelineView } from "./components/CrmPipelineView";
+import { LeadDetailDrawer } from "./components/LeadDetailDrawer";
+import { AiProspectingView } from "./components/AiProspectingView";
+import { MetaConnectionHub } from "./components/MetaConnectionHub";
+import { ProspectLead } from "./services/geminiProspecting";
+import { sendMetaConversionEvent } from "./services/metaIntegration";
 import { WhatsAppActionModal, WhatsAppModalData } from "./components/WhatsAppActionModal";
 import { PWAInstallButton } from "./components/PWAInstallButton";
 
@@ -1047,17 +1053,40 @@ export default function App() {
         | "arquivados") || "geral",
   );
   const [adminCurrentPage, setAdminCurrentPage] = useState(1);
-  const [adminSubView, setAdminSubView] = useState<
-    "leads" | "encomendas" | "financeiro" | "calculadora"
-  >(() => {
-      const pathname = window.location.pathname.toLowerCase();
-      if (pathname === "/calculadora" || pathname === "/calculadora/") {
-        return "calculadora";
-      }
-      return "leads";
-    },
-  );
-  const [financeProductFilter, setFinanceProductFilter] = useState("Todos");
+  const [adminSubView, setAdminSubView] = useState<AdminSubViewType>(() => {
+    const pathname = window.location.pathname.toLowerCase();
+    if (pathname === "/calculadora" || pathname === "/calculadora/") {
+      return "calculadora";
+    }
+    if (pathname === "/prospeccao" || pathname === "/prospeccao/") {
+      return "prospeccao";
+    }
+    if (pathname === "/meta" || pathname === "/meta/") {
+      return "meta";
+    }
+    return "leads";
+  });
+  const [selectedDrawerLead, setSelectedDrawerLead] = useState<any | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [crmProductFilter, setCrmProductFilter] = useState("Todos");
+  const crmAvailableProducts = useMemo(() => {
+    const list = Array.from(
+      new Set(
+        adminData
+          .map((d) => d.produto)
+          .filter(Boolean),
+      ),
+    );
+    if (list.length === 0) {
+      return [
+        "Secador Inteligente UV",
+        "Cinta Modeladora Colombiana",
+        "Camisa de Seda Masculina",
+        "Roteador 5G Ultra Desbloqueado",
+      ];
+    }
+    return list;
+  }, [adminData]);
   const [theme, setTheme] = useState<"dark" | "light">(
     () => (localStorage.getItem("validaC_theme") as "dark" | "light") || "dark",
   );
@@ -2425,8 +2454,59 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
     setAdminData((prev) =>
       prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l)),
     );
+    setSelectedDrawerLead((prev: any) =>
+      prev && prev.id === leadId ? { ...prev, status: newStatus } : prev,
+    );
+
     try {
       await updateDoc(doc(db, "leads", leadId), { status: newStatus });
+      const targetLead = adminData.find((l) => l.id === leadId);
+      if (targetLead) {
+        if (newStatus === "Reservado" || newStatus === "Qualificado") {
+          sendMetaConversionEvent({
+            eventName: "CompleteRegistration",
+            lead: {
+              name: targetLead.name,
+              phone: targetLead.phone,
+              province: targetLead.province,
+              produto: targetLead.produto,
+            },
+            customData: {
+              crm_status: "lead_qualificado",
+            },
+          });
+        } else if (newStatus === "Transferido" || newStatus === "Em Vendas") {
+          sendMetaConversionEvent({
+            eventName: "InitiateCheckout",
+            lead: {
+              name: targetLead.name,
+              phone: targetLead.phone,
+              province: targetLead.province,
+              produto: targetLead.produto,
+            },
+            customData: {
+              crm_status: "transferido_para_vendas",
+            },
+          });
+        } else if (newStatus === "Vendido") {
+          const leadPrice = getLeadPrice(targetLead);
+          sendMetaConversionEvent({
+            eventName: "Purchase",
+            lead: {
+              name: targetLead.name,
+              phone: targetLead.phone,
+              province: targetLead.province,
+              produto: targetLead.produto,
+              price: leadPrice,
+            },
+            customData: {
+              crm_status: "vendido",
+              value: leadPrice,
+              currency: "AOA",
+            },
+          });
+        }
+      }
     } catch (err: any) {
       if (
         err instanceof Error &&
@@ -2437,6 +2517,35 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
       console.error("Erro ao atualizar status:", err);
       // Carregar os dados reais em caso de erro no servidor
       loadAdminData();
+    }
+  };
+
+  const handleImportProspectLeads = async (prospects: ProspectLead[]) => {
+    for (const p of prospects) {
+      const newLeadData = {
+        name: p.name,
+        phone: p.phone,
+        province: p.province || "Luanda",
+        area: p.area || "",
+        address: p.area || "",
+        produto: p.businessType || "Prospecção IA",
+        status: "Pendente",
+        timestamp: new Date().toISOString(),
+        observacoes: `[Decisor: ${p.contactPerson || "N/A"}] - ${p.notes}`,
+        crmNotes: [
+          `[${new Date().toLocaleTimeString("pt-AO", { hour: "2-digit", minute: "2-digit" })}] Importado via Prospecção IA (Nicho: ${p.businessType})`,
+          `Abordagem sugerida: "${p.suggestedPitch}"`,
+        ],
+        source: "prospeccao_ia",
+        leadScore: p.score,
+        quantity: 1,
+      };
+
+      try {
+        await addDoc(collection(db, "leads"), newLeadData);
+      } catch (err) {
+        console.error("Erro ao importar lead para Firestore:", err);
+      }
     }
   };
 
@@ -2526,11 +2635,13 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
     const headers = [
       "Data",
       "Nome",
-      "WhatsApp",
+      "WhatsApp / Contacto",
+      "Província",
+      "País",
+      "Endereço / Município",
       "Produto",
       "Qtd",
       "Detalhes / Características",
-      "Endereço",
       "Status / Reserva",
     ];
     const csvRows = [headers.join(",")];
@@ -2551,19 +2662,20 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
       }
       const details = detailParts.length > 0 ? detailParts.join(" | ") : `${q} Un.`;
 
-      const addressParts: string[] = [];
-      if (lead.area || lead.address) addressParts.push(lead.area || lead.address);
-      if (lead.province && lead.province !== "Luanda") addressParts.push(lead.province);
-      const address = addressParts.length > 0 ? addressParts.join(", ") : (lead.province || "Luanda");
+      const province = lead.province || "Luanda";
+      const country = lead.country || lead.pais || "Angola";
+      const address = lead.area || lead.address || "N/A";
 
       const row = [
         `"${date}"`,
         `"${lead.name || ""}"`,
         `"${lead.phone || ""}"`,
+        `"${province.replace(/"/g, '""')}"`,
+        `"${country.replace(/"/g, '""')}"`,
+        `"${address.replace(/"/g, '""')}"`,
         `"${formatPageNameWithCensorship(lead.produto || "Secador Inteligente UV")}"`,
         q,
         `"${details.replace(/"/g, '""')}"`,
-        `"${address.replace(/"/g, '""')}"`,
         `"${lead.status || ""}"`,
       ];
       csvRows.push(row.join(","));
@@ -2602,17 +2714,17 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
 
       // Badge Grupo Cassaminha
       doc.setFillColor(79, 70, 229);
-      doc.roundedRect(14, 4, 42, 5.5, 1, 1, "F");
+      doc.roundedRect(12, 4, 42, 5.5, 1, 1, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(7);
       doc.setFont("helvetica", "bold");
-      doc.text("GRUPO CASSAMINHA", 16, 7.8);
+      doc.text("GRUPO CASSAMINHA", 14, 7.8);
 
       // Título do Relatório
       doc.setFontSize(13);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(255, 255, 255);
-      doc.text("Relatório de Encomendas & Leads — Grupo Cassaminha", 14, 19);
+      doc.text("Relatório de Encomendas & Leads — Grupo Cassaminha", 12, 19);
 
       doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
@@ -2627,10 +2739,12 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
         [
           "Data",
           "Nome",
-          "Produto",
-          "Detalhes / Características",
-          "Qtd",
+          "WhatsApp",
+          "Província / País",
           "Endereço",
+          "Produto",
+          "Detalhes",
+          "Qtd",
           "Status / Reserva",
         ],
       ];
@@ -2640,6 +2754,12 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
           ? new Date(lead.timestamp).toLocaleDateString("pt-AO")
           : "N/A";
         const name = lead.name || "N/A";
+        const phone = lead.phone || "N/A";
+        const province = lead.province || "Luanda";
+        const country = lead.country || lead.pais || "Angola";
+        const provCountry = `${province}\n(${country})`;
+        const address = lead.area || lead.address || "N/A";
+
         const product = formatPageNameWithCensorship(
           lead.produto || "Secador Inteligente UV",
         );
@@ -2658,13 +2778,6 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
         const details =
           detailParts.length > 0 ? detailParts.join(" | ") : `${qty} Unidade(s)`;
 
-        const addressParts: string[] = [];
-        if (lead.area || lead.address) addressParts.push(lead.area || lead.address);
-        if (lead.province && lead.province !== "Luanda")
-          addressParts.push(lead.province);
-        const address =
-          addressParts.length > 0 ? addressParts.join(", ") : lead.province || "Luanda";
-
         let statusStr = lead.status || "Pendente";
         if (lead.status && lead.status.includes("Reservado")) {
           statusStr = "✅ Reservado";
@@ -2678,33 +2791,42 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
           statusStr = "🚫 Cancelado";
         }
 
-        return [date, name, product, details, `${qty}`, address, statusStr];
+        return [date, name, phone, provCountry, address, product, details, `${qty}`, statusStr];
       });
 
       autoTable(doc, {
         head: tableHeaders,
         body: tableRows,
         startY: 30,
+        margin: { left: 12, right: 12 },
         theme: "striped",
         styles: {
-          fontSize: 8,
-          cellPadding: 3,
+          fontSize: 6.5,
+          cellPadding: 1.8,
           valign: "middle",
           overflow: "linebreak",
+          textColor: [30, 41, 59],
+          lineColor: [226, 232, 240],
+          lineWidth: 0.1,
         },
         headStyles: {
           fillColor: [79, 70, 229],
           textColor: [255, 255, 255],
           fontStyle: "bold",
+          fontSize: 7,
+          halign: "center",
+          cellPadding: 2.2,
         },
         columnStyles: {
-          0: { cellWidth: 22 },
-          1: { cellWidth: 38 },
-          2: { cellWidth: 42 },
-          3: { cellWidth: 70 },
-          4: { cellWidth: 15, halign: "center" },
-          5: { cellWidth: 50 },
-          6: { cellWidth: 32 },
+          0: { cellWidth: 18, halign: "center" },
+          1: { cellWidth: 30, halign: "left" },
+          2: { cellWidth: 26, halign: "center" },
+          3: { cellWidth: 26, halign: "center" },
+          4: { cellWidth: 38, halign: "left" },
+          5: { cellWidth: 32, halign: "left" },
+          6: { cellWidth: 57, halign: "left" },
+          7: { cellWidth: 11, halign: "center" },
+          8: { cellWidth: 35, halign: "center" },
         },
         alternateRowStyles: {
           fillColor: [248, 250, 252],
@@ -2718,12 +2840,12 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
           doc.setTextColor(100, 116, 139);
           doc.text(
             "Documento Oficial de Relatório — Grupo Cassaminha",
-            14,
+            12,
             pageHeight - 7,
           );
           doc.text(
             `Página ${data.pageNumber}`,
-            283,
+            285,
             pageHeight - 7,
             { align: "right" },
           );
@@ -2735,8 +2857,8 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
       const pageHeight = doc.internal.pageSize.getHeight();
 
       // Se não houver espaço suficiente no fim da página para o bloco de assinatura, adiciona nova página
-      const requiredSpace = 32;
-      let sigY = finalY + 8;
+      const requiredSpace = 30;
+      let sigY = finalY + 7;
       if (sigY + requiredSpace > pageHeight - 15) {
         doc.addPage();
         sigY = 20;
@@ -2745,32 +2867,32 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
       // Caixa de Assinatura Oficial
       doc.setDrawColor(203, 213, 225);
       doc.setFillColor(248, 250, 252);
-      doc.roundedRect(14, sigY, 269, 26, 3, 3, "FD");
+      doc.roundedRect(12, sigY, 273, 24, 3, 3, "FD");
 
-      doc.setFontSize(8);
+      doc.setFontSize(7.5);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(30, 41, 59);
-      doc.text("EMPRESA RESPONSÁVEL:", 18, sigY + 7);
+      doc.text("EMPRESA RESPONSÁVEL:", 16, sigY + 6.5);
       doc.setFont("helvetica", "normal");
-      doc.text("Grupo Cassaminha", 62, sigY + 7);
+      doc.text("Grupo Cassaminha", 58, sigY + 6.5);
 
       doc.setFont("helvetica", "bold");
-      doc.text("SISTEMA & PLATAFORMA:", 18, sigY + 13);
+      doc.text("SISTEMA & PLATAFORMA:", 16, sigY + 12);
       doc.setFont("helvetica", "normal");
-      doc.text("Valida C (Gestão Unificada de Encomendas)", 62, sigY + 13);
+      doc.text("Valida C (Gestão Unificada de Encomendas)", 58, sigY + 12);
 
       doc.setFont("helvetica", "bold");
-      doc.text("ASSINATURA / AUTENTICAÇÃO:", 18, sigY + 19);
+      doc.text("ASSINATURA / AUTENTICAÇÃO:", 16, sigY + 17.5);
 
       // Linha de Assinatura
       doc.setLineWidth(0.4);
       doc.setDrawColor(79, 70, 229);
-      doc.line(62, sigY + 19, 170, sigY + 19);
+      doc.line(58, sigY + 17.5, 160, sigY + 17.5);
 
-      doc.setFontSize(7);
+      doc.setFontSize(6.5);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(79, 70, 229);
-      doc.text("Assinatura Autorizada — Grupo Cassaminha", 62, sigY + 23);
+      doc.text("Assinatura Autorizada — Grupo Cassaminha", 58, sigY + 21);
 
       doc.save(`Leads_Grupo_Cassaminha_${new Date().toISOString().split("T")[0]}.pdf`);
     } catch (err) {
@@ -3179,27 +3301,27 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                                 }}
                                 className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-xl transition-colors text-left"
                               >
-                                <FileText size={16} /> Painel de Leads
+                                <FileText size={16} /> Validação de Leads
                               </button>
                               <button
                                 onClick={() => {
                                   setIsDropdownOpen(false);
                                   setView("admin");
-                                  setAdminSubView("encomendas");
+                                  setAdminSubView("prospeccao");
                                 }}
-                                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-xl transition-colors text-left"
+                                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-purple-300 hover:text-white hover:bg-purple-900/40 rounded-xl transition-colors text-left"
                               >
-                                <PackageCheck size={16} /> Gestão de Encomendas
+                                <Sparkles size={16} className="text-amber-300" /> Prospecção com IA
                               </button>
                               <button
                                 onClick={() => {
                                   setIsDropdownOpen(false);
                                   setView("admin");
-                                  setAdminSubView("financeiro");
+                                  setAdminSubView("meta");
                                 }}
-                                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-xl transition-colors text-left"
+                                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-blue-300 hover:text-white hover:bg-blue-900/40 rounded-xl transition-colors text-left"
                               >
-                                <Store size={16} /> Painel Financeiro
+                                <Share2 size={16} className="text-blue-400" /> Conexão Meta (Oficial)
                               </button>
                               <button
                                 onClick={() => {
@@ -5711,421 +5833,51 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
               isDark={isDark}
               onBack={() => setAdminSubView("leads")}
             />
-          ) : adminSubView === "encomendas" ? (
-            <AdminOrdersView
-              isDark={isDark}
-              adminData={adminData}
-              onNavigateSubView={(subView) => setAdminSubView(subView)}
-              updateLeadStatus={updateLeadStatus}
-              onDeleteLead={(lead) => {
-                setLeadToDelete(lead);
-                setModalState("delete-lead-confirm");
-              }}
-              formatKz={formatKz}
-              formatPhoneWithCensorship={formatPhoneWithCensorship}
-              formatPageNameWithCensorship={formatPageNameWithCensorship}
-              isStockLead={isStockLead}
-              getCleanObservacoes={getCleanObservacoes}
-              getLeadPrice={getLeadPrice}
-              normalizeProductName={normalizeProductName}
-              hidePhones={hidePhones}
-              setHidePhones={setHidePhones}
-              handleWhatsAppStockOrder={handleWhatsAppStockOrder}
-              openLeadDetailModal={(lead) => {
-                setSelectedLeadForPreview(lead);
-                setModalState("lead-preview");
-              }}
-              toggleLeadDoubleCheck={toggleLeadDoubleCheck}
-              selectedLeadIds={selectedLeadIds}
-              setSelectedLeadIds={setSelectedLeadIds}
-              isSelectionModeActive={isSelectionModeActive}
-              setIsSelectionModeActive={setIsSelectionModeActive}
-              setModalState={setModalState}
-            />
-          ) : adminSubView === "financeiro" ? (
+          ) : adminSubView === "prospeccao" ? (
             <div className="animate-fadeIn">
-              <div className="mb-4">
-                <button
-                  onClick={() => setAdminSubView("leads")}
-                  className={`flex items-center gap-1.5 text-sm font-bold transition-colors cursor-pointer ${
-                    isDark
-                      ? "text-slate-400 hover:text-white"
-                      : "text-slate-500 hover:text-indigo-600"
-                  }`}
-                >
-                  <ArrowLeft size={16} /> Voltar ao Painel de Leads
-                </button>
-              </div>
-              {/* Standalone Financial Page */}
-              <div className="flex justify-between items-center flex-wrap gap-4 mb-8">
-                <div>
-                  <h1 className="text-3xl font-black text-white flex items-center gap-2 tracking-tight">
-                    <Store className="text-emerald-400" size={28} /> Painel de
-                    Análise Financeira
-                  </h1>
-                  <p className="text-slate-400 mt-1">
-                    Previsões de faturamento e detalhamento real e estimado por
-                    produto
-                  </p>
-                </div>
-
-                {/* Product Selector specifically built for the financial page */}
-                <div className="flex items-center gap-3 flex-wrap">
-                  <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-xl shadow-xl">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
-                      Visualizar Produto:
-                    </span>
-                    <select
-                      value={financeProductFilter}
-                      onChange={(e) => setFinanceProductFilter(e.target.value)}
-                      className="text-sm font-bold text-white bg-transparent focus:outline-none cursor-pointer"
-                    >
-                      <option value="Todos" className="bg-slate-900 text-white">
-                        📦 Todos os Produtos ({adminData.length})
-                      </option>
-                      {uniquePages.map((page, index) => (
-                        <option
-                          key={index}
-                          value={page}
-                          className="bg-slate-900 text-white"
-                        >
-                          🏷️ {formatPageNameWithCensorship(page)} (
-                          {adminData.filter((d) => d.produto === page).length})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {(() => {
-                const filteredDataForFinance =
-                  financeProductFilter === "Todos"
-                    ? adminData
-                    : adminData.filter(
-                        (d) => d.produto === financeProductFilter,
-                      );
-
-                const faturamentoEfetuado = filteredDataForFinance
-                  .filter((d) => d.status === "Entregue" || d.status === "Pago")
-                  .reduce((sum, d) => sum + getLeadPrice(d), 0);
-
-                const countEfetuado = filteredDataForFinance.filter(
-                  (d) => d.status === "Entregue" || d.status === "Pago",
-                ).length;
-
-                const faturamentoReservas = filteredDataForFinance
-                  .filter((d) => d.status && d.status.includes("Reservado"))
-                  .reduce((sum, d) => sum + getLeadPrice(d), 0);
-
-                const countReservas = filteredDataForFinance.filter(
-                  (d) => d.status && d.status.includes("Reservado"),
-                ).length;
-
-                const faturamentoEspera = filteredDataForFinance
-                  .filter((d) => d.status === "Pendente")
-                  .reduce((sum, d) => sum + getLeadPrice(d), 0);
-
-                const countEspera = filteredDataForFinance.filter(
-                  (d) => d.status === "Pendente",
-                ).length;
-
-                const totalFaturamentoGeral =
-                  faturamentoEfetuado + faturamentoReservas + faturamentoEspera;
-                const totalCountGeral =
-                  countEfetuado + countReservas + countEspera;
-
-                return (
-                  <>
-                    {/* Visual warning when filter is applied */}
-                    {financeProductFilter !== "Todos" && (
-                      <div className="mb-6 p-4 bg-slate-900 border border-slate-800 text-slate-100 rounded-2xl flex items-center justify-between shadow-lg">
-                        <div className="flex items-center gap-2.5">
-                          <Sparkles
-                            size={18}
-                            className="text-indigo-400 shrink-0 animate-pulse"
-                          />
-                          <span className="text-sm font-medium text-slate-300">
-                            Filtrado por:{" "}
-                            <strong className="text-white bg-slate-950 px-2 py-1 rounded-md border border-slate-800 ml-1">
-                              {financeProductFilter}
-                            </strong>
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => setFinanceProductFilter("Todos")}
-                          className="text-xs bg-slate-950 hover:bg-slate-850 text-slate-300 border border-slate-800 px-3 py-1.5 font-bold rounded-lg transition-colors cursor-pointer"
-                        >
-                          Limpar Filtro
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Financial stats grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-                      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden group hover:border-slate-700 transition duration-300">
-                        <div className="absolute top-0 right-0 p-3 bg-slate-950 text-emerald-400 rounded-bl-3xl opacity-80 border-l border-b border-slate-800">
-                          <CheckCircle size={22} />
-                        </div>
-                        <div>
-                          <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-2">
-                            💸 Bruto Concluído (Entregues + Pagos)
-                          </span>
-                          <span
-                            className="text-lg sm:text-xl xl:text-2xl font-black text-emerald-400 tracking-tighter block leading-none whitespace-nowrap overflow-hidden text-ellipsis"
-                            title={formatKz(faturamentoEfetuado)}
-                          >
-                            {formatKz(faturamentoEfetuado)}
-                          </span>
-                        </div>
-                        <p className="text-slate-400 text-xs mt-4 pt-4 border-t border-slate-800">
-                          Das{" "}
-                          <span className="text-emerald-400 font-extrabold">
-                            {countEfetuado}
-                          </span>{" "}
-                          encomendas entregues ou pagas com sucesso do produto
-                          selecionado.
-                        </p>
-                      </div>
-
-                      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden group hover:border-slate-700 transition duration-300">
-                        <div className="absolute top-0 right-0 p-3 bg-slate-950 text-indigo-400 rounded-bl-3xl opacity-80 border-l border-b border-slate-800">
-                          <Activity size={22} />
-                        </div>
-                        <div>
-                          <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2">
-                            💎 Possível Faturamento (Reservas)
-                          </span>
-                          <span
-                            className="text-lg sm:text-xl xl:text-2xl font-black text-indigo-400 tracking-tighter block leading-none whitespace-nowrap overflow-hidden text-ellipsis"
-                            title={formatKz(faturamentoReservas)}
-                          >
-                            {formatKz(faturamentoReservas)}
-                          </span>
-                        </div>
-                        <p className="text-slate-400 text-xs mt-4 pt-4 border-t border-slate-800">
-                          Correspondente a{" "}
-                          <span className="text-indigo-400 font-extrabold">
-                            {countReservas}
-                          </span>{" "}
-                          reservas em processamento no sistema.
-                        </p>
-                      </div>
-
-                      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden group hover:border-slate-700 transition duration-300">
-                        <div className="absolute top-0 right-0 p-3 bg-slate-950 text-amber-400 rounded-bl-3xl opacity-80 border-l border-b border-slate-800">
-                          <Timer size={22} />
-                        </div>
-                        <div>
-                          <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest block mb-2">
-                            ⏳ Faturamento Potencial (Em Espera)
-                          </span>
-                          <span
-                            className="text-lg sm:text-xl xl:text-2xl font-black text-amber-400 tracking-tighter block leading-none whitespace-nowrap overflow-hidden text-ellipsis"
-                            title={formatKz(faturamentoEspera)}
-                          >
-                            {formatKz(faturamentoEspera)}
-                          </span>
-                        </div>
-                        <p className="text-slate-400 text-xs mt-4 pt-4 border-t border-slate-800">
-                          Do total de{" "}
-                          <span className="text-amber-400 font-extrabold">
-                            {countEspera}
-                          </span>{" "}
-                          leads comerciais aguardando verificação.
-                        </p>
-                      </div>
-
-                      <div className="bg-gradient-to-br from-indigo-950 to-slate-900 text-white border border-slate-800 rounded-3xl p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-3 bg-white/5 text-emerald-400 rounded-bl-3xl border-l border-b border-slate-800">
-                          <Zap
-                            size={22}
-                            className="text-emerald-400 animate-pulse"
-                          />
-                        </div>
-                        <div>
-                          <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-1">
-                            📊 Total Estimado Potencial
-                          </span>
-                          <span
-                            className="text-lg sm:text-xl xl:text-2xl font-black tracking-tighter block leading-none text-emerald-300 whitespace-nowrap overflow-hidden text-ellipsis"
-                            title={formatKz(totalFaturamentoGeral)}
-                          >
-                            {formatKz(totalFaturamentoGeral)}
-                          </span>
-                        </div>
-                        <p className="text-indigo-350 text-xs mt-4 pt-4 border-t border-indigo-905">
-                          Acumulado total de{" "}
-                          <span className="text-white font-extrabold">
-                            {totalCountGeral}
-                          </span>{" "}
-                          leads do fluxo de faturamento.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Breakdown by Product Table */}
-                    <div className="bg-slate-900 rounded-3xl border border-slate-800 shadow-2xl overflow-hidden mb-10">
-                      <div className="p-6 border-b border-slate-800 flex items-center justify-between flex-wrap gap-2 bg-slate-950/60">
-                        <div>
-                          <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                            <Sparkles
-                              className="text-indigo-400 animate-pulse"
-                              size={20}
-                            />{" "}
-                            Comparação Analítica de Todos os Produtos
-                          </h3>
-                          <p className="text-xs text-slate-400 mt-1">
-                            Previsão e status financeiro discriminado por linha
-                            de produto
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="overflow-x-auto">
-                        <table className="w-full min-w-[900px] border-collapse text-left">
-                          <thead>
-                            <tr className="bg-slate-950 border-b border-slate-800 text-slate-400 font-mono text-[10px] font-bold uppercase tracking-wider">
-                              <th className="px-6 py-4">
-                                Produto / Landing Page
-                              </th>
-                              <th className="px-5 py-4 text-center">
-                                Quant. Leads
-                              </th>
-                              <th className="px-5 py-4 text-center">
-                                Pendentes (⏳)
-                              </th>
-                              <th className="px-5 py-4 text-center">
-                                Reservados (💎)
-                              </th>
-                              <th className="px-5 py-4 text-center">
-                                Entregues ou Pagos (💸)
-                              </th>
-                              <th className="px-6 py-4 text-right">
-                                Faturamento Concluído
-                              </th>
-                              <th className="px-6 py-4 text-right">
-                                Total Estimado
-                              </th>
-                              <th className="px-6 py-4 text-center">Ações</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-800">
-                            {uniquePages.map((prod, index) => {
-                              const leadsForProd = adminData.filter(
-                                (d) => d.produto === prod,
-                              );
-                              const pendentesForProd = leadsForProd.filter(
-                                (d) => d.status === "Pendente",
-                              );
-                              const reservadosForProd = leadsForProd.filter(
-                                (d) =>
-                                  d.status && d.status.includes("Reservado"),
-                              );
-                              const entreguesForProd = leadsForProd.filter(
-                                (d) =>
-                                  d.status === "Entregue" ||
-                                  d.status === "Pago",
-                              );
-
-                              const brutoProd = entreguesForProd.reduce(
-                                (sum, d) => sum + getLeadPrice(d),
-                                0,
-                              );
-                              const previstoProd = reservadosForProd.reduce(
-                                (sum, d) => sum + getLeadPrice(d),
-                                0,
-                              );
-                              const pendenteValProd = pendentesForProd.reduce(
-                                (sum, d) => sum + getLeadPrice(d),
-                                0,
-                              );
-
-                              const totalProdVal =
-                                brutoProd + previstoProd + pendenteValProd;
-
-                              const isSelected = financeProductFilter === prod;
-
-                              return (
-                                <tr
-                                  key={index}
-                                  className={`transition-colors text-sm ${isSelected ? "bg-indigo-950/40 hover:bg-slate-800 text-white" : "hover:bg-slate-800 text-slate-300"}`}
-                                >
-                                  <td className="px-6 py-4 font-bold text-white">
-                                    <div className="flex items-center gap-2">
-                                      <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 shrink-0" />
-                                      {formatPageNameWithCensorship(prod)}
-                                    </div>
-                                  </td>
-                                  <td className="px-5 py-4 text-center font-bold text-slate-600">
-                                    {leadsForProd.length}
-                                  </td>
-                                  <td className="px-5 py-4 text-center">
-                                    <div className="inline-flex flex-col items-center">
-                                      <span className="font-bold text-amber-400">
-                                        {pendentesForProd.length}
-                                      </span>
-                                      <span className="text-[10px] text-slate-400 font-mono">
-                                        {formatKz(pendenteValProd)}
-                                      </span>
-                                    </div>
-                                  </td>
-                                  <td className="px-5 py-4 text-center">
-                                    <div className="inline-flex flex-col items-center">
-                                      <span className="font-bold text-indigo-400">
-                                        {reservadosForProd.length}
-                                      </span>
-                                      <span className="text-[10px] text-slate-400 font-mono">
-                                        {formatKz(previstoProd)}
-                                      </span>
-                                    </div>
-                                  </td>
-                                  <td className="px-5 py-4 text-center">
-                                    <div className="inline-flex flex-col items-center">
-                                      <span className="font-bold text-emerald-400">
-                                        {entreguesForProd.length}
-                                      </span>
-                                      <span className="text-[10px] text-slate-400 font-mono">
-                                        {formatKz(brutoProd)}
-                                      </span>
-                                    </div>
-                                  </td>
-                                  <td className="px-6 py-4 text-right font-black text-emerald-400 font-mono">
-                                    {formatKz(brutoProd)}
-                                  </td>
-                                  <td className="px-6 py-4 text-right font-black text-white font-mono bg-slate-950/40">
-                                    {formatKz(totalProdVal)}
-                                  </td>
-                                  <td className="px-6 py-4 text-center">
-                                    <button
-                                      onClick={() =>
-                                        setFinanceProductFilter(prod)
-                                      }
-                                      className={`px-3 py-1.5 bg-slate-900 border rounded-lg text-xs font-bold transition cursor-pointer ${
-                                        isSelected
-                                          ? "border-indigo-500 text-indigo-400 shadow-xl bg-slate-950"
-                                          : "border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
-                                      }`}
-                                    >
-                                      {isSelected
-                                        ? "✓ Selecionado"
-                                        : "⚡ Isolar Produto"}
-                                    </button>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </>
-                );
-              })()}
+              <AdminSubNav
+                currentSubView={adminSubView}
+                onNavigateSubView={(subView) => setAdminSubView(subView)}
+                hidePhones={hidePhones}
+                onToggleHidePhones={() => setHidePhones(!hidePhones)}
+                onOpenExport={() => setIsExportModalOpen(true)}
+                leadsCount={adminData.length}
+              />
+              <AiProspectingView
+                isDark={isDark}
+                onImportLeadsToCrm={handleImportProspectLeads}
+                onTriggerWhatsApp={(lead, type) => {
+                  const cleanPhone = formatWhatsAppPhone(lead.phone);
+                  setWhatsAppModalData({
+                    isOpen: true,
+                    lead,
+                    type: "reserva",
+                    title: `Contacto Comercial — ${lead.name}`,
+                    messageText:
+                      lead.suggestedPitch ||
+                      `Olá ${lead.name}! Entramos em contacto da Valida C para apresentar soluções para o seu negócio.`,
+                    recipientPhone: cleanPhone,
+                    recipientName: lead.name,
+                  });
+                }}
+                formatPhoneWithCensorship={formatPhoneWithCensorship}
+              />
+            </div>
+          ) : adminSubView === "meta" ? (
+            <div className="animate-fadeIn">
+              <AdminSubNav
+                currentSubView={adminSubView}
+                onNavigateSubView={(subView) => setAdminSubView(subView)}
+                hidePhones={hidePhones}
+                onToggleHidePhones={() => setHidePhones(!hidePhones)}
+                onOpenExport={() => setIsExportModalOpen(true)}
+                leadsCount={adminData.length}
+              />
+              <MetaConnectionHub isDark={isDark} />
             </div>
           ) : (
             <>
-              <div className="mb-8 block">
+              <div className="mb-6 block">
                 <button
                   onClick={() => setView("pages")}
                   className={`flex items-center gap-1.5 text-sm font-medium mb-4 transition-colors ${isDark ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-indigo-600"}`}
@@ -6140,1273 +5892,97 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                   onOpenExport={() => setIsExportModalOpen(true)}
                   leadsCount={adminData.length}
                 />
-                <div className="flex justify-between items-center flex-wrap gap-4 mb-4">
-                  <div>
-                    <h1
-                      className={`text-2xl sm:text-3xl font-bold ${isDark ? "text-white" : "text-slate-900"}`}
-                    >
-                      Painel de Leads
-                    </h1>
-                    <p
-                      className={`mt-1 text-xs sm:text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}
-                    >
-                      Gestão de Reservas
-                    </p>
-                  </div>
-                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-                <div
-                  className={`p-6 rounded-2xl border relative overflow-hidden transition-all duration-300 ${isDark ? "bg-slate-900 border-slate-800 text-white shadow-2xl" : "bg-white border-amber-200 text-slate-800 shadow-sm"}`}
-                >
-                  <div className="absolute top-0 right-0 p-4 opacity-10">
-                    <Activity size={64} />
-                  </div>
-                  <p className="text-sm text-amber-600 font-bold uppercase tracking-wider">
-                    Pendentes
-                  </p>
-                  <p
-                    className={`text-4xl font-black mt-2 ${isDark ? "text-white" : "text-slate-900"}`}
-                  >
-                    {
-                      leadsForMetrics.filter((d) => d.status === "Pendente")
-                        .length
-                    }
-                  </p>
-                </div>
-                <div
-                  className={`p-6 rounded-2xl border relative overflow-hidden transition-all duration-300 ${isDark ? "bg-slate-900 border-slate-800 text-white shadow-2xl" : "bg-white border-emerald-200 text-slate-800 shadow-sm"}`}
-                >
-                  <div className="absolute top-0 right-0 p-4 opacity-10 text-emerald-500">
-                    <CheckCircle size={64} />
-                  </div>
-                  <p className="text-sm text-emerald-600 font-bold uppercase tracking-wider">
-                    Leads
-                  </p>
-                  <p
-                    className={`text-4xl font-black mt-2 ${isDark ? "text-white" : "text-slate-900"}`}
-                  >
-                    {
-                      leadsForMetrics.filter(
-                        (d) => d.status && d.status.includes("Reservado"),
-                      ).length
-                    }
-                  </p>
-                </div>
-                <div
-                  className={`p-6 rounded-2xl border relative overflow-hidden transition-all duration-300 ${isDark ? "bg-slate-900 border-slate-800 text-white shadow-2xl" : "bg-white border-teal-200 text-slate-800 shadow-sm"}`}
-                >
-                  <div className="absolute top-0 right-0 p-4 opacity-10 text-teal-500">
-                    <PackageOpen size={64} />
-                  </div>
-                  <p className="text-sm text-teal-600 font-bold uppercase tracking-wider">
-                    Qtd. Reservada
-                  </p>
-                  <p
-                    className={`text-4xl font-black mt-2 ${isDark ? "text-white" : "text-slate-900"}`}
-                  >
-                    {
-                      leadsForMetrics
-                        .filter(
-                          (d) => d.status && (d.status.includes("Reservado") || d.status === "Entregue" || d.status === "Pago"),
-                        )
-                        .reduce(
-                          (sum, d) =>
-                            sum +
-                            (Number(d.quantity) ||
-                              Number(d.qtd) ||
-                              Number(d.quantidade) ||
-                              1),
-                          0,
-                        )
-                    }
-                  </p>
-                </div>
-                <div
-                  className={`p-6 rounded-2xl border relative overflow-hidden transition-all duration-300 ${isDark ? "bg-slate-900 border-slate-800 text-white shadow-2xl" : "bg-white border-indigo-200 text-slate-800 shadow-sm"}`}
-                >
-                  <div className="absolute top-0 right-0 p-4 opacity-10 text-indigo-500">
-                    <Activity size={64} />
-                  </div>
-                  <p className="text-sm text-indigo-600 font-bold uppercase tracking-wider">
-                    Taxa de Conversão
-                  </p>
-                  <p
-                    className={`text-4xl font-black mt-2 ${isDark ? "text-white" : "text-slate-900"}`}
-                  >
-                    {conversionRate}%
-                  </p>
-                  <div className="w-full bg-slate-205 dark:bg-slate-950/40 h-2 rounded-full mt-3 overflow-hidden">
-                    <div
-                      className="bg-indigo-500 h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${Math.min(100, parseFloat(conversionRate) || 85)}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-                <div
-                  className={`p-6 rounded-2xl border relative overflow-hidden transition-all duration-300 ${isDark ? "bg-slate-900 border-slate-800 text-white shadow-2xl" : "bg-white border-red-200 text-slate-800 shadow-sm"}`}
-                >
-                  <div className="absolute top-0 right-0 p-4 opacity-10 text-red-500">
-                    <XCircle size={64} />
-                  </div>
-                  <p className="text-sm text-red-600 font-bold uppercase tracking-wider">
-                    Rejeitados
-                  </p>
-                  <p
-                    className={`text-4xl font-black mt-2 ${isDark ? "text-white" : "text-slate-900"}`}
-                  >
-                    {
-                      leadsForMetrics.filter((d) => d.status === "Rejeitado")
-                        .length
-                    }
-                  </p>
-                </div>
-              </div>
+              {/* Modern CRM Pipeline & Qualification Funnel */}
+              <CrmPipelineView
+                isDark={isDark}
+                leads={adminData}
+                onUpdateStatus={updateLeadStatus}
+                onDeleteLead={(lead) => {
+                  setLeadToDelete(lead);
+                  setModalState("delete-lead-confirm");
+                }}
+                onOpenLeadDetail={(lead) => {
+                  setSelectedDrawerLead(lead);
+                  setIsDrawerOpen(true);
+                }}
+                onTriggerWhatsApp={(lead, type) => {
+                  const cleanPhone = formatWhatsAppPhone(lead.phone);
+                  const text =
+                    type === "entrega"
+                      ? getWhatsAppDeliveryText(lead)
+                      : type === "pendente"
+                        ? getWhatsAppPendingText(lead)
+                        : getWhatsAppReservationText(lead);
+                  setWhatsAppModalData({
+                    isOpen: true,
+                    lead,
+                    type,
+                    title:
+                      type === "entrega"
+                        ? "Confirmar Entrega"
+                        : type === "pendente"
+                          ? "Recuperar Lead Pendente"
+                          : "Confirmar Reserva",
+                    messageText: text,
+                    recipientPhone: cleanPhone,
+                    recipientName: lead.name || "Cliente",
+                  });
+                }}
+                formatKz={formatKz}
+                hidePhones={hidePhones}
+                formatPhoneWithCensorship={formatPhoneWithCensorship}
+                formatPageNameWithCensorship={formatPageNameWithCensorship}
+                availableProducts={crmAvailableProducts}
+                selectedProductFilter={crmProductFilter}
+                onSelectProductFilter={setCrmProductFilter}
+                onOpenExport={() => setIsExportModalOpen(true)}
+              />
 
-              <div
-                className={`p-4 rounded-2xl border mb-6 flex flex-col md:flex-row gap-4 items-center transition-all duration-300 ${isDark ? "bg-slate-900 border-slate-800 shadow-2xl" : "bg-white border-slate-200 shadow-sm"}`}
-              >
-                <div className="relative flex-grow w-full md:w-auto">
-                  <Search
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                    size={18}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Pesquisar por nome, telefone ou endereço..."
-                    className={`w-full pl-10 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${isDark ? "bg-slate-950 border-slate-800 text-white placeholder:text-slate-500" : "bg-slate-50 border-slate-200 text-slate-750"}`}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-                  <div className="relative min-w-[140px] shrink-0">
-                    <Filter
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                      size={16}
-                    />
-                    <select
-                      className={`w-full pl-9 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none text-sm cursor-pointer transition-colors ${isDark ? "bg-slate-950 border-slate-800 text-white" : "bg-slate-50 border-slate-200 text-slate-750"}`}
-                      value={timeRangeFilter}
-                      onChange={(e) => setTimeRangeFilter(e.target.value)}
-                    >
-                      <option
-                        value="Tudo"
-                        className={isDark ? "bg-slate-900 text-white" : ""}
-                      >
-                        Qualquer Data
-                      </option>
-                      <option
-                        value="Hoje"
-                        className={isDark ? "bg-slate-900 text-white" : ""}
-                      >
-                        Hoje
-                      </option>
-                      <option
-                        value="Últimos 7 Dias"
-                        className={isDark ? "bg-slate-900 text-white" : ""}
-                      >
-                        Últimos 7 Dias
-                      </option>
-                      <option
-                        value="Este Mês"
-                        className={isDark ? "bg-slate-900 text-white" : ""}
-                      >
-                        Este Mês
-                      </option>
-                    </select>
-                  </div>
-                  <div className="relative min-w-[140px] shrink-0">
-                    <Filter
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                      size={16}
-                    />
-                    <select
-                      className={`w-full pl-9 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none text-sm cursor-pointer transition-colors ${isDark ? "bg-slate-950 border-slate-800 text-white" : "bg-slate-50 border-slate-200 text-slate-750"}`}
-                      value={filterStatus}
-                      onChange={(e) => setFilterStatus(e.target.value)}
-                    >
-                      <option
-                        value="Todos"
-                        className={isDark ? "bg-slate-900 text-white" : ""}
-                      >
-                        Todos os Status
-                      </option>
-                      <option
-                        value="Pendente"
-                        className={isDark ? "bg-slate-900 text-white" : ""}
-                      >
-                        Pendentes
-                      </option>
-                      <option
-                        value="Reservado"
-                        className={isDark ? "bg-slate-900 text-white" : ""}
-                      >
-                        Reservados
-                      </option>
-                      <option
-                        value="Rejeitado"
-                        className={isDark ? "bg-slate-900 text-white" : ""}
-                      >
-                        Rejeitados
-                      </option>
-                      <option
-                        value="Entregue"
-                        className={isDark ? "bg-slate-900 text-white" : ""}
-                      >
-                        Entregues
-                      </option>
-                      <option
-                        value="Tentativa Falhada"
-                        className={isDark ? "bg-slate-900 text-white" : ""}
-                      >
-                        Tentativas Falhadas
-                      </option>
-                      <option
-                        value="Cancelado"
-                        className={isDark ? "bg-slate-900 text-white" : ""}
-                      >
-                        Cancelados
-                      </option>
-                    </select>
-                  </div>
-                  <input
-                    type="date"
-                    className={`px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm shrink-0 cursor-pointer transition-colors ${isDark ? "bg-slate-950 border-slate-800 text-white" : "bg-slate-50 border-slate-200 text-slate-750"}`}
-                    value={filterDate}
-                    onChange={(e) => setFilterDate(e.target.value)}
-                  />
-
-                  {/* SELECTOR NATIVO DE PÁGINAS INDIVIDUAIS */}
-                  <div className="relative min-w-[180px] shrink-0">
-                    <Filter
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10"
-                      size={16}
-                    />
-                    <select
-                      className={`w-full pl-9 pr-8 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none text-sm cursor-pointer transition-colors font-medium ${
-                        isDark
-                          ? "bg-slate-950 border-slate-800 text-white"
-                          : "bg-slate-50 border-slate-200 text-slate-750"
-                      }`}
-                      value={filterProduct}
-                      onChange={(e) => {
-                        setFilterProduct(e.target.value);
-                        setSelectedPagesFilter([]);
-                      }}
-                    >
-                      <option value="" className={isDark ? "bg-slate-900 text-white" : ""}>
-                        📄 Todas as Páginas
-                      </option>
-                      {uniquePages.map((page, index) => {
-                        const count = adminData.filter((l) => l.produto === page).length;
-                        return (
-                          <option
-                            key={index}
-                            value={page}
-                            className={isDark ? "bg-slate-900 text-white" : ""}
-                          >
-                            📄 {formatPageNameWithCensorship(page)} {count > 0 ? `(${count})` : ""}
-                          </option>
-                        );
-                      })}
-                    </select>
-                    <ChevronDown
-                      size={14}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* BARRA DE AÇÕES EM GRUPO (BULK SELECTION TOOLBAR) */}
-              {(isSelectionModeActive || selectedLeadIds.length > 0) && (
-                <div className="bg-gradient-to-r from-indigo-900 to-slate-900 border border-indigo-700/80 p-3.5 px-5 mb-6 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xl text-white">
-                  <div className="flex items-center gap-3 font-bold text-sm">
-                    <span className="w-7 h-7 rounded-xl bg-indigo-500 text-white flex items-center justify-center text-xs font-black shadow-inner">
-                      {selectedLeadIds.length}
-                    </span>
-                    <span>lead(s) selecionado(s) para ação em grupo</span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      onClick={() => {
-                        const pageIds = displayedLeads.map((l) => l.id);
-                        setSelectedLeadIds(
-                          Array.from(new Set([...selectedLeadIds, ...pageIds])),
-                        );
-                      }}
-                      className="px-3.5 py-2 bg-indigo-800/80 hover:bg-indigo-700 text-indigo-100 text-xs font-semibold rounded-xl transition cursor-pointer border border-indigo-600/50"
-                    >
-                      Selecionar Todos ({displayedLeads.length})
-                    </button>
-                    {selectedLeadIds.length > 0 && (
-                      <button
-                        onClick={() => setModalState("delete-bulk-confirm")}
-                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-black rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95"
-                      >
-                        <Trash2 size={15} />
-                        <span>Eliminar Selecionados ({selectedLeadIds.length})</span>
-                      </button>
-                    )}
-                    <button
-                      onClick={() => {
-                        setSelectedLeadIds([]);
-                        setIsSelectionModeActive(false);
-                      }}
-                      className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl transition cursor-pointer border border-slate-700"
-                    >
-                      Sair da Seleção
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* PRODUCT STAGE EVOLUTION BANNER (when filtering by product or for active product) */}
-              {(() => {
-                const currentFilteredProd = PRODUCTS_LIST.find(
-                  (p) =>
-                    p.title.toLowerCase() === filterProduct.toLowerCase() ||
-                    p.id === filterProduct ||
-                    filterProduct.toLowerCase().includes(p.title.toLowerCase()),
-                );
-                if (!currentFilteredProd) return null;
-                const prodInfo = getProductValidationInfo(currentFilteredProd.id);
-
-                return (
-                  <div
-                    className={`p-4 rounded-2xl mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border shadow-xl transition-all ${
-                      prodInfo.isStockStage
-                        ? "bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 border-blue-500/40"
-                        : "bg-gradient-to-r from-slate-900 via-indigo-950/80 to-slate-900 border-indigo-500/30"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3.5">
-                      <div
-                        className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 border ${
-                          prodInfo.isStockStage
-                            ? "bg-blue-500/20 text-cyan-300 border-blue-400/40 shadow-inner"
-                            : "bg-indigo-500/20 text-indigo-300 border-indigo-400/40"
-                        }`}
-                      >
-                        {prodInfo.isStockStage ? (
-                          <PackageCheck size={22} />
-                        ) : (
-                          <Rocket size={22} />
-                        )}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-black text-white">
-                            {currentFilteredProd.title}
-                          </span>
-                          <span
-                            className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
-                              prodInfo.isStockStage
-                                ? "bg-blue-500/20 text-cyan-300 border-blue-400/40"
-                                : "bg-indigo-500/20 text-indigo-300 border-indigo-400/40"
-                            }`}
-                          >
-                            {prodInfo.isStockStage
-                              ? "📦 Encomendas em Stock (Entrega Imediata)"
-                              : "🧪 Teste & Validação de Pré-Venda"}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-300 mt-1 max-w-2xl">
-                          {prodInfo.isStockStage
-                            ? "Este produto evoluiu para encomendas em stock. Suas reservas tornaram-se entregas imediatas com período e data agendados."
-                            : "Este produto está na fase de teste/pré-reserva. Clique no botão ao lado para evoluir imediatamente para encomendas em stock."}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => toggleProductStage(currentFilteredProd.id)}
-                        className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shadow-md active:scale-95 whitespace-nowrap ${
-                          prodInfo.isStockStage
-                            ? "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
-                            : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-500/25"
-                        }`}
-                      >
-                        {prodInfo.isStockStage ? (
-                          <>
-                            <RefreshCw size={13} />
-                            <span>Reverter para Modo Teste</span>
-                          </>
-                        ) : (
-                          <>
-                            <Rocket size={14} />
-                            <span>Evoluir para Encomendas em Stock</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* SECTIONS / SESSÕES DE LEADS */}
-              <div className="flex bg-slate-900 border border-slate-800 p-1.5 rounded-2xl mb-6 gap-1.5 w-full sm:w-max shadow-xl flex-wrap">
-                <button
-                  onClick={() => setAdminListTab("geral")}
-                  className={`px-4 py-2.5 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                    adminListTab === "geral"
-                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/15"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800"
-                  }`}
-                >
-                  <FileText size={16} />
-                  <span>
-                    📋 Painel Geral (
-                    {
-                      filteredData.filter(
-                        (d) => d.status !== "Entregue" && d.status !== "Pago",
-                      ).length
-                    }
-                    )
-                  </span>
-                </button>
-                <button
-                  onClick={() => setAdminListTab("arquivados")}
-                  className={`px-4 py-2.5 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                    adminListTab === "arquivados"
-                      ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/15"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800"
-                  }`}
-                >
-                  <PackageOpen size={16} />
-                  <span>
-                    💸 Pagos ou Entregues (
-                    {
-                      filteredData.filter(
-                        (d) => d.status === "Entregue" || d.status === "Pago",
-                      ).length
-                    }
-                    )
-                  </span>
-                </button>
-              </div>
-
-              <div
-                className={`${isDark ? "bg-slate-900 border-slate-800 shadow-2xl" : "bg-white border-slate-200 shadow-sm"} rounded-2xl border overflow-hidden transition-all duration-300`}
-              >
-                {isAdminLoading ? (
-                  <div className="p-12 text-center text-slate-500 flex flex-col items-center">
-                    <Loader2 className="animate-spin mb-4" size={32} />
-                    <p>A sincronizar com a base de dados...</p>
-                  </div>
-                ) : adminError ? (
-                  <div
-                    className={`p-8 pb-10 text-center rounded-2xl m-4 flex flex-col items-center gap-3 border ${isDark ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200"}`}
-                  >
-                    <TriangleAlert className="text-amber-500" size={40} />
-                    <div className="max-w-md">
-                      <p
-                        className={`font-bold text-base ${isDark ? "text-slate-200" : "text-slate-800"}`}
-                      >
-                        Problema de Ligação ou Sincronização
-                      </p>
-                      <p
-                        className={`text-xs font-mono mt-1 p-2 rounded-lg border overflow-x-auto truncate max-w-lg ${isDark ? "bg-slate-900 border-slate-805 text-slate-300" : "bg-slate-100 border-slate-200 text-slate-400"}`}
-                      >
-                        {adminError}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => loadAdminData()}
-                      className="mt-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl transition shadow-sm cursor-pointer flex items-center gap-2"
-                    >
-                      <RefreshCw size={14} />
-                      Tentar Novamente / Sincronizar
-                    </button>
-                  </div>
-                ) : displayedLeads.length === 0 ? (
-                  <div className="p-12 text-center text-slate-500">
-                    Nenhum lead encontrado nesta sessão com os filtros actuais.
-                  </div>
-                ) : (
-                  <>
-                    {/* MOBILE CARDS VIEW (For Phone Access) */}
-                    <div className="block md:hidden divide-y divide-slate-800">
-                      {displayedLeads.map((lead, i) => {
-                        const isSelected = selectedLeadIds.includes(lead.id);
-                        const level = typeof lead.verificationLevel === "number"
-                          ? lead.verificationLevel
-                          : (lead.doubleCheck || lead.verified2x)
-                            ? 2
-                            : (lead.singleCheck || lead.verified1x)
-                              ? 1
-                              : 0;
-
-                        return (
-                          <div
-                            key={lead.id || i}
-                            className={`p-4 transition-colors space-y-3 ${
-                              isSelected
-                                ? isDark
-                                  ? "bg-indigo-950/40 border-l-4 border-l-indigo-500"
-                                  : "bg-indigo-50/60 border-l-4 border-l-indigo-500"
-                                : isDark
-                                  ? "bg-slate-900"
-                                  : "bg-white"
-                            }`}
-                          >
-                            {/* Top Header */}
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="checkbox"
-                                  className="w-5 h-5 rounded border-slate-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                                  checked={isSelected}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setSelectedLeadIds([...selectedLeadIds, lead.id]);
-                                    } else {
-                                      setSelectedLeadIds(selectedLeadIds.filter((id) => id !== lead.id));
-                                    }
-                                  }}
-                                />
-                                <span className="text-xs text-slate-400 font-medium">
-                                  📅 {lead.timestamp ? new Date(lead.timestamp).toLocaleDateString() : "N/A"}
-                                </span>
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleLeadDoubleCheck(lead.id, level);
-                                }}
-                                className={`px-2 py-1 rounded-lg border text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
-                                  level === 2
-                                    ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-                                    : level === 1
-                                      ? "bg-amber-500/20 text-amber-400 border-amber-500/40"
-                                      : "bg-slate-800 text-slate-400 border-slate-700"
-                                }`}
-                              >
-                                {level === 2 ? (
-                                  <><CheckCheck size={14} /> 2x</>
-                                ) : level === 1 ? (
-                                  <><Check size={14} /> 1x</>
-                                ) : (
-                                  <><Check size={14} className="opacity-40" /> 0x</>
-                                )}
-                              </button>
-                            </div>
-
-                            {/* Lead Info */}
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="space-y-1">
-                                <h3 className={`font-bold text-base leading-snug ${isDark ? "text-white" : "text-slate-900"}`}>
-                                  {lead.name}
-                                </h3>
-                                <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
-                                  <Phone size={13} className="text-slate-400 shrink-0" />
-                                  <a href={`tel:${lead.phone}`} className="hover:underline text-indigo-400 font-bold">
-                                    {formatPhoneWithCensorship(lead.phone)}
-                                  </a>
-                                </div>
-                                <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                                  <MapPin size={13} className="text-rose-400 shrink-0" />
-                                  <span>{lead.province || "Luanda"}</span>
-                                </div>
-                              </div>
-
-                              <div className="text-right shrink-0">
-                                <span className="text-xs font-extrabold px-2 py-1 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-lg inline-block">
-                                  Qtd: {lead.quantity || 1}
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Product & Delivery info */}
-                            <div className={`p-2.5 rounded-xl border text-xs ${isDark ? "bg-slate-950/60 border-slate-800/80 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-700"}`}>
-                              <div className="font-bold flex items-center gap-1.5 flex-wrap">
-                                <span>📦 {formatPageNameWithCensorship(lead.produto || "Secador Inteligente UV")}</span>
-                                {isStockLead(lead) && (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                                    <PackageCheck size={11} /> Stock
-                                  </span>
-                                )}
-                              </div>
-                              {(lead.deliveryDate || lead.deliveryPeriod) && (
-                                <div className="text-[11px] font-semibold text-emerald-400 mt-1 flex items-center gap-1">
-                                  📅 {lead.deliveryDate ? (lead.deliveryDate.includes("-") ? lead.deliveryDate.split("-").reverse().join("/") : lead.deliveryDate) : "A combinar"}
-                                  {lead.deliveryPeriod ? ` • ${lead.deliveryPeriod.split(" (")[0]}` : ""}
-                                </div>
-                              )}
-                              {lead.observacoes && (
-                                <div className="text-[11px] text-slate-400 mt-1 italic">
-                                  "{getCleanObservacoes(lead)}"
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Status Dropdown */}
-                            <div>
-                              <select
-                                value={lead.status}
-                                onChange={(e) => updateLeadStatus(lead.id, e.target.value)}
-                                className={`w-full text-xs font-bold rounded-xl px-3 py-2 border focus:outline-none cursor-pointer ${
-                                  lead.status?.includes("Reservado")
-                                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-                                    : lead.status === "Rejeitado"
-                                      ? "bg-red-500/20 text-red-300 border-red-500/40"
-                                      : lead.status === "Entregue"
-                                        ? "bg-blue-500/20 text-blue-300 border-blue-500/40"
-                                        : lead.status === "Cancelado"
-                                          ? "bg-slate-800 text-slate-400 border-slate-700"
-                                          : lead.status === "Tentativa Falhada"
-                                            ? "bg-orange-500/20 text-orange-300 border-orange-500/40"
-                                            : "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                                }`}
-                              >
-                                <option value="Pendente" className="bg-slate-900 text-slate-200">⏳ Pendente</option>
-                                <option value="Reservado" className="bg-slate-900 text-emerald-300">✅ Reservado</option>
-                                <option value="Rejeitado" className="bg-slate-900 text-red-300">❌ Rejeitado</option>
-                                <option value="Entregue" className="bg-slate-900 text-blue-300">📦 Entregue</option>
-                                <option value="Tentativa Falhada" className="bg-slate-900 text-orange-300">⚠️ Tentativa Falhada</option>
-                                <option value="Cancelado" className="bg-slate-900 text-slate-400">🚫 Cancelado</option>
-                              </select>
-                            </div>
-
-                             {/* Action Buttons */}
-                            <div className="grid grid-cols-3 gap-2 pt-1">
-                              <button
-                                onClick={() => {
-                                  setSelectedLeadForPreview(lead);
-                                  setModalState("lead-preview");
-                                }}
-                                className="flex items-center justify-center gap-1.5 p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer text-xs font-bold"
-                              >
-                                <Eye size={14} /> Detalhes
-                              </button>
-                              <button
-                                onClick={() => {
-                                  if (isStockLead(lead)) {
-                                    handleWhatsAppStockOrder(lead);
-                                  } else {
-                                    handleWhatsAppReservation(lead);
-                                  }
-                                }}
-                                className="flex items-center justify-center gap-1.5 p-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/40 transition cursor-pointer text-xs font-bold"
-                                title="Opções de mensagem WhatsApp"
-                              >
-                                <MessageSquare size={14} /> WhatsApp
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setLeadToDelete(lead);
-                                  setModalState("delete-lead-confirm");
-                                }}
-                                className="flex items-center justify-center gap-1.5 p-2 rounded-xl bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-800/40 transition cursor-pointer text-xs font-bold"
-                              >
-                                <Trash2 size={14} /> Eliminar
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* DESKTOP TABLE VIEW */}
-                    <div className="hidden md:block overflow-x-auto min-h-[400px] pb-56">
-                      <table
-                        className={`min-w-full divide-y ${isDark ? "divide-slate-800" : "divide-slate-100"}`}
-                      >
-                        <thead
-                          className={isDark ? "bg-slate-950" : "bg-slate-50"}
-                        >
-                          <tr>
-                            {(isSelectionModeActive || selectedLeadIds.length > 0) && (
-                              <th className="px-4 py-4 w-10 text-center">
-                                <input
-                                  type="checkbox"
-                                  className="w-4 h-4 rounded border-slate-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                                  checked={
-                                    displayedLeads.length > 0 &&
-                                    displayedLeads.every((l) =>
-                                      selectedLeadIds.includes(l.id),
-                                    )
-                                  }
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      const pageIds = displayedLeads.map((l) => l.id);
-                                      setSelectedLeadIds(
-                                        Array.from(
-                                          new Set([...selectedLeadIds, ...pageIds]),
-                                        ),
-                                      );
-                                    } else {
-                                      const pageIds = new Set(
-                                        displayedLeads.map((l) => l.id),
-                                      );
-                                      setSelectedLeadIds(
-                                        selectedLeadIds.filter(
-                                          (id) => !pageIds.has(id),
-                                        ),
-                                      );
-                                    }
-                                  }}
-                                  title="Selecionar todos os visíveis"
-                                />
-                              </th>
-                            )}
-                            <th
-                              className={`px-6 py-4 text-left text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-slate-500"}`}
-                            >
-                              Data
-                            </th>
-                            <th
-                              className={`px-6 py-4 text-left text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-slate-500"}`}
-                            >
-                              Nome
-                            </th>
-                            <th
-                              className={`px-6 py-4 text-left text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-slate-500"}`}
-                            >
-                              WhatsApp
-                            </th>
-                            <th
-                              className={`px-6 py-4 text-left text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-slate-500"}`}
-                            >
-                              Produto
-                            </th>
-                            <th
-                              className={`px-6 py-4 text-left text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-slate-500"}`}
-                            >
-                              Qtd
-                            </th>
-                            <th
-                              className={`px-6 py-4 text-left text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-slate-500"}`}
-                            >
-                              PROVÍNCIA
-                            </th>
-                            <th
-                              className={`px-6 py-4 text-left text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-slate-500"}`}
-                            >
-                              Status
-                            </th>
-                            <th
-                              className={`px-6 py-4 text-center text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-slate-500"}`}
-                            >
-                              Verificado
-                            </th>
-                            <th
-                              className={`px-6 py-4 text-right text-xs font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-slate-500"}`}
-                            >
-                              Ações
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody
-                          className={`divide-y ${isDark ? "bg-slate-900 divide-slate-800" : "bg-white divide-slate-100"}`}
-                        >
-                          {displayedLeads.map((lead, i) => (
-                            <tr
-                              key={i}
-                              className={`transition-colors border-b ${
-                                selectedLeadIds.includes(lead.id)
-                                  ? isDark
-                                    ? "bg-indigo-950/40 border-indigo-900/50"
-                                    : "bg-indigo-50/60 border-indigo-100"
-                                  : isDark
-                                    ? "hover:bg-slate-800/40 border-slate-800/40"
-                                    : "hover:bg-slate-50 border-slate-100/50"
-                              }`}
-                            >
-                              {(isSelectionModeActive || selectedLeadIds.length > 0) && (
-                                <td className="px-4 py-4 w-10 text-center">
-                                  <input
-                                    type="checkbox"
-                                    className="w-4 h-4 rounded border-slate-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                                    checked={selectedLeadIds.includes(lead.id)}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        setSelectedLeadIds([...selectedLeadIds, lead.id]);
-                                      } else {
-                                        setSelectedLeadIds(
-                                          selectedLeadIds.filter((id) => id !== lead.id),
-                                        );
-                                      }
-                                    }}
-                                  />
-                                </td>
-                              )}
-                              <td className="px-6 py-4 whitespace-nowrap text-xs text-slate-450">
-                                {lead.timestamp
-                                  ? new Date(
-                                      lead.timestamp,
-                                    ).toLocaleDateString()
-                                  : "N/A"}
-                              </td>
-                              <td
-                                className={`px-6 py-4 whitespace-nowrap text-sm font-bold ${isDark ? "text-white" : "text-slate-900"}`}
-                              >
-                                {lead.name}
-                              </td>
-                              <td
-                                className={`px-6 py-4 whitespace-nowrap text-sm font-mono ${isDark ? "text-slate-300" : "text-slate-600"}`}
-                              >
-                                {formatPhoneWithCensorship(lead.phone)}
-                              </td>
-                              <td
-                                className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? "text-slate-300" : "text-slate-655"}`}
-                              >
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <div className="font-bold">
-                                    {formatPageNameWithCensorship(
-                                      lead.produto || "Secador Inteligente UV",
-                                    )}
-                                  </div>
-                                  {isStockLead(lead) && (
-                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                                      <PackageCheck size={11} /> Stock
-                                    </span>
-                                  )}
-                                </div>
-                                {(lead.deliveryDate || lead.deliveryPeriod) && (
-                                  <div className="text-[11px] font-semibold text-emerald-400 mt-0.5 flex items-center gap-1">
-                                    <span>
-                                      📅 {lead.deliveryDate ? (lead.deliveryDate.includes("-") ? lead.deliveryDate.split("-").reverse().join("/") : lead.deliveryDate) : "A combinar"}
-                                      {lead.deliveryPeriod ? ` • ${lead.deliveryPeriod.split(" (")[0]}` : ""}
-                                    </span>
-                                  </div>
-                                )}
-                                {lead.observacoes && (
-                                  <div
-                                    className={`text-[11px] font-medium mt-0.5 max-w-[240px] truncate ${
-                                      isDark ? "text-slate-400" : "text-slate-500"
-                                    }`}
-                                    title={getCleanObservacoes(lead)}
-                                  >
-                                    {getCleanObservacoes(lead)}
-                                  </div>
-                                )}
-                              </td>
-                              <td
-                                className={`px-6 py-4 whitespace-nowrap text-sm font-extrabold ${isDark ? "text-emerald-400" : "text-slate-800"}`}
-                              >
-                                {lead.quantity || 1}
-                              </td>
-                              <td
-                                className={`px-6 py-4 whitespace-nowrap text-sm max-w-[200px] truncate ${isDark ? "text-slate-400" : "text-slate-500"}`}
-                              >
-                                {lead.province || "Luanda"}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <select
-                                  value={lead.status}
-                                  onChange={(e) =>
-                                    updateLeadStatus(lead.id, e.target.value)
-                                  }
-                                  className={`text-xs font-bold rounded-full px-2.5 py-1 border-0 focus:ring-2 focus:ring-indigo-500 cursor-pointer ${
-                                    lead.status?.includes("Reservado")
-                                      ? "bg-emerald-100 text-emerald-700"
-                                      : lead.status === "Rejeitado"
-                                        ? "bg-red-100 text-red-700"
-                                        : lead.status === "Entregue"
-                                          ? "bg-blue-100 text-blue-700"
-                                          : lead.status === "Cancelado"
-                                            ? "bg-slate-200 text-slate-700"
-                                            : lead.status ===
-                                                "Tentativa Falhada"
-                                              ? "bg-orange-100 text-orange-700"
-                                              : "bg-amber-100 text-amber-700"
-                                  }`}
-                                >
-                                  <option value="Pendente">⏳ Pendente</option>
-                                  <option value="Reservado">
-                                    ✅ Reservado
-                                  </option>
-                                  <option value="Rejeitado">
-                                    ❌ Rejeitado
-                                  </option>
-                                  <option value="Entregue">📦 Entregue</option>
-                                  <option value="Tentativa Falhada">
-                                    ⚠️ Tentativa Falhada
-                                  </option>
-                                  <option value="Cancelado">
-                                    🚫 Cancelado
-                                  </option>
-                                </select>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-center">
-                                {(() => {
-                                  const level = typeof lead.verificationLevel === "number"
-                                    ? lead.verificationLevel
-                                    : (lead.doubleCheck || lead.verified2x)
-                                      ? 2
-                                      : (lead.singleCheck || lead.verified1x)
-                                        ? 1
-                                        : 0;
-
-                                  return (
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        toggleLeadDoubleCheck(lead.id, level);
-                                      }}
-                                      title={
-                                        level === 2
-                                          ? "Confirmado 2x (Dupla confirmação por ligação). Clique para desmarcar."
-                                          : level === 1
-                                            ? "Confirmado 1x (1ª confirmação simples). Clique para Dupla Confirmação (2x)."
-                                            : "Clique para confirmar (1º clique: 1x, 2º clique: 2x, 3º clique: desmarcar)"
-                                      }
-                                      className={`group mx-auto rounded-xl border flex items-center justify-center transition-all cursor-pointer duration-200 select-none ${
-                                        level === 2
-                                          ? "w-9 h-8 bg-gradient-to-tr from-emerald-500 to-teal-500 border-emerald-400 text-white shadow-md shadow-emerald-500/25 scale-105 hover:scale-110 active:scale-95"
-                                          : level === 1
-                                            ? "w-8 h-8 bg-indigo-600 border-indigo-500 text-white shadow-md shadow-indigo-500/25 scale-105 hover:scale-110 active:scale-95"
-                                            : isDark
-                                              ? "w-8 h-8 bg-slate-800/80 border-slate-700 hover:border-indigo-500 hover:bg-indigo-950/40 text-slate-600 hover:text-indigo-400"
-                                              : "w-8 h-8 bg-slate-50 border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/60 text-slate-300 hover:text-indigo-600 shadow-xs"
-                                      }`}
-                                    >
-                                      {level === 2 ? (
-                                        <CheckCheck size={18} className="stroke-[2.5]" />
-                                      ) : level === 1 ? (
-                                        <Check size={16} className="stroke-[2.5]" />
-                                      ) : (
-                                        <Check size={16} className="opacity-0 group-hover:opacity-100 transition-opacity stroke-[2.5]" />
-                                      )}
-                                    </button>
-                                  );
-                                })()}
-                              </td>
-                              <td className="relative whitespace-nowrap px-6 py-4 text-right text-sm">
-                                <div className="relative flex justify-end">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setActiveDropdownLeadId(
-                                        activeDropdownLeadId === lead.id
-                                          ? null
-                                          : lead.id,
-                                      );
-                                    }}
-                                    className={`cursor-pointer rounded-lg p-1.5 transition-colors ${
-                                      isDark
-                                        ? "text-slate-400 hover:bg-slate-800 hover:text-white"
-                                        : "hover:bg-slate-100 text-slate-500 hover:text-slate-900"
-                                    }`}
-                                    title="Ações"
-                                  >
-                                    <MoreVertical size={18} />
-                                  </button>
-
-                                  {activeDropdownLeadId === lead.id && (
-                                    <>
-                                      {/* Invisible backdrop to close the dropdown on clicking outside */}
-                                      <div
-                                        className="fixed inset-0 z-40"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setActiveDropdownLeadId(null);
-                                        }}
-                                      />
-                                      <div
-                                        onClick={(e) => e.stopPropagation()}
-                                        className={`absolute right-0 z-50 w-44 rounded-xl border py-1 shadow-2xl top-full mt-2 ${
-                                          isDark
-                                            ? "border-slate-800 bg-slate-950 text-slate-200"
-                                            : "border-slate-200 bg-white text-slate-800"
-                                        }`}
-                                      >
-                                        <button
-                                          onClick={() => {
-                                            setActiveDropdownLeadId(null);
-                                            setSelectedLeadForPreview(lead);
-                                            setModalState("lead-preview");
-                                          }}
-                                          className={`flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-xs font-semibold transition-colors ${
-                                            isDark
-                                              ? "hover:bg-slate-900 hover:text-white"
-                                              : "hover:bg-slate-100 hover:text-indigo-650"
-                                          }`}
-                                        >
-                                          <Eye
-                                            size={14}
-                                            className="text-slate-400"
-                                          />
-                                          <span>Ver Detalhes</span>
-                                        </button>
-
-                                        <button
-                                          onClick={() => {
-                                            setActiveDropdownLeadId(null);
-                                            handleCopyLead(lead);
-                                          }}
-                                          className={`flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-xs font-semibold transition-colors ${
-                                            isDark
-                                              ? "hover:bg-slate-900 hover:text-white"
-                                              : "hover:bg-slate-100 hover:text-indigo-650"
-                                          }`}
-                                        >
-                                          <Copy
-                                            size={14}
-                                            className="text-slate-400"
-                                          />
-                                          <span>Copiar Info</span>
-                                        </button>
-
-                                        {isStockLead(lead) && (
-                                          <button
-                                            onClick={() => {
-                                              setActiveDropdownLeadId(null);
-                                              handleWhatsAppStockOrder(lead);
-                                            }}
-                                            className={`flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-xs font-semibold transition-colors ${
-                                              isDark
-                                                ? "hover:bg-slate-900 hover:text-blue-400"
-                                                : "hover:bg-blue-50 hover:text-blue-700"
-                                            }`}
-                                            title="Enviar mensagem de confirmação de encomenda em stock (entrega imediata)"
-                                          >
-                                            <PackageCheck
-                                              size={14}
-                                              className="text-blue-500 shrink-0"
-                                            />
-                                            <span>Confir. Encomenda</span>
-                                          </button>
-                                        )}
-
-                                        <button
-                                          onClick={() => {
-                                            setActiveDropdownLeadId(null);
-                                            handleWhatsAppReservation(lead);
-                                          }}
-                                          className={`flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-xs font-semibold transition-colors ${
-                                            isDark
-                                              ? "hover:bg-slate-900 hover:text-emerald-400"
-                                              : "hover:bg-emerald-50 hover:text-emerald-700"
-                                          }`}
-                                          title="Enviar mensagem para confirmar a reserva"
-                                        >
-                                          <MessageSquare
-                                            size={14}
-                                            className="text-emerald-500 shrink-0"
-                                          />
-                                          <span>Reconfir. Reserva</span>
-                                        </button>
-
-                                        <button
-                                          onClick={() => {
-                                            setActiveDropdownLeadId(null);
-                                            handleWhatsAppDelivery(lead);
-                                          }}
-                                          className={`flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-xs font-semibold transition-colors ${
-                                            isDark
-                                              ? "hover:bg-slate-900 hover:text-teal-400"
-                                              : "hover:bg-teal-50 hover:text-teal-700"
-                                          }`}
-                                          title="Enviar mensagem para confirmar a entrega"
-                                        >
-                                          <Truck
-                                            size={14}
-                                            className="text-teal-500 shrink-0"
-                                          />
-                                          <span>Confir. Entrega</span>
-                                        </button>
-
-                                        <button
-                                          onClick={() => {
-                                            setActiveDropdownLeadId(null);
-                                            handleWhatsAppPending(lead);
-                                          }}
-                                          className={`flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-xs font-semibold transition-colors ${
-                                            isDark
-                                              ? "hover:bg-slate-900 hover:text-amber-400"
-                                              : "hover:bg-amber-50 hover:text-amber-700"
-                                          }`}
-                                          title="Enviar mensagem para lembrar e recuperar reserva pendente"
-                                        >
-                                          <Clock
-                                            size={14}
-                                            className="text-amber-500 shrink-0"
-                                          />
-                                          <span>Recuperar Pendente</span>
-                                        </button>
-
-                                        <button
-                                          onClick={() => {
-                                            setActiveDropdownLeadId(null);
-                                            setIsSelectionModeActive(true);
-                                            if (!selectedLeadIds.includes(lead.id)) {
-                                              setSelectedLeadIds([...selectedLeadIds, lead.id]);
-                                            }
-                                          }}
-                                          className={`flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-xs font-semibold transition-colors ${
-                                            isDark
-                                              ? "hover:bg-slate-900 hover:text-white"
-                                              : "hover:bg-slate-100 hover:text-indigo-600"
-                                          }`}
-                                        >
-                                          <CheckSquare
-                                            size={14}
-                                            className="text-indigo-500"
-                                          />
-                                          <span>
-                                            {selectedLeadIds.includes(lead.id)
-                                              ? "Marcar (Selecionado)"
-                                              : "Marcar / Selecionar"}
-                                          </span>
-                                        </button>
-
-                                        <div
-                                          className={`my-1 border-t ${isDark ? "border-slate-800" : "border-slate-100"}`}
-                                        />
-
-                                        <button
-                                          onClick={() => {
-                                            setActiveDropdownLeadId(null);
-                                            setLeadToDelete(lead);
-                                            setModalState(
-                                              "delete-lead-confirm",
-                                            );
-                                          }}
-                                          className="flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-xs font-extrabold text-red-500 transition-colors hover:bg-red-500/10"
-                                        >
-                                          <Trash2
-                                            size={14}
-                                            className="text-red-500"
-                                          />
-                                          <span>Eliminar Lead</span>
-                                        </button>
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    {totalPages > 1 && (
-                      <div
-                        className={`px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 select-none transition-colors ${isDark ? "bg-slate-950 border-slate-800 text-slate-300" : "bg-slate-50 border-slate-100"}`}
-                      >
-                        <p
-                          className={`text-xs font-medium font-mono ${isDark ? "text-slate-400" : "text-slate-500"}`}
-                        >
-                          A mostrar{" "}
-                          <span
-                            className={`${isDark ? "text-white" : "text-slate-800"} font-bold`}
-                          >
-                            {(currentPage - 1) * itemsPerPage + 1}
-                          </span>{" "}
-                          a{" "}
-                          <span
-                            className={`${isDark ? "text-white" : "text-slate-800"} font-bold`}
-                          >
-                            {Math.min(
-                              currentPage * itemsPerPage,
-                              allDisplayedLeads.length,
-                            )}
-                          </span>{" "}
-                          de{" "}
-                          <span
-                            className={`${isDark ? "text-white" : "text-slate-800"} font-medium`}
-                          >
-                            {allDisplayedLeads.length}
-                          </span>{" "}
-                          leads
-                        </p>
-
-                        <div className="flex items-center gap-1.5 step-pagination">
-                          <button
-                            onClick={() =>
-                              setAdminCurrentPage((prev) =>
-                                Math.max(1, prev - 1),
-                              )
-                            }
-                            disabled={currentPage === 1}
-                            className={`p-1 px-2.5 rounded-lg border transition flex items-center gap-1 text-xs font-bold cursor-pointer ${isDark ? "border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:bg-slate-950 disabled:opacity-40" : "border-slate-200 bg-white text-slate-600 sm:hover:bg-slate-50 disabled:bg-white disabled:opacity-40"}`}
-                            title="Página Anterior"
-                          >
-                            <ChevronLeft size={14} />
-                            <span>Anterior</span>
-                          </button>
-
-                          {/* Page numbers */}
-                          {(() => {
-                            const pages: (number | string)[] = [];
-                            const startPage = Math.max(1, currentPage - 2);
-                            const endPage = Math.min(
-                              totalPages,
-                              currentPage + 2,
-                            );
-
-                            if (startPage > 1) {
-                              pages.push(1);
-                              if (startPage > 2) pages.push("...");
-                            }
-
-                            for (let i = startPage; i <= endPage; i++) {
-                              pages.push(i);
-                            }
-
-                            if (endPage < totalPages) {
-                              if (endPage < totalPages - 1) pages.push("...");
-                              pages.push(totalPages);
-                            }
-
-                            return pages.map((page, idx) => {
-                              if (typeof page === "string") {
-                                return (
-                                  <span
-                                    key={`dots-${idx}`}
-                                    className="px-2 text-slate-450 font-mono text-xs"
-                                  >
-                                    {page}
-                                  </span>
-                                );
-                              }
-                              return (
-                                <button
-                                  key={`page-${page}`}
-                                  onClick={() => setAdminCurrentPage(page)}
-                                  className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-black transition-all ${
-                                    currentPage === page
-                                      ? "bg-indigo-600 text-white shadow-sm shadow-indigo-500/10"
-                                      : isDark
-                                        ? "bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 cursor-pointer"
-                                        : "bg-white border border-slate-200 text-slate-600 sm:hover:bg-slate-50 cursor-pointer"
-                                  }`}
-                                >
-                                  {page}
-                                </button>
-                              );
-                            });
-                          })()}
-
-                          <button
-                            onClick={() =>
-                              setAdminCurrentPage((prev) =>
-                                Math.min(totalPages, prev + 1),
-                              )
-                            }
-                            disabled={currentPage === totalPages}
-                            className={`p-1 px-2.5 rounded-lg border transition flex items-center gap-1 text-xs font-bold cursor-pointer ${isDark ? "border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:bg-slate-950 disabled:opacity-40" : "border-slate-200 bg-white text-slate-600 sm:hover:bg-slate-50 disabled:bg-white disabled:opacity-40"}`}
-                            title="Próxima Página"
-                          >
-                            <span>Próxima</span>
-                            <ChevronRight size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
+              {/* 360° Lead Qualification Drawer */}
+              <LeadDetailDrawer
+                lead={selectedDrawerLead}
+                isOpen={isDrawerOpen}
+                onClose={() => {
+                  setIsDrawerOpen(false);
+                  setSelectedDrawerLead(null);
+                }}
+                isDark={isDark}
+                onUpdateStatus={updateLeadStatus}
+                onDeleteLead={(lead) => {
+                  setLeadToDelete(lead);
+                  setModalState("delete-lead-confirm");
+                  setIsDrawerOpen(false);
+                }}
+                onTriggerWhatsApp={(lead, type) => {
+                  const cleanPhone = formatWhatsAppPhone(lead.phone);
+                  const text =
+                    type === "entrega"
+                      ? getWhatsAppDeliveryText(lead)
+                      : type === "pendente"
+                        ? getWhatsAppPendingText(lead)
+                        : getWhatsAppReservationText(lead);
+                  setWhatsAppModalData({
+                    isOpen: true,
+                    lead,
+                    type,
+                    title:
+                      type === "entrega"
+                        ? "Confirmar Entrega"
+                        : type === "pendente"
+                          ? "Recuperar Lead Pendente"
+                          : "Confirmar Reserva",
+                    messageText: text,
+                    recipientPhone: cleanPhone,
+                    recipientName: lead.name || "Cliente",
+                  });
+                }}
+                formatKz={formatKz}
+                hidePhones={hidePhones}
+                formatPhoneWithCensorship={formatPhoneWithCensorship}
+                formatPageNameWithCensorship={formatPageNameWithCensorship}
+              />
             </>
           )}
         </main>
@@ -9583,11 +8159,13 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
       </AnimatePresence>
 
       {/* WHATSAPP ACTION DISPATCH MODAL (POPUP TO CHOOSE COPY OR DIRECT SEND) */}
-      <WhatsAppActionModal
-        data={whatsAppModalData}
-        onClose={() => setWhatsAppModalData(null)}
-        isDark={isDark}
-      />
+      {whatsAppModalData && whatsAppModalData.isOpen && (
+        <WhatsAppActionModal
+          data={whatsAppModalData}
+          onClose={() => setWhatsAppModalData(null)}
+          isDark={isDark}
+        />
+      )}
 
       {/* EXPORT OPTIONS MODAL PROMPT */}
       {isExportModalOpen && (
