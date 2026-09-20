@@ -906,9 +906,9 @@ const LeadKanbanCard: React.FC<LeadKanbanCardProps> = ({
       </div>
 
       {/* Top Card Row */}
-      <div className="flex items-start justify-between gap-1.5 mb-1.5 pr-4">
-        <div>
-          <h4 className="text-xs font-black truncate max-w-[125px] text-slate-100 group-hover:text-indigo-300 transition">
+      <div className="flex items-start justify-between gap-2 mb-1.5 pr-4">
+        <div className="min-w-0 flex-1">
+          <h4 className="text-xs font-black truncate text-slate-100 group-hover:text-indigo-300 transition" title={lead.name}>
             {lead.name || "Lead Sem Nome"}
           </h4>
           {isSold ? (
@@ -916,14 +916,14 @@ const LeadKanbanCard: React.FC<LeadKanbanCardProps> = ({
               <Trophy size={10} className="text-amber-400" /> Purchase Meta
             </span>
           ) : (
-            <span className="text-[10px] text-slate-400">
+            <span className="text-[10.5px] font-semibold text-slate-400">
               {formatKz ? formatKz(leadPrice) : ""}
             </span>
           )}
         </div>
         <div className="text-right shrink-0">
           {isSold ? (
-            <span className="text-[11px] font-black text-emerald-400 block">
+            <span className="text-xs font-black text-emerald-400 block">
               {formatKz ? formatKz(leadPrice) : ""}
             </span>
           ) : (
@@ -935,8 +935,8 @@ const LeadKanbanCard: React.FC<LeadKanbanCardProps> = ({
       </div>
 
       {/* Phone / WhatsApp */}
-      <div className="flex items-center justify-between gap-1 text-[11px] text-slate-400 mb-1.5">
-        <span className="truncate">
+      <div className="flex items-center justify-between gap-1 text-[11.5px] text-slate-300 mb-1.5">
+        <span className="truncate font-mono">
           {hidePhones ? formatPhoneWithCensorship(lead.phone || "") : lead.phone || "Sem contacto"}
         </span>
         <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -958,13 +958,13 @@ const LeadKanbanCard: React.FC<LeadKanbanCardProps> = ({
       </div>
 
       {/* Location & Product Badges */}
-      <div className="space-y-1 text-[10px] text-slate-400 border-t border-slate-700/40 pt-1.5 mb-2">
-        <div className="flex items-center gap-1 truncate">
-          <MapPin size={11} className="shrink-0 text-blue-400" />
+      <div className="space-y-1 text-[10.5px] text-slate-400 border-t border-slate-700/40 pt-1.5 mb-2">
+        <div className="flex items-center gap-1.5 truncate">
+          <MapPin size={12} className="shrink-0 text-blue-400" />
           <span className="truncate">{lead.area || lead.address || "Centro"}, {lead.province || "Luanda"}</span>
         </div>
-        <div className="flex items-center gap-1 truncate">
-          <Package size={11} className="shrink-0 text-purple-400" />
+        <div className="flex items-center gap-1.5 truncate">
+          <Package size={12} className="shrink-0 text-purple-400" />
           <span className="truncate">{formatPageNameWithCensorship(lead.produto || "Secador UV")}</span>
         </div>
       </div>

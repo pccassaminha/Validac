@@ -829,7 +829,7 @@ export default function App() {
       id: "camisa-seda",
       title: "Camisa Seda Gelada Premium",
       subtitle: "Camisa social premium em seda gelada tecnológica com efeito antirrugas. 25.000 Kz / Unidade.",
-      image: "https://i.postimg.cc/2yRkWypx/C2128-1-branco.jpg",
+      image: "https://i.postimg.cc/PJWtQHTd/C2128-5-azul-marinho.jpg",
       viewName: "sales-camisa-seda",
       paramName: "camisa-seda",
       matchesLead: (l: any) => {
@@ -3171,7 +3171,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
       {/* Navigation */}
       {isAuthenticated && view !== "home" && (
         <nav className={`bg-slate-900 text-white shadow-xl border-b border-slate-800 ${isSalesView ? "hidden md:block relative z-20" : "sticky top-0 z-40"}`}>
-          <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 h-16 flex justify-between items-center">
+          <div className="w-full max-w-none px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
             <div
               className="flex items-center gap-3 cursor-pointer"
               onClick={() => setView("home")}
@@ -5827,7 +5827,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
 
       {/* ADMIN VIEW */}
       {view === "admin" && (
-        <main className="w-full max-w-[1600px] mx-auto px-4 py-10 flex-grow">
+        <main className="w-full max-w-none px-3 sm:px-6 lg:px-8 2xl:px-10 py-6 sm:py-8 flex-grow">
           {adminSubView === "calculadora" ? (
             <CardCalculatorView
               isDark={isDark}
@@ -5990,21 +5990,26 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
 
       {/* PAGES HUB VIEW */}
       {view === "pages" && isAuthenticated && (
-        <main className="w-full max-w-[1600px] mx-auto px-4 py-10 flex-grow">
+        <main className="w-full max-w-none px-3 sm:px-6 lg:px-8 2xl:px-10 py-6 sm:py-8 flex-grow">
           <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <button
                 onClick={() => setView("sales")}
-                className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-indigo-600 font-medium mb-4 transition-colors"
+                className={`flex items-center gap-1.5 text-sm font-semibold mb-3 transition-colors cursor-pointer ${
+                  isDark ? "text-slate-400 hover:text-indigo-400" : "text-slate-500 hover:text-indigo-600"
+                }`}
               >
                 <ArrowLeft size={16} /> Voltar
               </button>
-              <h1 className="text-3xl font-bold text-slate-900">
+              <h1 className={`text-2xl sm:text-3xl font-black tracking-tight ${
+                isDark ? "text-slate-100" : "text-slate-900"
+              }`}>
                 Gerência de Páginas
               </h1>
-              <p className="text-slate-500 mt-1">
-                Gira as suas landing pages, acesse links e veja leads
-                rapidamente.
+              <p className={`mt-1 text-sm ${
+                isDark ? "text-slate-400" : "text-slate-500"
+              }`}>
+                Gira as suas landing pages, acesse links e veja leads rapidamente.
               </p>
             </div>
 
@@ -6013,9 +6018,13 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
               <button
                 type="button"
                 onClick={() => setIsTrackingModalOpen(true)}
-                className="flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 shadow-sm hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 shadow-sm hover:scale-[1.02] active:scale-[0.98] cursor-pointer border ${
+                  isDark
+                    ? "bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border-indigo-500/30"
+                    : "bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200/80"
+                }`}
               >
-                <Sparkles size={18} className="text-indigo-600" />
+                <Sparkles size={17} className={isDark ? "text-indigo-400" : "text-indigo-600"} />
                 <span>Configurações de Tracking</span>
                 {(appSettings.fbPixel || appSettings.googleTag) && (
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" title="Pixel / Tag configurado" />
@@ -6031,7 +6040,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm"
                 onClick={() => setIsTrackingModalOpen(false)}
               >
                 <motion.div
@@ -6039,26 +6048,34 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                   animate={{ scale: 1, opacity: 1, y: 0 }}
                   exit={{ scale: 0.95, opacity: 0, y: 10 }}
                   transition={{ type: "spring", duration: 0.3 }}
-                  className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden"
+                  className={`rounded-2xl shadow-2xl border max-w-lg w-full overflow-hidden ${
+                    isDark ? "bg-slate-900 border-slate-800 text-slate-100" : "bg-white border-slate-200 text-slate-900"
+                  }`}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                  <div className={`p-6 border-b flex items-center justify-between ${
+                    isDark ? "bg-slate-800/60 border-slate-800" : "bg-slate-50/50 border-slate-100"
+                  }`}>
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold ${
+                        isDark ? "bg-indigo-500/20 text-indigo-400" : "bg-indigo-100 text-indigo-600"
+                      }`}>
                         <Sparkles size={18} />
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-slate-900">
+                        <h3 className={`text-base sm:text-lg font-bold ${isDark ? "text-slate-100" : "text-slate-900"}`}>
                           Configurações Globais & Tracking
                         </h3>
-                        <p className="text-xs text-slate-500">
+                        <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>
                           WhatsApp de Pedidos, Meta Pixel e Google Tag
                         </p>
                       </div>
                     </div>
                     <button
                       onClick={() => setIsTrackingModalOpen(false)}
-                      className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-xl transition cursor-pointer"
+                      className={`p-2 rounded-xl transition cursor-pointer ${
+                        isDark ? "text-slate-400 hover:text-slate-200 hover:bg-slate-800" : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/60"
+                      }`}
                     >
                       <X size={18} />
                     </button>
@@ -6066,9 +6083,11 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
 
                   <div className="p-6 space-y-5">
                     {/* WhatsApp Number Configuration */}
-                    <div className="bg-emerald-50/70 border border-emerald-200/90 rounded-2xl p-4">
-                      <label className="block text-sm font-bold text-emerald-950 mb-1.5 flex items-center gap-2">
-                        <MessageSquare size={16} className="text-emerald-600" />
+                    <div className={`rounded-2xl p-4 border ${
+                      isDark ? "bg-emerald-950/30 border-emerald-800/50 text-emerald-200" : "bg-emerald-50/70 border-emerald-200/90 text-emerald-950"
+                    }`}>
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 flex items-center gap-2">
+                        <MessageSquare size={15} className="text-emerald-400" />
                         Número WhatsApp de Receção de Pedidos (Loja)
                       </label>
                       <input
@@ -6081,15 +6100,23 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                           }))
                         }
                         placeholder="Ex: 921167980"
-                        className="w-full bg-white border border-emerald-300 focus:border-emerald-500 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition font-bold text-slate-800"
+                        className={`w-full rounded-xl px-4 py-2.5 text-sm font-bold outline-none transition border ${
+                          isDark
+                            ? "bg-slate-900 border-emerald-700/60 text-emerald-300 focus:ring-2 focus:ring-emerald-500"
+                            : "bg-white border-emerald-300 focus:border-emerald-500 text-slate-800 focus:ring-2 focus:ring-emerald-500"
+                        }`}
                       />
-                      <p className="mt-1.5 text-[11px] text-emerald-800 flex items-center gap-1">
-                        <Info size={13} className="shrink-0" /> Quando o cliente finalizar o pedido do Secador Expresso Pro e clicar em "Finalizar no WhatsApp", os dados serão enviados diretamente para este número. (Padrão: 921167980).
+                      <p className={`mt-1.5 text-[11px] flex items-center gap-1 ${
+                        isDark ? "text-emerald-400/90" : "text-emerald-800"
+                      }`}>
+                        <Info size={13} className="shrink-0" /> Quando o cliente finalizar no WhatsApp, as mensagens irão diretamente para este número.
                       </p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-1.5 ${
+                        isDark ? "text-slate-300" : "text-slate-700"
+                      }`}>
                         Meta Pixel ID (Facebook)
                       </label>
                       <input
@@ -6102,15 +6129,21 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                           }))
                         }
                         placeholder="Ex: 4192962437607469"
-                        className="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                        className={`w-full rounded-xl px-4 py-2.5 text-sm outline-none transition border ${
+                          isDark
+                            ? "bg-slate-950/60 border-slate-800 text-slate-200 focus:ring-2 focus:ring-indigo-500"
+                            : "bg-slate-50 border-slate-200 focus:bg-white text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                        }`}
                       />
-                      <p className="mt-1.5 text-[11px] text-slate-400 flex items-center gap-1">
+                      <p className="mt-1 text-[11px] text-slate-400 flex items-center gap-1">
                         <Info size={13} /> Cole apenas o número do ID do Pixel (ex: 4192962437607469).
                       </p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                      <label className={`block text-xs font-bold uppercase tracking-wider mb-1.5 ${
+                        isDark ? "text-slate-300" : "text-slate-700"
+                      }`}>
                         Google Tag ID (Ads / Analytics)
                       </label>
                       <input
@@ -6123,19 +6156,27 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                           }))
                         }
                         placeholder="Ex: AW-123456789 ou G-XXXXX"
-                        className="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                        className={`w-full rounded-xl px-4 py-2.5 text-sm outline-none transition border ${
+                          isDark
+                            ? "bg-slate-950/60 border-slate-800 text-slate-200 focus:ring-2 focus:ring-indigo-500"
+                            : "bg-slate-50 border-slate-200 focus:bg-white text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                        }`}
                       />
-                      <p className="mt-1.5 text-[11px] text-slate-400 flex items-center gap-1">
+                      <p className="mt-1 text-[11px] text-slate-400 flex items-center gap-1">
                         <Info size={13} /> Cole o ID de conversão do Google Ads ou Google Analytics.
                       </p>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+                  <div className={`p-4 border-t flex items-center justify-end gap-3 ${
+                    isDark ? "bg-slate-800/40 border-slate-800" : "bg-slate-50 border-slate-100"
+                  }`}>
                     <button
                       type="button"
                       onClick={() => setIsTrackingModalOpen(false)}
-                      className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200/70 transition cursor-pointer"
+                      className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                        isDark ? "text-slate-400 hover:text-slate-200 hover:bg-slate-800" : "text-slate-600 hover:bg-slate-200/70"
+                      }`}
                     >
                       Cancelar
                     </button>
@@ -6155,7 +6196,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                         }
                       }}
                       disabled={isSavingSettings}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition shadow-md flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                      className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition shadow-md flex items-center gap-2 disabled:opacity-50 cursor-pointer"
                     >
                       {isSavingSettings ? (
                         <Loader2 size={15} className="animate-spin" />
@@ -6172,21 +6213,27 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
 
           {/* PRODUCT VALIDATION ANALYTICS METRICS BAR */}
           <div className="mb-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
               <div>
-                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                  <Target size={22} className="text-indigo-600" /> Validation & Lead Goals Hub
+                <h2 className={`text-lg sm:text-xl font-bold flex items-center gap-2 ${
+                  isDark ? "text-slate-100" : "text-slate-900"
+                }`}>
+                  <Target size={20} className="text-indigo-400" /> Validation & Lead Goals Hub
                 </h2>
-                <p className="text-sm text-slate-500">
+                <p className={`text-xs sm:text-sm mt-0.5 ${
+                  isDark ? "text-slate-400" : "text-slate-500"
+                }`}>
                   Acompanhe quais produtos atingiram a meta de reservas (validados) e edite os objetivos por página.
                 </p>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => setPagesFilter("all")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                     pagesFilter === "all"
-                      ? "bg-slate-900 text-white shadow-sm"
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : isDark
+                      ? "bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-800"
                       : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
                   }`}
                 >
@@ -6194,9 +6241,11 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                 </button>
                 <button
                   onClick={() => setPagesFilter("active")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
                     pagesFilter === "active"
                       ? "bg-emerald-600 text-white shadow-sm"
+                      : isDark
+                      ? "bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/50 border border-emerald-800/50"
                       : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
                   }`}
                 >
@@ -6204,9 +6253,11 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                 </button>
                 <button
                   onClick={() => setPagesFilter("inactive")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
                     pagesFilter === "inactive"
                       ? "bg-rose-600 text-white shadow-sm"
+                      : isDark
+                      ? "bg-rose-950/40 text-rose-300 hover:bg-rose-900/50 border border-rose-800/50"
                       : "bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200"
                   }`}
                 >
@@ -6214,30 +6265,36 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                 </button>
                 <button
                   onClick={() => setPagesFilter("validated")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
                     pagesFilter === "validated"
-                      ? "bg-indigo-600 text-white shadow-sm"
-                      : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
+                      ? "bg-amber-600 text-white shadow-sm"
+                      : isDark
+                      ? "bg-amber-950/40 text-amber-300 hover:bg-amber-900/50 border border-amber-800/50"
+                      : "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
                   }`}
                 >
                   🏆 Validados ({PRODUCTS_LIST.filter((p) => getProductValidationInfo(p.id).isValidated).length})
                 </button>
                 <button
                   onClick={() => setPagesFilter("testing")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
                     pagesFilter === "testing"
-                      ? "bg-slate-700 text-white shadow-sm"
-                      : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : isDark
+                      ? "bg-blue-950/40 text-blue-300 hover:bg-blue-900/50 border border-blue-800/50"
+                      : "bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
                   }`}
                 >
                   🧪 Em Teste ({PRODUCTS_LIST.filter((p) => getProductValidationInfo(p.id).statusKey === "testing").length})
                 </button>
                 <button
                   onClick={() => setPagesFilter("stock")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
                     pagesFilter === "stock"
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
+                      ? "bg-purple-600 text-white shadow-sm"
+                      : isDark
+                      ? "bg-purple-950/40 text-purple-300 hover:bg-purple-900/50 border border-purple-800/50"
+                      : "bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
                   }`}
                 >
                   📦 Em Stock ({PRODUCTS_LIST.filter((p) => getProductValidationInfo(p.id).isStockStage).length})
@@ -6247,51 +6304,67 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
 
             {/* Metric Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+              <div className={`p-4 sm:p-5 rounded-2xl border transition flex items-center gap-4 ${
+                isDark ? "bg-slate-900/90 border-slate-800" : "bg-white border-slate-200 shadow-sm"
+              }`}>
+                <div className={`w-12 h-12 rounded-xl border flex items-center justify-center shrink-0 ${
+                  isDark ? "bg-indigo-500/10 border-indigo-500/20 text-indigo-400" : "bg-indigo-50 border-indigo-100 text-indigo-600"
+                }`}>
                   <Store size={22} />
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Páginas Ativas</span>
-                  <p className="text-2xl font-black text-slate-900">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Páginas Ativas</span>
+                  <p className={`text-2xl font-black ${isDark ? "text-slate-100" : "text-slate-900"}`}>
                     {PRODUCTS_LIST.filter((p) => activePagesStatus[p.id] !== false).length}
                     <span className="text-xs font-normal text-slate-400 ml-1">/ {PRODUCTS_LIST.length}</span>
                   </p>
                 </div>
               </div>
 
-              <div className="bg-white p-4.5 rounded-2xl border border-emerald-200 shadow-sm flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+              <div className={`p-4 sm:p-5 rounded-2xl border transition flex items-center gap-4 ${
+                isDark ? "bg-slate-900/90 border-slate-800" : "bg-white border-slate-200 shadow-sm"
+              }`}>
+                <div className={`w-12 h-12 rounded-xl border flex items-center justify-center shrink-0 ${
+                  isDark ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-emerald-50 border-emerald-100 text-emerald-600"
+                }`}>
                   <Award size={22} />
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Validados</span>
-                  <p className="text-2xl font-black text-emerald-600">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Validados</span>
+                  <p className="text-2xl font-black text-emerald-400">
                     {PRODUCTS_LIST.filter((p) => getProductValidationInfo(p.id).isValidated).length}
                     <span className="text-xs font-normal text-slate-400 ml-1">/ {PRODUCTS_LIST.length}</span>
                   </p>
                 </div>
               </div>
 
-              <div className="bg-white p-4.5 rounded-2xl border border-amber-200 shadow-sm flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+              <div className={`p-4 sm:p-5 rounded-2xl border transition flex items-center gap-4 ${
+                isDark ? "bg-slate-900/90 border-slate-800" : "bg-white border-slate-200 shadow-sm"
+              }`}>
+                <div className={`w-12 h-12 rounded-xl border flex items-center justify-center shrink-0 ${
+                  isDark ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-amber-50 border-amber-100 text-amber-600"
+                }`}>
                   <Timer size={22} />
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Em Teste</span>
-                  <p className="text-2xl font-black text-amber-600">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Em Teste</span>
+                  <p className="text-2xl font-black text-amber-400">
                     {PRODUCTS_LIST.filter((p) => getProductValidationInfo(p.id).statusKey === "testing").length}
                   </p>
                 </div>
               </div>
 
-              <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+              <div className={`p-4 sm:p-5 rounded-2xl border transition flex items-center gap-4 ${
+                isDark ? "bg-slate-900/90 border-slate-800" : "bg-white border-slate-200 shadow-sm"
+              }`}>
+                <div className={`w-12 h-12 rounded-xl border flex items-center justify-center shrink-0 ${
+                  isDark ? "bg-blue-500/10 border-blue-500/20 text-blue-400" : "bg-blue-50 border-blue-100 text-blue-600"
+                }`}>
                   <PackageOpen size={22} />
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total de Unidades Reservadas</span>
-                  <p className="text-2xl font-black text-slate-900">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Qtd. Reservada</span>
+                  <p className={`text-2xl font-black ${isDark ? "text-slate-100" : "text-slate-900"}`}>
                     {PRODUCTS_LIST.reduce((sum, p) => sum + getProductValidationInfo(p.id).reservasCount, 0)}
                   </p>
                   <span className="text-[10px] text-slate-400 font-normal">
@@ -6321,14 +6394,29 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
               return (
                 <div
                   key={prod.id}
-                  className={`bg-white rounded-2xl shadow-sm border overflow-hidden flex flex-col hover:shadow-md transition ${
-                    isActive ? (info.isStockStage ? "border-blue-300 ring-1 ring-blue-200" : "border-slate-200") : "border-rose-200/80 bg-slate-50/50 opacity-90"
+                  className={`rounded-2xl border overflow-hidden flex flex-col transition duration-200 ${
+                    isDark
+                      ? isActive
+                        ? info.isStockStage
+                          ? "bg-slate-900/90 border-blue-500/40 shadow-lg shadow-blue-950/20 ring-1 ring-blue-500/20"
+                          : "bg-slate-900/90 border-slate-800 hover:border-slate-700 shadow-sm"
+                        : "bg-slate-900/50 border-rose-900/40 opacity-80"
+                      : isActive
+                        ? info.isStockStage
+                          ? "bg-white border-blue-300 ring-1 ring-blue-200 shadow-sm"
+                          : "bg-white border-slate-200 shadow-sm"
+                        : "bg-slate-50/70 border-rose-200/80 opacity-90 shadow-sm"
                   }`}
                 >
-                  <div className="aspect-video bg-slate-100 relative group overflow-hidden">
+                  <div className="aspect-video bg-slate-800 relative group overflow-hidden">
                     <img
                       src={prod.image}
                       alt={prod.title}
+                      onError={(e) => {
+                        // Fallback image if remote host fails
+                        (e.currentTarget as HTMLImageElement).src =
+                          "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80";
+                      }}
                       className={`w-full h-full object-cover transition-transform group-hover:scale-105 ${
                         isActive ? "" : "grayscale-[40%]"
                       }`}
@@ -6371,33 +6459,43 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
 
                   <div className="p-5 flex-grow flex flex-col justify-between">
                     <div>
-                      <h3 className="font-bold text-lg text-slate-900 mb-1 leading-tight">
+                      <h3 className={`font-bold text-base sm:text-lg mb-1 leading-tight ${
+                        isDark ? "text-slate-100" : "text-slate-900"
+                      }`}>
                         {prod.title}
                       </h3>
-                      <p className="text-xs text-slate-500 mb-4 line-clamp-2">
+                      <p className={`text-xs mb-4 line-clamp-2 ${
+                        isDark ? "text-slate-400" : "text-slate-500"
+                      }`}>
                         {prod.subtitle}
                       </p>
 
                       {/* VALIDATION PROGRESS SECTION */}
-                      <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl mb-5">
+                      <div className={`p-3.5 rounded-xl mb-4 border ${
+                        isDark ? "bg-slate-950/60 border-slate-800/80" : "bg-slate-50 border-slate-200"
+                      }`}>
                         <div className="flex items-center justify-between text-xs mb-1.5">
-                          <span className="font-bold text-slate-700 flex items-center gap-1">
-                            <Target size={13} className="text-indigo-600" /> Qtd. Reservada:
+                          <span className={`font-bold flex items-center gap-1.5 ${
+                            isDark ? "text-slate-300" : "text-slate-700"
+                          }`}>
+                            <Target size={13} className="text-indigo-400" /> Qtd. Reservada:
                           </span>
-                          <span className="font-black text-slate-900">
+                          <span className={`font-black ${isDark ? "text-slate-100" : "text-slate-900"}`}>
                             {info.reservasCount} / {info.goal} un. ({Math.min(100, info.percent)}%)
                           </span>
                         </div>
 
                         {/* Animated Progress Bar */}
-                        <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden mb-2.5">
+                        <div className={`w-full h-2 rounded-full overflow-hidden mb-2.5 ${
+                          isDark ? "bg-slate-800" : "bg-slate-200"
+                        }`}>
                           <div
                             className={`h-full transition-all duration-500 rounded-full ${
                               info.isValidated
                                 ? "bg-emerald-500"
                                 : info.reservasCount > 0
                                 ? "bg-gradient-to-r from-amber-500 to-yellow-400"
-                                : "bg-slate-300"
+                                : "bg-slate-600"
                             }`}
                             style={{ width: `${Math.min(100, info.percent)}%` }}
                           />
@@ -6405,36 +6503,48 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
 
                         {/* Goal Edit Controls */}
                         {isEditing ? (
-                          <div className="flex items-center gap-1.5 pt-1 border-t border-slate-200 mt-2">
+                          <div className={`flex items-center gap-1.5 pt-1.5 border-t mt-2 ${
+                            isDark ? "border-slate-800" : "border-slate-200"
+                          }`}>
                             <input
                               type="number"
                               min="1"
                               value={tempGoalInput}
                               onChange={(e) => setTempGoalInput(parseInt(e.target.value) || 1)}
-                              className="w-16 bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500"
+                              className={`w-16 rounded-lg px-2 py-1 text-xs font-bold outline-none border ${
+                                isDark
+                                  ? "bg-slate-900 border-slate-700 text-slate-100 focus:ring-2 focus:ring-indigo-500"
+                                  : "bg-white border-slate-300 text-slate-900 focus:ring-2 focus:ring-indigo-500"
+                              }`}
                             />
                             <button
                               onClick={() => updateProductGoal(prod.id, tempGoalInput)}
-                              className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] px-2.5 py-1 rounded-lg font-bold transition"
+                              className="bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] px-2.5 py-1 rounded-lg font-bold transition cursor-pointer"
                             >
                               Salvar
                             </button>
                             <button
                               onClick={() => setEditingGoalProductId(null)}
-                              className="bg-slate-200 text-slate-600 text-[11px] px-2 py-1 rounded-lg font-bold"
+                              className={`text-[11px] px-2 py-1 rounded-lg font-bold cursor-pointer ${
+                                isDark ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-slate-200 text-slate-600 hover:bg-slate-300"
+                              }`}
                             >
                               X
                             </button>
                           </div>
                         ) : (
-                          <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-200/60">
-                            <span>Meta: <strong className="text-slate-800">{info.goal} Unidades</strong></span>
+                          <div className={`flex items-center justify-between text-[11px] pt-1.5 border-t ${
+                            isDark ? "text-slate-400 border-slate-800/80" : "text-slate-500 border-slate-200/70"
+                          }`}>
+                            <span>Meta: <strong className={isDark ? "text-slate-200 font-bold" : "text-slate-800 font-bold"}>{info.goal} Unidades</strong></span>
                             <button
                               onClick={() => {
                                 setEditingGoalProductId(prod.id);
                                 setTempGoalInput(info.goal);
                               }}
-                              className="text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1 transition"
+                              className={`font-bold flex items-center gap-1 transition cursor-pointer ${
+                                isDark ? "text-indigo-400 hover:text-indigo-300" : "text-indigo-600 hover:text-indigo-800"
+                              }`}
                             >
                               <Edit size={11} /> Alterar Meta
                             </button>
@@ -6444,29 +6554,37 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                     </div>
 
                     {/* Evolution / Stage Selector */}
-                    <div className="pt-2 pb-1 border-t border-slate-100 flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
-                        Estágio: <strong className={info.isStockStage ? "text-blue-600 font-black" : "text-amber-600 font-black"}>{info.isStockStage ? "📦 Stock / Imediato" : "🧪 Teste / Reserva"}</strong>
+                    <div className={`pt-2.5 pb-2 border-t flex items-center justify-between ${
+                      isDark ? "border-slate-800" : "border-slate-100"
+                    }`}>
+                      <span className={`text-[11px] font-bold flex items-center gap-1 ${
+                        isDark ? "text-slate-400" : "text-slate-500"
+                      }`}>
+                        Estágio: <strong className={info.isStockStage ? "text-blue-400 font-black" : "text-amber-400 font-black"}>{info.isStockStage ? "📦 Stock / Imediato" : "🧪 Teste / Reserva"}</strong>
                       </span>
                       <button
                         type="button"
                         onClick={() => toggleProductStage(prod.id)}
                         className={`text-[11px] font-black px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1 cursor-pointer shadow-xs ${
                           info.isStockStage
-                            ? "bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
-                            : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-blue-500 shadow-blue-500/20"
+                            ? isDark
+                              ? "bg-blue-950/50 hover:bg-blue-900/60 text-blue-300 border-blue-800/60"
+                              : "bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                            : "bg-blue-600 hover:bg-blue-500 text-white border-blue-500 shadow-blue-500/20"
                         }`}
                         title={info.isStockStage ? "Clique para voltar a modo Validação/Reserva" : "Clique para promover para Encomendas em Stock (Entrega Imediata)"}
                       >
                         <Sparkles size={11} />
-                        {info.isStockStage ? "Voltar a Teste" : "Mover p/ Stock 🚀"}
+                        {info.isStockStage ? "Voltar a Teste" : "Mover p/ Stock"}
                       </button>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
+                    <div className={`flex flex-wrap gap-2 pt-2.5 border-t ${
+                      isDark ? "border-slate-800" : "border-slate-100"
+                    }`}>
                       <button
                         onClick={() => setView(prod.viewName)}
-                        className="flex-1 text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-bold transition flex justify-center items-center gap-1.5 shadow-sm"
+                        className="flex-1 text-xs sm:text-sm bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-xl font-bold transition flex justify-center items-center gap-1.5 shadow-sm cursor-pointer"
                       >
                         <Eye size={14} /> Pré-visualizar
                       </button>
@@ -6475,17 +6593,25 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                           setFilterProduct(prod.title);
                           setView("admin");
                         }}
-                        className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl font-bold transition border border-slate-200 shadow-sm"
+                        className={`text-xs sm:text-sm px-3 py-2 rounded-xl font-bold transition border shadow-sm cursor-pointer ${
+                          isDark
+                            ? "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700"
+                            : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+                        }`}
                         title={`${info.leadCount} leads recebidos no total`}
                       >
                         Ver Leads ({info.leadCount})
                       </button>
                       <button
                         onClick={() => togglePageStatus(prod.id)}
-                        className={`text-xs px-3 py-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 shrink-0 border shadow-sm ${
+                        className={`text-xs px-3 py-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 shrink-0 border shadow-sm cursor-pointer ${
                           isActive
-                            ? "bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200"
-                            : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200"
+                            ? isDark
+                              ? "bg-rose-950/40 hover:bg-rose-900/50 text-rose-300 border-rose-800/60"
+                              : "bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200"
+                            : isDark
+                              ? "bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-300 border-emerald-800/60"
+                              : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200"
                         }`}
                         title={isActive ? "Clique para desativar esta página" : "Clique para ativar esta página"}
                       >
@@ -6499,10 +6625,14 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                           navigator.clipboard.writeText(link);
                           alert("Link copiado: " + link);
                         }}
-                        className="text-sm bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 px-3 py-2 rounded-xl font-bold transition flex items-center justify-center shrink-0 w-[42px] shadow-sm"
+                        className={`text-sm px-3 py-2 rounded-xl font-bold transition flex items-center justify-center shrink-0 w-[38px] border shadow-sm cursor-pointer ${
+                          isDark
+                            ? "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300"
+                            : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
+                        }`}
                         title="Copiar Link da Página"
                       >
-                        <Copy size={16} />
+                        <Copy size={15} />
                       </button>
                     </div>
                   </div>

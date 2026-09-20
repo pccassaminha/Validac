@@ -14,7 +14,12 @@ import {
   ExternalLink,
   HelpCircle,
   Activity,
-  Code2
+  Code2,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  EyeOff,
+  Trash2
 } from "lucide-react";
 import {
   MetaConfig,
@@ -22,6 +27,7 @@ import {
   getMetaConfig,
   saveMetaConfig,
   getMetaLogs,
+  clearMetaLogs,
   sendMetaConversionEvent
 } from "../services/metaIntegration";
 
@@ -36,10 +42,18 @@ export const MetaConnectionHub: React.FC<MetaConnectionHubProps> = ({ isDark }) 
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [showLogs, setShowLogs] = useState(false);
 
   useEffect(() => {
     setLogs(getMetaLogs());
   }, []);
+
+  const handleClearLogs = () => {
+    if (window.confirm("Deseja limpar todo o histórico de disparos da Meta?")) {
+      clearMetaLogs();
+      setLogs([]);
+    }
+  };
 
   const handleSaveConfig = () => {
     setIsSaving(true);
@@ -328,74 +342,128 @@ export const MetaConnectionHub: React.FC<MetaConnectionHubProps> = ({ isDark }) 
         </div>
       </div>
 
-      {/* Logs Table */}
-      <div className={`p-5 sm:p-6 rounded-2xl border space-y-4 ${
-        isDark ? "bg-slate-900/90 border-slate-800" : "bg-white border-slate-200 shadow-sm"
+      {/* Logs Section / Button */}
+      <div className={`p-4 sm:p-5 rounded-2xl border transition-all ${
+        isDark ? "bg-slate-900/90 border-slate-800" : "bg-white border-slate-200 shadow-xs"
       }`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Activity size={16} className="text-blue-400" />
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-200">
-              Histórico de Disparos de Conversão (Meta CAPI Logs)
-            </h3>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              <Activity size={18} />
+            </div>
+            <div>
+              <h3 className={`text-xs font-black uppercase tracking-wider ${isDark ? "text-slate-200" : "text-slate-800"}`}>
+                Histórico de Disparos de Conversão (Meta CAPI Logs)
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                {logs.length === 0 ? "Nenhum evento registrado ainda" : `${logs.length} evento(s) oficiais registrados`}
+              </p>
+            </div>
           </div>
-          <span className="text-[11px] text-slate-400 font-bold">
-            {logs.length} evento(s) registrados
-          </span>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            {logs.length > 0 && showLogs && (
+              <button
+                onClick={handleClearLogs}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-red-400 hover:bg-red-500/10 border border-red-500/20 transition cursor-pointer"
+                title="Limpar todos os logs"
+              >
+                <Trash2 size={13} />
+                <span>Limpar</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => setShowLogs(!showLogs)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black bg-blue-600 hover:bg-blue-500 text-white transition shadow-sm cursor-pointer"
+            >
+              {showLogs ? (
+                <>
+                  <EyeOff size={14} />
+                  <span>Ocultar Histórico</span>
+                  <ChevronUp size={14} />
+                </>
+              ) : (
+                <>
+                  <Eye size={14} />
+                  <span>Ver Histórico de Disparos</span>
+                  <span className="px-1.5 py-0.5 rounded-md bg-blue-700/80 text-[10px] font-black">
+                    {logs.length}
+                  </span>
+                  <ChevronDown size={14} />
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
-        {logs.length === 0 ? (
-          <p className="text-xs text-slate-500 italic py-4 text-center">
-            Nenhum evento disparado recentemente. Clique em "Testar Disparo Oficial" acima.
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className={`text-[10px] font-black uppercase tracking-wider border-b ${
-                isDark ? "text-slate-400 border-slate-800" : "text-slate-600 border-slate-200"
-              }`}>
-                <tr>
-                  <th className="py-2.5 px-3">Hora</th>
-                  <th className="py-2.5 px-3">Evento Meta</th>
-                  <th className="py-2.5 px-3">Lead / Cliente</th>
-                  <th className="py-2.5 px-3">Telefone Hashed</th>
-                  <th className="py-2.5 px-3">Status</th>
-                  <th className="py-2.5 px-3">Resposta Meta</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/50">
-                {logs.map((log) => (
-                  <tr key={log.id} className={isDark ? "text-slate-300" : "text-slate-700"}>
-                    <td className="py-2.5 px-3 font-mono text-[11px] whitespace-nowrap text-slate-400">
-                      {log.timestamp}
-                    </td>
-                    <td className="py-2.5 px-3 font-bold text-blue-400">
-                      {log.eventName}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      {log.leadName || "Lead Teste"}
-                    </td>
-                    <td className="py-2.5 px-3 font-mono text-[10px] text-slate-400">
-                      {log.phoneHashed || "SHA-256"}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                        log.status === "success"
-                          ? "bg-emerald-500/20 text-emerald-400"
-                          : log.status === "simulated"
-                          ? "bg-blue-500/20 text-blue-400"
-                          : "bg-red-500/20 text-red-400"
-                      }`}>
-                        {log.status}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-[11px] text-slate-400 max-w-xs truncate">
-                      {log.responseMessage}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Expandable History Table */}
+        {showLogs && (
+          <div className="pt-4 mt-4 border-t border-slate-800/60 space-y-3 animate-fadeIn">
+            {logs.length === 0 ? (
+              <p className="text-xs text-slate-500 italic py-6 text-center">
+                Nenhum evento oficial registrado ainda. Dispare uma conversão pelo CRM ou clique em "Testar Disparo Oficial" acima.
+              </p>
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className={`text-[10px] font-black uppercase tracking-wider border-b ${
+                      isDark ? "text-slate-400 border-slate-800" : "text-slate-600 border-slate-200"
+                    }`}>
+                      <tr>
+                        <th className="py-2.5 px-3">Hora</th>
+                        <th className="py-2.5 px-3">Evento Meta</th>
+                        <th className="py-2.5 px-3">Lead / Cliente</th>
+                        <th className="py-2.5 px-3">Telefone Hashed</th>
+                        <th className="py-2.5 px-3">Status</th>
+                        <th className="py-2.5 px-3">Resposta Meta</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/50">
+                      {logs.map((log) => (
+                        <tr key={log.id} className={isDark ? "text-slate-300" : "text-slate-700"}>
+                          <td className="py-2.5 px-3 font-mono text-[11px] whitespace-nowrap text-slate-400">
+                            {log.timestamp}
+                          </td>
+                          <td className="py-2.5 px-3 font-bold text-blue-400">
+                            {log.eventName}
+                          </td>
+                          <td className="py-2.5 px-3">
+                            {log.leadName || "Lead Oficial"}
+                          </td>
+                          <td className="py-2.5 px-3 font-mono text-[10px] text-slate-400">
+                            {log.phoneHashed || "SHA-256"}
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                              log.status === "success"
+                                ? "bg-emerald-500/20 text-emerald-400"
+                                : "bg-red-500/20 text-red-400"
+                            }`}>
+                              {log.status}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3 text-[11px] text-slate-400 max-w-xs truncate">
+                            {log.responseMessage}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    onClick={() => setShowLogs(false)}
+                    className="text-xs font-bold text-slate-400 hover:text-slate-200 flex items-center gap-1 cursor-pointer"
+                  >
+                    <ChevronUp size={13} />
+                    <span>Recolher Histórico</span>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

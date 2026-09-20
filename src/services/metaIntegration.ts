@@ -18,7 +18,7 @@ export interface MetaEventLog {
   eventName: "Lead" | "CompleteRegistration" | "Schedule" | "Purchase" | "InitiateCheckout";
   leadName?: string;
   phoneHashed?: string;
-  status: "success" | "error" | "simulated";
+  status: "success" | "error";
   responseMessage: string;
   eventSourceUrl?: string;
 }
@@ -60,9 +60,23 @@ export function getMetaLogs(): MetaEventLog[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_LOGS);
     if (!raw) return [];
-    return JSON.parse(raw);
+    const parsed: any[] = JSON.parse(raw);
+    // Purge any simulated logs from historical data
+    const cleaned = parsed.filter((l) => l.status !== "simulated" && l.status !== "Simulado");
+    if (cleaned.length !== parsed.length) {
+      localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(cleaned));
+    }
+    return cleaned as MetaEventLog[];
   } catch {
     return [];
+  }
+}
+
+export function clearMetaLogs(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY_LOGS);
+  } catch (e) {
+    console.error("Erro ao limpar histórico Meta:", e);
   }
 }
 
@@ -143,20 +157,12 @@ export async function sendMetaConversionEvent(params: {
     }
   }
 
-  // If no Access Token is filled, log simulation with instructions
+  // If no Access Token or Pixel ID is filled, inform user without saving simulated logs
   if (!config.accessToken || !config.pixelId) {
     const msg = !config.pixelId
       ? "Pixel ID não configurado no painel Meta."
-      : "Access Token CAPI não inserido. Evento simulado com sucesso no Valida C.";
-    saveMetaLog({
-      eventName,
-      leadName: lead.name,
-      phoneHashed: hashedPhone ? `${hashedPhone.substring(0, 8)}...` : undefined,
-      status: "simulated",
-      responseMessage: msg,
-      eventSourceUrl: window.location.href,
-    });
-    return { success: true, message: msg };
+      : "Access Token CAPI não inserido. Preencha o token para registrar eventos reais na Meta.";
+    return { success: false, message: msg };
   }
 
   // Official Meta Conversions API Graph Call
