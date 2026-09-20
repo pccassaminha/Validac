@@ -120,10 +120,10 @@ export const AdminSubNav: React.FC<AdminSubNavProps> = ({
             <button
               onClick={onOpenExport}
               className="p-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:text-white transition cursor-pointer flex items-center gap-1.5"
-              title="Exportar dados (PDF & CSV Meta)"
+              title="Exportar dados para CSV (Excel / Google Sheets)"
             >
               <Download size={15} />
-              <span className="hidden sm:inline">Export</span>
+              <span className="hidden sm:inline">Exportar CSV</span>
             </button>
           )}
         </div>

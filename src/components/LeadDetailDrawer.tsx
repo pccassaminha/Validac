@@ -197,11 +197,15 @@ export const LeadDetailDrawer: React.FC<LeadDetailDrawerProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/70 backdrop-blur-xs animate-fadeIn">
+    <div
+      className="fixed inset-0 z-50 flex justify-end bg-slate-950/70 backdrop-blur-xs animate-fadeIn cursor-pointer"
+      onClick={onClose}
+    >
       <div
-        className={`w-full max-w-xl h-full flex flex-col shadow-2xl overflow-hidden transition-all ${
+        className={`w-full max-w-xl h-full flex flex-col shadow-2xl overflow-hidden transition-all cursor-default ${
           isDark ? "bg-slate-900 border-l border-slate-800 text-slate-100" : "bg-white border-l border-slate-200 text-slate-800"
         }`}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Drawer Header */}
         <div className={`p-5 border-b flex items-center justify-between shrink-0 ${isDark ? "border-slate-800 bg-slate-900/80" : "border-slate-100 bg-slate-50/80"}`}>

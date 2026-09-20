@@ -257,10 +257,10 @@ export const CrmPipelineView: React.FC<CrmPipelineViewProps> = ({
             <button
               onClick={onOpenExport}
               className="px-3 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 cursor-pointer"
-              title="Exportar dados para CSV ou PDF da Meta"
+              title="Exportar dados para CSV (Excel / CRM)"
             >
               <Download size={14} />
-              <span className="hidden sm:inline">Exportar</span>
+              <span className="hidden sm:inline">Exportar CSV</span>
             </button>
           )}
         </div>

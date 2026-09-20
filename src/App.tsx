@@ -657,7 +657,26 @@ export default function App() {
   });
   const [editingGoalProductId, setEditingGoalProductId] = useState<string | null>(null);
   const [tempGoalInput, setTempGoalInput] = useState<number>(50);
-  const [pagesFilter, setPagesFilter] = useState<"all" | "active" | "inactive" | "validated" | "testing" | "stock">("all");
+  const [pagesFilter, setPagesFilter] = useState<"all" | "active" | "inactive" | "validated" | "testing" | "stock">(() => {
+    try {
+      const saved = localStorage.getItem("validaC_pages_filter");
+      if (saved && ["all", "active", "inactive", "validated", "testing", "stock"].includes(saved)) {
+        return saved as "all" | "active" | "inactive" | "validated" | "testing" | "stock";
+      }
+    } catch (e) {
+      // fallback
+    }
+    return "active";
+  });
+
+  // Persist chosen pages filter across sessions
+  useEffect(() => {
+    try {
+      localStorage.setItem("validaC_pages_filter", pagesFilter);
+    } catch (e) {
+      // ignore
+    }
+  }, [pagesFilter]);
 
   // Product Evolution Stages ("testing" = Pré-venda / Validação, "stock" = Encomendas em Stock / Entrega Imediata)
   const [productStages, setProductStages] = useState<Record<string, "testing" | "stock">>(() => {
@@ -5840,7 +5859,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                 onNavigateSubView={(subView) => setAdminSubView(subView)}
                 hidePhones={hidePhones}
                 onToggleHidePhones={() => setHidePhones(!hidePhones)}
-                onOpenExport={() => setIsExportModalOpen(true)}
+                onOpenExport={handleExportCSV}
                 leadsCount={adminData.length}
               />
               <AiProspectingView
@@ -5870,7 +5889,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                 onNavigateSubView={(subView) => setAdminSubView(subView)}
                 hidePhones={hidePhones}
                 onToggleHidePhones={() => setHidePhones(!hidePhones)}
-                onOpenExport={() => setIsExportModalOpen(true)}
+                onOpenExport={handleExportCSV}
                 leadsCount={adminData.length}
               />
               <MetaConnectionHub isDark={isDark} />
@@ -5889,7 +5908,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                   onNavigateSubView={(subView) => setAdminSubView(subView)}
                   hidePhones={hidePhones}
                   onToggleHidePhones={() => setHidePhones(!hidePhones)}
-                  onOpenExport={() => setIsExportModalOpen(true)}
+                  onOpenExport={handleExportCSV}
                   leadsCount={adminData.length}
                 />
               </div>
@@ -5937,7 +5956,7 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                 availableProducts={crmAvailableProducts}
                 selectedProductFilter={crmProductFilter}
                 onSelectProductFilter={setCrmProductFilter}
-                onOpenExport={() => setIsExportModalOpen(true)}
+                onOpenExport={handleExportCSV}
               />
 
               {/* 360° Lead Qualification Drawer */}
@@ -6747,8 +6766,13 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex justify-center items-center p-4 overflow-y-auto"
-            onClick={() => setModalState("none")}
+            className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex justify-center items-center p-4 overflow-y-auto cursor-pointer"
+            onClick={() => {
+              if (modalState === "lead-preview") {
+                setSelectedLeadForPreview(null);
+              }
+              setModalState("none");
+            }}
           >
             {/* Step 1: Confirmation of Customer Data & Order Details */}
             {modalState === "step1" && (
@@ -8336,31 +8360,10 @@ Se tiver alguma dúvida ou precisar de apoio para finalizar, responda a esta men
                 </div>
                 <div className="flex-1">
                   <span className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors block">
-                    Export as CSV (.csv)
+                    Exportar para CSV (.csv)
                   </span>
                   <span className="text-xs text-slate-400 block mt-0.5">
-                    Spreadsheet format for Excel, Google Sheets, or CRM
-                  </span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setIsExportModalOpen(false);
-                  handleExportPDF();
-                }}
-                className="p-4 bg-slate-950/90 hover:bg-slate-800/90 border border-slate-800 hover:border-indigo-500/50 rounded-2xl flex items-center gap-4 transition group text-left cursor-pointer active:scale-98"
-              >
-                <div className="p-3 bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 rounded-xl group-hover:scale-110 transition-transform">
-                  <FileText size={24} />
-                </div>
-                <div className="flex-1">
-                  <span className="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors block">
-                    Export as PDF (.pdf)
-                  </span>
-                  <span className="text-xs text-slate-400 block mt-0.5">
-                    Formatted document with dates, names, products, characteristics, quantities, address, and status
+                    Formato de folha de cálculo otimizado para Excel, Google Sheets ou CRM
                   </span>
                 </div>
               </button>
